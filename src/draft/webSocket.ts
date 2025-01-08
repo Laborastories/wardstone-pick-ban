@@ -1,18 +1,25 @@
 import type { WebSocketDefinition, WaspSocketData } from 'wasp/server/webSocket'
 import { prisma } from 'wasp/server'
+import { type DraftAction } from 'wasp/entities'
+
+export interface ServerToClientEvents {
+  readyStateUpdate: (data: { gameId: string, readyStates: { blue?: boolean, red?: boolean } }) => void
+  draftStart: (data: { gameId: string, startTime: number }) => void
+  draftActionUpdate: (data: { gameId: string, action: DraftAction }) => void
+  timerUpdate: (data: { gameId: string, timeRemaining: number }) => void
+  gameUpdated: (data: { gameId: string, status: string, winner?: 'BLUE' | 'RED' }) => void
+  gameCreated: (data: { gameId: string, seriesId: string, gameNumber: number }) => void
+  seriesUpdated: (data: { seriesId: string, status: string, winner?: 'BLUE' | 'RED' }) => void
+}
 
 type WebSocketFn = WebSocketDefinition<
   {
     joinGame: (gameId: string) => void
     readyState: (data: { gameId: string, side: 'blue' | 'red', isReady: boolean }) => void
     draftAction: (data: { gameId: string, type: 'PICK' | 'BAN', phase: number, team: 'BLUE' | 'RED', champion: string, position: number }) => void
+    setWinner: (data: { gameId: string, winner: 'BLUE' | 'RED' }) => void
   },
-  {
-    readyStateUpdate: (data: { gameId: string, readyStates: { blue?: boolean, red?: boolean } }) => void
-    draftStart: (data: { gameId: string }) => void
-    draftActionUpdate: (data: { gameId: string, action: { gameId: string, type: string, phase: number, team: string, champion: string, position: number } }) => void
-    timerUpdate: (data: { gameId: string, timeRemaining: number }) => void
-  },
+  ServerToClientEvents,
   Record<string, never>,
   WaspSocketData
 >
@@ -88,7 +95,10 @@ export const webSocketFn: WebSocketFn = (io) => {
           startTimer(io, gameId)
 
           // Emit draft start event
-          io.to(gameId).emit('draftStart', { gameId })
+          io.to(gameId).emit('draftStart', {
+            gameId,
+            startTime: Date.now()
+          })
 
           // Clear ready states
           delete gameReadyStates[gameId]
@@ -99,10 +109,12 @@ export const webSocketFn: WebSocketFn = (io) => {
     })
 
     socket.on('draftAction', async ({ gameId, type, phase, team, champion, position }) => {
-      console.log('Draft action:', { gameId, type, phase, team, champion, position })
+      console.log('\n=== Draft Action Received ===')
+      console.log('Details:', { gameId, type, phase, team, champion, position })
 
       try {
         // Get the game and its actions to validate the draft action
+        console.log('Fetching game data...')
         const game = await prisma.game.findUnique({
           where: { id: gameId },
           include: {
@@ -116,25 +128,34 @@ export const webSocketFn: WebSocketFn = (io) => {
         })
 
         if (!game) {
-          console.error('Game not found')
+          console.error('❌ Game not found')
           return
         }
+        console.log('✓ Game found:', { 
+          id: game.id, 
+          status: game.status,
+          currentActions: game.actions.length 
+        })
 
         // Validate game is in progress
         if (game.status !== 'IN_PROGRESS') {
-          console.error('Game is not in progress')
+          console.error('❌ Game is not in progress, current status:', game.status)
           return
         }
+        console.log('✓ Game is in progress')
 
         // Validate champion hasn't been picked or banned
+        console.log('Validating champion...')
         const championUsed = game.actions.some(action => action.champion === champion)
         if (championUsed) {
-          console.error('Champion has already been picked or banned')
+          console.error('❌ Champion has already been picked or banned')
           return
         }
+        console.log('✓ Champion is available')
 
         // If fearless draft is enabled, check if champion was used in previous games
         if (game.series.fearlessDraft && position <= 10) { // Only check for picks, not bans
+          console.log('Checking fearless draft rules...')
           const previousGames = await prisma.game.findMany({
             where: {
               seriesId: game.series.id,
@@ -150,12 +171,14 @@ export const webSocketFn: WebSocketFn = (io) => {
           )
 
           if (championUsedInSeries) {
-            console.error('Champion has already been picked in this series')
+            console.error('❌ Champion has already been picked in this series')
             return
           }
+          console.log('✓ Champion is valid for fearless draft')
         }
 
         // Create the draft action
+        console.log('Creating draft action...')
         const draftAction = await prisma.draftAction.create({
           data: {
             gameId,
@@ -166,32 +189,185 @@ export const webSocketFn: WebSocketFn = (io) => {
             position
           }
         })
-
-        // Check if this was the last action (position 19 is the last pick)
-        if (position === 19) {
-          // Update game status to DRAFT_COMPLETE
-          await prisma.game.update({
-            where: { id: gameId },
-            data: { status: 'DRAFT_COMPLETE' }
-          })
-
-          // Clear the timer if it exists
-          if (gameTimers[gameId]?.intervalId) {
-            clearInterval(gameTimers[gameId].intervalId)
-            delete gameTimers[gameId]
-          }
-        } else {
-          // Reset timer for next action
-          resetTimer(io, gameId)
-        }
+        console.log('✓ Draft action created:', draftAction)
 
         // Emit the action to all clients in the game room
+        console.log('Emitting draftActionUpdate event...')
         io.to(gameId).emit('draftActionUpdate', {
           gameId,
           action: draftAction
         })
+        console.log('✓ draftActionUpdate emitted')
+
+        // Check if this was the last action (position 19 is Red Pick 5 in 0-based indexing)
+        if (position === 19) {
+          console.log('\n=== Last Action Detected ===')
+          console.log('Current game state:', {
+            gameId,
+            position,
+            currentStatus: game.status,
+            totalActions: game.actions.length + 1,
+            team,
+            type
+          })
+
+          try {
+            console.log('Updating game status to DRAFT_COMPLETE...')
+            // Update game status to DRAFT_COMPLETE
+            const updatedGame = await prisma.game.update({
+              where: { id: gameId },
+              data: { status: 'DRAFT_COMPLETE' },
+              include: {
+                actions: true,
+                series: true
+              }
+            })
+            console.log('✓ Game status updated:', {
+              id: updatedGame.id,
+              status: updatedGame.status,
+              actionsCount: updatedGame.actions.length,
+              lastAction: updatedGame.actions[updatedGame.actions.length - 1]
+            })
+
+            // Clear the timer if it exists
+            if (gameTimers[gameId]?.intervalId) {
+              console.log('Clearing timer for game:', gameId)
+              clearInterval(gameTimers[gameId].intervalId)
+              delete gameTimers[gameId]
+              console.log('✓ Timer cleared')
+            }
+
+            // Emit game updated event after everything else is done
+            console.log('Emitting gameUpdated event...')
+            io.to(gameId).emit('gameUpdated', {
+              gameId,
+              status: updatedGame.status
+            })
+            console.log('✓ gameUpdated event emitted')
+          } catch (error) {
+            console.error('❌ Error updating game status to DRAFT_COMPLETE:', error)
+          }
+        } else {
+          // Reset timer for next action
+          console.log('Resetting timer for next action...')
+          resetTimer(io, gameId)
+          console.log('✓ Timer reset')
+        }
       } catch (error) {
-        console.error('Error creating draft action:', error)
+        console.error('❌ Error handling draft action:', error)
+      }
+    })
+
+    socket.on('setWinner', async ({ gameId, winner }) => {
+      console.log('\n=== Set Winner Event ===')
+      console.log('Details:', { gameId, winner })
+
+      try {
+        // Get the game to validate it's in DRAFT_COMPLETE state
+        const game = await prisma.game.findUnique({
+          where: { id: gameId },
+          include: {
+            series: {
+              include: {
+                games: true
+              }
+            }
+          }
+        })
+
+        if (!game) {
+          console.error('❌ Game not found')
+          return
+        }
+
+        if (game.status !== 'DRAFT_COMPLETE') {
+          console.error('❌ Game is not in DRAFT_COMPLETE state')
+          return
+        }
+
+        console.log('✓ Game found and validated')
+
+        // Update game with winner
+        const updatedGame = await prisma.game.update({
+          where: { id: gameId },
+          data: {
+            status: 'COMPLETED',
+            winner
+          },
+          include: {
+            series: true
+          }
+        })
+
+        console.log('✓ Game updated with winner:', {
+          id: updatedGame.id,
+          status: updatedGame.status,
+          winner: updatedGame.winner
+        })
+
+        // Emit game updated event
+        io.to(gameId).emit('gameUpdated', {
+          gameId,
+          status: updatedGame.status,
+          winner: updatedGame.winner as 'BLUE' | 'RED' | undefined
+        })
+
+        // If game is completed, check if we need to create next game
+        const series = game.series
+        const blueWins = series.games.filter(g => g.winner === 'BLUE').length
+        const redWins = series.games.filter(g => g.winner === 'RED').length
+        const gamesNeeded = series.format === 'BO5' ? 3 : (series.format === 'BO3' ? 2 : 1)
+
+        if (blueWins < gamesNeeded && redWins < gamesNeeded) {
+          // Create next game
+          const nextGameNumber = series.games.length + 1
+          const nextGame = await prisma.game.create({
+            data: {
+              seriesId: series.id,
+              gameNumber: nextGameNumber,
+              // Swap sides for next game
+              blueSide: game.redSide,
+              redSide: game.blueSide,
+              status: 'PENDING'
+            }
+          })
+
+          console.log('✓ Created next game:', {
+            id: nextGame.id,
+            gameNumber: nextGame.gameNumber
+          })
+
+          // Emit game created event
+          io.emit('gameCreated', {
+            gameId: nextGame.id,
+            seriesId: series.id,
+            gameNumber: nextGameNumber
+          })
+        } else {
+          // Update series as completed
+          const updatedSeries = await prisma.series.update({
+            where: { id: series.id },
+            data: {
+              status: 'COMPLETED',
+              winner: blueWins > redWins ? 'BLUE' : 'RED'
+            }
+          })
+
+          console.log('✓ Series completed:', {
+            id: updatedSeries.id,
+            status: updatedSeries.status,
+            winner: updatedSeries.winner
+          })
+
+          // Emit series updated event
+          io.emit('seriesUpdated', {
+            seriesId: series.id,
+            status: updatedSeries.status,
+            winner: updatedSeries.winner as 'BLUE' | 'RED' | undefined
+          })
+        }
+      } catch (error) {
+        console.error('❌ Error setting winner:', error)
       }
     })
 

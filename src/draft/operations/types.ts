@@ -1,13 +1,17 @@
+import { type Game } from 'wasp/entities'
+import { type WaspSocketData } from 'wasp/server/webSocket'
+
 export type CreateSeries = {
   blueTeamName: string
   redTeamName: string
   matchName: string
   format: 'BO1' | 'BO3' | 'BO5'
+  fearlessDraft: boolean
 }
 
-export type UpdateGame = {
+export type UpdateGameArgs = {
   gameId: string
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
+  status: Game['status']
   winner?: 'BLUE' | 'RED'
 }
 
@@ -18,4 +22,16 @@ export type CreateDraftAction = {
   team: 'BLUE' | 'RED'
   champion: string
   position: number
+}
+
+declare module 'wasp/server' {
+  interface Context {
+    entities: {
+      Game: any
+      Series: any
+      DraftAction: any
+    }
+    user?: any
+    webSocket?: WaspSocketData
+  }
 } 

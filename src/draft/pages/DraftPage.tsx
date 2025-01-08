@@ -8,17 +8,16 @@ import { Button } from '../../client/components/ui/button'
 import { Check, X } from '@phosphor-icons/react'
 import { ChampionGrid } from '../components/ChampionGrid'
 import { type Champion, getChampions, getChampionImageUrl } from '../services/championService'
-import { getCurrentTurn, getNextAction, isTeamTurn, getPhaseDescription, getCurrentPhase } from '../utils/draftSequence'
-
-type DraftParams = {
-  seriesId: string
-  gameNumber: string
-  side?: 'blue' | 'red'
-  auth?: string
-}
+import { getCurrentTurn, getNextAction, isTeamTurn, getCurrentPhase } from '../utils/draftSequence'
+import { SeriesInfo } from '../components/SeriesInfo'
+import { useParams } from 'react-router-dom'
 
 type GameWithRelations = Game & {
-  series: Series
+  series: Series & {
+    games: (Game & {
+      actions: DraftAction[]
+    })[]
+  }
   actions: DraftAction[]
 }
 
@@ -28,12 +27,11 @@ type ReadyStates = {
 }
 
 export function DraftPage() {
-  // Get URL params from pathname since useParams isn't available
-  const pathParts = window.location.pathname.split('/')
-  const seriesId = pathParts[2]
-  const gameNumber = pathParts[3]
-  const side = pathParts[4] as 'blue' | 'red' | undefined
-  const auth = pathParts[5]
+  const { seriesId, gameNumber, side } = useParams() as {
+    seriesId: string
+    gameNumber: string
+    side?: 'blue' | 'red'
+  }
 
   const [champions, setChampions] = useState<Champion[]>([])
 
@@ -44,10 +42,8 @@ export function DraftPage() {
 
   const { data: game, isLoading, error, refetch } = useQuery(getGame, {
     seriesId,
-    gameNumber,
-    side,
-    auth
-  } as DraftParams)
+    gameNumber
+  })
 
   const { socket, isConnected } = useSocket()
   const [readyStates, setReadyStates] = useState<ReadyStates>({})
@@ -98,6 +94,35 @@ export function DraftPage() {
   useSocketListener('timerUpdate', (data: ServerToClientPayload<'timerUpdate'>) => {
     setTimeRemaining(data.timeRemaining)
   })
+
+  // Add this near the top where other socket events are handled
+  useEffect(() => {
+    if (!socket) return
+
+    socket.on('gameUpdated', data => {
+      if (data.gameId === game?.id) {
+        refetch()
+      }
+    })
+
+    socket.on('gameCreated', data => {
+      if (data.seriesId === game?.seriesId) {
+        refetch()
+      }
+    })
+
+    socket.on('seriesUpdated', data => {
+      if (data.seriesId === game?.seriesId) {
+        refetch()
+      }
+    })
+
+    return () => {
+      socket.off('gameUpdated')
+      socket.off('gameCreated')
+      socket.off('seriesUpdated')
+    }
+  }, [socket, game?.id, game?.seriesId])
 
   const handleReadyClick = () => {
     if (!socket || !game || !side || !isConnected) return
@@ -155,18 +180,45 @@ export function DraftPage() {
     )
   }
 
+  if (!game) {
+    return (
+      <div className='min-h-screen bg-background flex items-center justify-center'>
+        <div className='text-destructive'>Game not found</div>
+      </div>
+    )
+  }
+
+  console.log('Game data:', {
+    id: game?.id,
+    status: game?.status,
+    seriesId: game?.seriesId,
+    gameNumber: game?.gameNumber,
+    seriesGames: (game as GameWithRelations)?.series?.games?.length,
+    actions: (game as GameWithRelations)?.actions?.length
+  })
+
   const gameWithRelations = game as GameWithRelations
+
   const currentTurn = getCurrentTurn(gameWithRelations.actions)
   const currentPhase = getCurrentPhase(currentTurn)
   const nextAction = getNextAction(currentTurn)
 
   return (
-    <div className='min-h-screen bg-background text-foreground p-4'>
+    <div className='min-h-screen bg-background p-8'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='max-w-7xl mx-auto flex flex-col gap-8'
+        className='max-w-6xl mx-auto space-y-8'
       >
+        {/* Series Info */}
+        {(game as GameWithRelations)?.series && (
+          <SeriesInfo
+            series={(game as GameWithRelations).series}
+            currentGameNumber={parseInt(gameNumber)}
+            side={side}
+          />
+        )}
+
         <header className='text-center mb-8'>
           <h1 className='text-3xl font-bold mb-2'>{gameWithRelations.series.matchName} - Game {gameWithRelations.gameNumber}</h1>
           <p className='text-muted-foreground'>{gameWithRelations.series.blueTeamName} vs {gameWithRelations.series.redTeamName}</p>
@@ -378,7 +430,18 @@ export function DraftPage() {
             <ChampionGrid 
               onSelect={handleChampionSelect}
               disabled={!side || !isTeamTurn(side.toUpperCase() as 'BLUE' | 'RED', currentTurn)}
-              usedChampions={gameWithRelations.actions.map(a => a.champion)}
+              usedChampions={[
+                // Current game champions
+                ...gameWithRelations.actions.map(a => a.champion),
+                // Previously picked champions in series if fearless draft is enabled
+                ...(gameWithRelations.series.fearlessDraft 
+                  ? gameWithRelations.series.games
+                      .filter(g => g.gameNumber < gameWithRelations.gameNumber)
+                      .flatMap(g => g.actions)
+                      .filter(a => a.type === 'PICK')
+                      .map(a => a.champion)
+                  : [])
+              ]}
             />
           </div>
         )}

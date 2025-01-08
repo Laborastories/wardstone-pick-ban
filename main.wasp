@@ -129,7 +129,7 @@ query getSeries {
 
 query getGame {
   fn: import { getGame } from "@src/draft/operations/games",
-  entities: [Game]
+  entities: [Game, Series, DraftAction]
 }
 
 action createSeries {
@@ -138,7 +138,7 @@ action createSeries {
 }
 action updateGame {
   fn: import { updateGame } from "@src/draft/operations/games",
-  entities: [Game, DraftAction]
+  entities: [Game, DraftAction, Series]
 }
 
 action createDraftAction {

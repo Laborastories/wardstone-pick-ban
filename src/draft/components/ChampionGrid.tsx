@@ -54,18 +54,26 @@ export function ChampionGrid({ onSelect, disabled, usedChampions = [] }: Champio
                 flex flex-col items-center justify-center group relative
                 ${(disabled || isUsed) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}
-              title={`${champion.name}${isUsed ? ' (Already used)' : ''}`}
+              title={`${champion.name}${isUsed ? ' (Already used in this series)' : ''}`}
             >
               <div className='relative aspect-square w-full overflow-hidden rounded'>
                 <img
                   src={getChampionImageUrl(champion)}
                   alt={champion.name}
-                  className='w-full h-full object-cover rounded scale-[115%]'
+                  className={`
+                    w-full h-full object-cover rounded scale-[115%]
+                    ${isUsed ? 'grayscale' : ''}
+                  `}
                   loading='lazy'
                 />
-                <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center'>
+                <div className={`
+                  absolute inset-0 bg-black/50 
+                  ${isUsed ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} 
+                  transition-opacity rounded flex items-center justify-center
+                `}>
                   <span className='text-[10px] font-medium text-white text-center px-0.5 leading-tight'>
                     {champion.name}
+                    {isUsed && <div className='text-[8px] text-red-400'>Already Used</div>}
                   </span>
                 </div>
               </div>

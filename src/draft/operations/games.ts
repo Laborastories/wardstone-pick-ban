@@ -1,19 +1,37 @@
 import { HttpError } from 'wasp/server'
 import { type Game } from 'wasp/entities'
-import { type UpdateGame } from './types'
+import { type GetGame, type UpdateGame } from 'wasp/server/operations'
+import { type UpdateGameArgs } from './types'
 
-export const getGame = async (args: { seriesId: string, gameNumber: string, side?: 'blue' | 'red', auth?: string }, context: any): Promise<Game> => {
-  const { seriesId, gameNumber, side, auth } = args
+type GetGameArgs = {
+  seriesId: string
+  gameNumber: string
+  side?: 'blue' | 'red'
+  auth?: string
+}
 
-  const parsedGameNumber = parseInt(gameNumber)
+export const getGame: GetGame<GetGameArgs, Game> = async (args, context) => {
+  const { seriesId, gameNumber } = args
 
+  // Get the game and its series
   const game = await context.entities.Game.findFirst({
     where: {
       seriesId,
-      gameNumber: parsedGameNumber
+      gameNumber: parseInt(gameNumber)
     },
     include: {
-      series: true,
+      series: {
+        include: {
+          games: {
+            include: {
+              actions: true
+            },
+            orderBy: {
+              gameNumber: 'asc'
+            }
+          }
+        }
+      },
       actions: {
         orderBy: {
           position: 'asc'
@@ -26,19 +44,21 @@ export const getGame = async (args: { seriesId: string, gameNumber: string, side
     throw new HttpError(404, 'Game not found')
   }
 
-  // Validate auth token if provided
-  if (auth && side) {
-    const isValidAuth = (side === 'blue' && auth === game.series.blueAuthToken) ||
-                       (side === 'red' && auth === game.series.redAuthToken)
-    if (!isValidAuth) {
-      throw new HttpError(401, 'Invalid authentication token')
-    }
-  }
+  console.log('Game data:', {
+    id: game.id,
+    status: game.status,
+    seriesId: game.seriesId,
+    gameNumber: game.gameNumber,
+    seriesGames: game.series.games.length,
+    actions: game.actions.length
+  })
 
   return game
 }
 
-export const updateGame = async ({ gameId, status, winner }: UpdateGame, context: any): Promise<Game> => {
+export const updateGame: UpdateGame<UpdateGameArgs, Game> = async (args, context) => {
+  const { gameId, status, winner } = args
+  
   const game = await context.entities.Game.update({
     where: { id: gameId },
     data: {
@@ -94,3 +114,4 @@ export const updateGame = async ({ gameId, status, winner }: UpdateGame, context
 
   return game
 } 
+

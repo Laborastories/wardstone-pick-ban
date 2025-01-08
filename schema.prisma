@@ -41,7 +41,7 @@ model Game {
   gameNumber  Int
   blueSide    String      // Team name on blue side for this game
   redSide     String      // Team name on red side for this game
-  status      String      @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  status      String      @default("PENDING") // PENDING, IN_PROGRESS, DRAFT_COMPLETE, COMPLETED
   winner      String?     // "BLUE" or "RED"
   actions     DraftAction[]
 }

@@ -6,7 +6,7 @@ import { Link } from 'wasp/client/router'
 import {
   HouseSimple,
   List,
-  Mountains,
+  Strategy,
   User as UserIcon,
 } from '@phosphor-icons/react'
 import { ModeToggle } from '../../client/components/mode-toggle'
@@ -63,7 +63,7 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
             className='flex items-center space-x-2'
             onMouseEnter={() => prefetch('/', undefined, { assets: true })}
           >
-            <Mountains size={24} />
+            <Strategy size={24} />
             <span className='font-bold'>
               {import.meta.env.REACT_APP_NAME || 'Roke'}
             </span>
@@ -78,16 +78,6 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
               onMouseEnter={() => prefetch('/', undefined, { assets: true })}
             >
               <span>Home</span>
-            </Link>
-            <Link
-              to='/draft/create'
-              className={cn(
-                'text-md flex items-center space-x-2 font-medium transition-colors hover:text-primary',
-                location.pathname === '/draft/create' && 'text-primary',
-              )}
-              onMouseEnter={() => prefetch('/draft/create', undefined, { assets: true })}
-            >
-              <span>Draft</span>
             </Link>
           </div>
         </div>

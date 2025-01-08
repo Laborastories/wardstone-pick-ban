@@ -1,9 +1,6 @@
 import {
   LoginForm,
   SignupForm,
-  VerifyEmailForm,
-  ForgotPasswordForm,
-  ResetPasswordForm,
 } from 'wasp/client/auth'
 import { Link } from 'react-router-dom'
 import './auth.css'
@@ -68,53 +65,6 @@ export function Signup() {
           go to login
         </Link>
         ).
-      </span>
-    </Layout>
-  )
-}
-
-export function EmailVerification() {
-  return (
-    <Layout>
-      <Mountains size={100} weight='thin' />
-      <div className='login'>
-        <VerifyEmailForm appearance={authAppearance} />
-      </div>
-      <br />
-      <span className='login-text text-sm font-medium'>
-        If everything is okay,{' '}
-        <Link to='/login' className='underline'>
-          go to login
-        </Link>
-      </span>
-    </Layout>
-  )
-}
-
-export function RequestPasswordReset() {
-  return (
-    <Layout>
-      <Mountains size={100} weight='thin' />
-      <div className='login login-text'>
-        <ForgotPasswordForm appearance={authAppearance} />
-      </div>
-    </Layout>
-  )
-}
-
-export function PasswordReset() {
-  return (
-    <Layout>
-      <Mountains size={100} weight='thin' />
-      <div className='login login-text'>
-        <ResetPasswordForm appearance={authAppearance} />
-      </div>
-      <br />
-      <span className='login-text text-sm font-medium'>
-        If everything is okay,{' '}
-        <Link to='/login' className='underline'>
-          go to login
-        </Link>
       </span>
     </Layout>
   )

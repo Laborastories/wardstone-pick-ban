@@ -60,6 +60,13 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
 
   return (
     <div className='space-y-6 p-6 bg-card rounded-lg border border-border'>
+      {/* Team Indicator - Always show if a team is selected */}
+      {side && (
+        <div className='text-sm font-medium text-primary text-center mb-4'>
+          Playing as {side === 'team1' ? series.team1Name : series.team2Name}
+        </div>
+      )}
+
       {/* Header */}
       <div className='text-center'>
         <h2 className='text-xl font-bold mb-4'>{series.matchName}</h2>
@@ -69,7 +76,7 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
           {series.games.map(game => (
             <Link
               key={game.id}
-              to="/draft/:seriesId/:gameNumber/:team/:auth?"
+              to="/draft/:seriesId/:gameNumber/:team?/:auth?"
               params={{
                 seriesId: series.id,
                 gameNumber: game.gameNumber.toString(),
@@ -90,22 +97,23 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
         </div>
 
         {/* Score Display */}
-        <div className='flex items-center justify-center gap-4 text-xl font-bold'>
-          <span>{series.team1Name}</span>
-          <div className='px-4 py-1 bg-muted rounded-lg'>
+        <div className='flex items-center justify-center gap-8 text-xl font-bold'>
+          <div className='flex-1 flex justify-end'>
+            {series.team1Name}
+          </div>
+          <div className='min-w-[80px] px-6 py-2 bg-muted rounded-lg text-center shrink-0'>
             {team1Wins} - {team2Wins}
           </div>
-          <span>{series.team2Name}</span>
+          <div className='flex-1 flex justify-start'>
+            {series.team2Name}
+          </div>
         </div>
       </div>
 
-      {/* Game Status */}
+      {/* Game Status - Only show if not completed */}
       {currentGame.status === 'PENDING' && (
-        <div className='space-y-4'>
-          <div className='text-sm text-muted-foreground'>
-            <div>Team 1: {currentGame.blueSide}</div>
-            <div>Team 2: {currentGame.redSide}</div>
-          </div>
+        <div className='text-sm text-muted-foreground text-center'>
+          {side ? `You are playing as ${side === 'team1' ? series.team1Name : series.team2Name}` : 'Spectating'}
         </div>
       )}
 
@@ -141,7 +149,7 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
           </div>
           {team1Wins < gamesNeeded && team2Wins < gamesNeeded && series.games.length > currentGameNumber && (
             <Link
-              to="/draft/:seriesId/:gameNumber/:team/:auth?"
+              to="/draft/:seriesId/:gameNumber/:team?/:auth?"
               params={{
                 seriesId: series.id,
                 gameNumber: (currentGameNumber + 1).toString(),

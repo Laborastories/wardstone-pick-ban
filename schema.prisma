@@ -14,12 +14,15 @@ model User {
   isAdmin    Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  createdSeries Series[]
 }
 
 model Series {
   id            String    @id @default(uuid())
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  creator       User?     @relation(fields: [creatorId], references: [id])
+  creatorId     String?
   team1Name     String
   team2Name     String
   matchName     String

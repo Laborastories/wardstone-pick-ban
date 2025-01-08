@@ -2,7 +2,7 @@ app wardstonepickban {
   wasp: {
     version: "^0.15.1"
   },
-  title: "Roke: A Full-Stack Wasp Starter with Modern UI Components",
+  title: "Pick Ban Tool",
   head: [
     "<meta name='description' content='A comprehensive Wasp starter template featuring shadcn/ui components, Motion animations, and TypeScript support for building modern full-stack web applications.'>",
     
@@ -22,23 +22,12 @@ app wardstonepickban {
   auth: {
     userEntity: User,
     methods: {
-      email: {
-        fromField: {
-          name: "example.com",
-          email: "wizard@example.com"
-        },
-        emailVerification: {
-          clientRoute: EmailVerificationRoute,
-          getEmailContentFn: import { getVerificationEmailContent } from "@src/auth/email",
-        },
-        passwordReset: {
-          clientRoute: PasswordResetRoute,
-          getEmailContentFn: import { getPasswordResetEmailContent } from "@src/auth/email",
-        },
-        userSignupFields: import { getEmailUserFields } from "@src/auth/user-signup-fields",
-      }
+      discord: {
+        userSignupFields: import { getDiscordUserFields } from "@src/auth/user-signup-fields",
+        configFn: import { getDiscordAuthConfig } from "@src/auth/user-signup-fields"
+      },
     },
-    onAuthSucceededRedirectTo: "/note-example",
+    onAuthSucceededRedirectTo: "/",
     onAuthFailedRedirectTo: "/login"
   },
   client: {
@@ -55,18 +44,15 @@ app wardstonepickban {
 }
 
 //#region Routes
-route Landing { path: "/", to: Landing }
+route RootRoute { path: "/", to: CreateSeriesPage }
 route Profile { path: "/profile/:id", to: ProfilePage }
 route LoginRoute { path: "/login", to: LoginPage }
 route SignupRoute { path: "/signup", to: SignupPage }
-route RequestPasswordResetRoute { path: "/request-password-reset", to: RequestPasswordResetPage }
-route PasswordResetRoute { path: "/password-reset", to: PasswordResetPage }
-route EmailVerificationRoute { path: "/email-verification", to: EmailVerificationPage }
 route NotFoundRoute { path: "*", to: NotFoundPage }
 
 // Draft Routes
 route CreateSeriesRoute { path: "/draft/create", to: CreateSeriesPage }
-route DraftRoute { path: "/draft/:seriesId/:gameNumber/:team/:auth?", to: DraftPage }
+route DraftRoute { path: "/draft/:seriesId/:gameNumber/:team?/:auth?", to: DraftPage }
 route SpectatorDraftRoute { path: "/draft/:seriesId/:gameNumber", to: DraftPage }
 // route AdminDashboardRoute { path: "/admin", to: AdminDashboardPage }
 
@@ -88,18 +74,6 @@ page LoginPage {
 
 page SignupPage {
   component: import { Signup } from "@src/auth/auth",
-}
-
-page RequestPasswordResetPage {
-  component: import { RequestPasswordReset } from "@src/auth/auth",
-}
-
-page PasswordResetPage {
-  component: import { PasswordReset } from "@src/auth/auth",
-}
-
-page EmailVerificationPage {
-  component: import { EmailVerification } from "@src/auth/auth",
 }
 
 page NotFoundPage {

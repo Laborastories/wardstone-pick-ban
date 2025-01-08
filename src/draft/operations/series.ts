@@ -46,6 +46,9 @@ export const createSeries: CreateSeries<SeriesArgs, Series> = async (args, conte
       team1AuthToken: team1AuthToken,
       team2AuthToken: team2AuthToken,
       status: 'PENDING',
+      ...(context.user && {
+        creatorId: context.user.id
+      }),
       games: {
         create: [
           {
@@ -58,7 +61,8 @@ export const createSeries: CreateSeries<SeriesArgs, Series> = async (args, conte
       }
     },
     include: {
-      games: true
+      games: true,
+      creator: true
     }
   })
 

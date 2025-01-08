@@ -52,6 +52,7 @@ export function DraftPage() {
   const { socket, isConnected } = useSocket()
   const [readyStates, setReadyStates] = useState<ReadyStates>({})
   const [isReady, setIsReady] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
 
   // Join game room when socket connects and game data is available
   useEffect(() => {
@@ -83,12 +84,19 @@ export function DraftPage() {
   // Listen for draft start
   useSocketListener('draftStart', (data: ServerToClientPayload<'draftStart'>) => {
     console.log('Draft starting!', data.gameId)
+    // Refetch game data to get the updated status
+    refetch()
   })
 
   // Listen for draft action updates
   useSocketListener('draftActionUpdate', () => {
     // Refetch game data to get the latest actions
     refetch()
+  })
+
+  // Listen for timer updates
+  useSocketListener('timerUpdate', (data: ServerToClientPayload<'timerUpdate'>) => {
+    setTimeRemaining(data.timeRemaining)
   })
 
   const handleReadyClick = () => {
@@ -162,15 +170,27 @@ export function DraftPage() {
         <header className='text-center mb-8'>
           <h1 className='text-3xl font-bold mb-2'>{gameWithRelations.series.matchName} - Game {gameWithRelations.gameNumber}</h1>
           <p className='text-muted-foreground'>{gameWithRelations.series.blueTeamName} vs {gameWithRelations.series.redTeamName}</p>
-          <div className='mt-4 text-lg font-semibold'>
-            Draft Status: {gameWithRelations.status}
-          </div>
+          
+          {/* Draft Status - Only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className='mt-4 text-xs text-muted-foreground'>
+              Status: {gameWithRelations.status}
+            </div>
+          )}
+
           {/* Draft Phase - Only show when IN_PROGRESS */}
           {gameWithRelations.status === 'IN_PROGRESS' && currentPhase && (
             <div className='mt-4 space-y-2'>
-              <div className='text-lg font-medium'>
-                {getPhaseDescription(currentPhase)}
-              </div>
+              {/* Timer */}
+              {timeRemaining !== null && (
+                <div className={`text-5xl font-bold ${
+                  timeRemaining <= 5 ? 'text-destructive animate-pulse' : 
+                  timeRemaining <= 10 ? 'text-destructive' : 
+                  'text-foreground'
+                }`}>
+                  {timeRemaining}
+                </div>
+              )}
               <div className='text-sm text-muted-foreground'>
                 {nextAction ? (
                   <>
@@ -183,6 +203,7 @@ export function DraftPage() {
               </div>
             </div>
           )}
+
           {/* Ready Status - Only show when PENDING */}
           {gameWithRelations.status === 'PENDING' && (
             <>
@@ -231,54 +252,60 @@ export function DraftPage() {
           <div className='space-y-6'>
             <h2 className='text-xl font-bold text-blue-500'>{gameWithRelations.series.blueTeamName}</h2>
             <div className='grid grid-cols-5 gap-4'>
-              {/* Bans */}
-              <div className='col-span-5 grid grid-cols-5 gap-2'>
-                {[0, 2, 4, 13, 15].map(i => {
-                  const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
-                  const champion = action ? champions.find(c => c.id === action.champion) : null
-                  return (
-                    <div
-                      key={`blue-ban-${i}`}
-                      className='aspect-square bg-card rounded-lg border border-border flex items-center justify-center relative overflow-hidden'
-                    >
-                      {champion && (
-                        <>
+              {/* Picks */}
+              <div className='col-span-5'>
+                <h3 className='text-sm font-medium text-muted-foreground mb-2'>Picks</h3>
+                <div className='grid grid-cols-5 gap-2'>
+                  {[6, 9, 10, 17, 18].map(i => {
+                    const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
+                    const champion = action ? champions.find(c => c.id === action.champion) : null
+                    return (
+                      <div
+                        key={`blue-pick-${i}`}
+                        className='aspect-square bg-card rounded-lg border border-border flex items-center justify-center relative overflow-hidden'
+                      >
+                        {champion && (
                           <img
                             src={getChampionImageUrl(champion)}
                             alt={champion.name}
                             className='w-full h-full object-cover scale-[115%]'
                             loading='lazy'
                           />
-                          <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
-                            <X size={24} weight='bold' className='text-white' />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )
-                })}
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-              {/* Picks */}
-              <div className='col-span-5 grid grid-cols-5 gap-2'>
-                {[6, 9, 10, 17, 18].map(i => {
-                  const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
-                  const champion = action ? champions.find(c => c.id === action.champion) : null
-                  return (
-                    <div
-                      key={`blue-pick-${i}`}
-                      className='aspect-square bg-card rounded-lg border border-border flex items-center justify-center relative overflow-hidden'
-                    >
-                      {champion && (
-                        <img
-                          src={getChampionImageUrl(champion)}
-                          alt={champion.name}
-                          className='w-full h-full object-cover scale-[115%]'
-                          loading='lazy'
-                        />
-                      )}
-                    </div>
-                  )
-                })}
+              {/* Bans */}
+              <div className='col-span-5'>
+                <h3 className='text-sm font-medium text-muted-foreground mb-2'>Bans</h3>
+                <div className='grid grid-cols-5 gap-2'>
+                  {[0, 2, 4, 13, 15].map(i => {
+                    const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
+                    const champion = action ? champions.find(c => c.id === action.champion) : null
+                    return (
+                      <div
+                        key={`blue-ban-${i}`}
+                        className='aspect-square bg-card rounded-lg border border-border flex items-center justify-center relative overflow-hidden'
+                      >
+                        {champion && (
+                          <>
+                            <img
+                              src={getChampionImageUrl(champion)}
+                              alt={champion.name}
+                              className='w-full h-full object-cover scale-[115%] opacity-75'
+                              loading='lazy'
+                            />
+                            <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
+                              <X size={24} weight='bold' className='text-white' />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -287,54 +314,60 @@ export function DraftPage() {
           <div className='space-y-6'>
             <h2 className='text-xl font-bold text-red-500'>{gameWithRelations.series.redTeamName}</h2>
             <div className='grid grid-cols-5 gap-4'>
-              {/* Bans */}
-              <div className='col-span-5 grid grid-cols-5 gap-2'>
-                {[1, 3, 5, 12, 14].map(i => {
-                  const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
-                  const champion = action ? champions.find(c => c.id === action.champion) : null
-                  return (
-                    <div
-                      key={`red-ban-${i}`}
-                      className='aspect-square bg-card rounded-lg border border-border flex items-center justify-center relative overflow-hidden'
-                    >
-                      {champion && (
-                        <>
+              {/* Picks */}
+              <div className='col-span-5'>
+                <h3 className='text-sm font-medium text-muted-foreground mb-2'>Picks</h3>
+                <div className='grid grid-cols-5 gap-2'>
+                  {[7, 8, 11, 16, 19].map(i => {
+                    const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
+                    const champion = action ? champions.find(c => c.id === action.champion) : null
+                    return (
+                      <div
+                        key={`red-pick-${i}`}
+                        className='aspect-square bg-card rounded-lg border border-border flex items-center justify-center relative overflow-hidden'
+                      >
+                        {champion && (
                           <img
                             src={getChampionImageUrl(champion)}
                             alt={champion.name}
                             className='w-full h-full object-cover scale-[115%]'
                             loading='lazy'
                           />
-                          <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
-                            <X size={24} weight='bold' className='text-white' />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )
-                })}
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-              {/* Picks */}
-              <div className='col-span-5 grid grid-cols-5 gap-2'>
-                {[7, 8, 11, 16, 19].map(i => {
-                  const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
-                  const champion = action ? champions.find(c => c.id === action.champion) : null
-                  return (
-                    <div
-                      key={`red-pick-${i}`}
-                      className='aspect-square bg-card rounded-lg border border-border flex items-center justify-center relative overflow-hidden'
-                    >
-                      {champion && (
-                        <img
-                          src={getChampionImageUrl(champion)}
-                          alt={champion.name}
-                          className='w-full h-full object-cover scale-[115%]'
-                          loading='lazy'
-                        />
-                      )}
-                    </div>
-                  )
-                })}
+              {/* Bans */}
+              <div className='col-span-5'>
+                <h3 className='text-sm font-medium text-muted-foreground mb-2'>Bans</h3>
+                <div className='grid grid-cols-5 gap-2'>
+                  {[1, 3, 5, 12, 14].map(i => {
+                    const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
+                    const champion = action ? champions.find(c => c.id === action.champion) : null
+                    return (
+                      <div
+                        key={`red-ban-${i}`}
+                        className='aspect-square bg-card rounded-lg border border-border flex items-center justify-center relative overflow-hidden'
+                      >
+                        {champion && (
+                          <>
+                            <img
+                              src={getChampionImageUrl(champion)}
+                              alt={champion.name}
+                              className='w-full h-full object-cover scale-[115%] opacity-75'
+                              loading='lazy'
+                            />
+                            <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
+                              <X size={24} weight='bold' className='text-white' />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>

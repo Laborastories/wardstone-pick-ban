@@ -9,6 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../client/components/ui/select'
+import { Button } from '../../client/components/ui/button'
+import { Copy, Check } from '@phosphor-icons/react'
 
 type SeriesArgs = {
   blueTeamName: string
@@ -26,6 +28,14 @@ export function CreateSeriesPage() {
     redUrl?: string
     spectatorUrl?: string
   }>({})
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyAll = () => {
+    const formattedLinks = `${urls.blueUrl ? `Blue Team: ${urls.blueUrl}\n` : ''}${urls.redUrl ? `Red Team: ${urls.redUrl}\n` : ''}${urls.spectatorUrl ? `Spectator: ${urls.spectatorUrl}` : ''}`
+    navigator.clipboard.writeText(formattedLinks)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -162,7 +172,27 @@ export function CreateSeriesPage() {
             animate={{ opacity: 1 }}
             className='mt-8 space-y-4 bg-card p-6 rounded-lg'
           >
-            <h2 className='text-xl font-semibold mb-4'>Series Created!</h2>
+            <div className='flex items-center justify-between mb-4'>
+              <h2 className='text-xl font-semibold'>Series Created!</h2>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleCopyAll}
+                className='flex items-center gap-2'
+              >
+                {copied ? (
+                  <>
+                    <Check size={16} weight='bold' />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} />
+                    Copy All Links
+                  </>
+                )}
+              </Button>
+            </div>
             
             <div className='space-y-2'>
               <p className='text-sm font-medium text-blue-500'>Blue Team URL:</p>
@@ -170,7 +200,7 @@ export function CreateSeriesPage() {
                 type='text'
                 readOnly
                 value={urls.blueUrl}
-                className='mt-1'
+                className='mt-1 font-mono text-sm'
                 onClick={e => e.currentTarget.select()}
               />
             </div>
@@ -181,7 +211,7 @@ export function CreateSeriesPage() {
                 type='text'
                 readOnly
                 value={urls.redUrl}
-                className='mt-1'
+                className='mt-1 font-mono text-sm'
                 onClick={e => e.currentTarget.select()}
               />
             </div>
@@ -192,7 +222,7 @@ export function CreateSeriesPage() {
                 type='text'
                 readOnly
                 value={urls.spectatorUrl}
-                className='mt-1'
+                className='mt-1 font-mono text-sm'
                 onClick={e => e.currentTarget.select()}
               />
             </div>

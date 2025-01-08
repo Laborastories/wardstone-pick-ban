@@ -11,13 +11,20 @@ type WebSocketFn = WebSocketDefinition<
     readyStateUpdate: (data: { gameId: string, readyStates: { blue?: boolean, red?: boolean } }) => void
     draftStart: (data: { gameId: string }) => void
     draftActionUpdate: (data: { gameId: string, action: { gameId: string, type: string, phase: number, team: string, champion: string, position: number } }) => void
+    timerUpdate: (data: { gameId: string, timeRemaining: number }) => void
   },
   Record<string, never>,
   WaspSocketData
 >
 
-// Store ready states in memory
+// Store ready states and timers in memory
 const gameReadyStates: Record<string, { blue?: boolean; red?: boolean }> = {}
+const gameTimers: Record<string, {
+  timeRemaining: number;
+  intervalId?: NodeJS.Timeout;
+}> = {}
+
+const PHASE_TIME_LIMIT = 30 // 30 seconds per pick/ban
 
 export const webSocketFn: WebSocketFn = (io) => {
   console.log('WebSocket server initialized')
@@ -35,6 +42,14 @@ export const webSocketFn: WebSocketFn = (io) => {
         socket.emit('readyStateUpdate', {
           gameId,
           readyStates: gameReadyStates[gameId]
+        })
+      }
+
+      // If there's an active timer for this game, send it to the new client
+      if (gameTimers[gameId]) {
+        socket.emit('timerUpdate', {
+          gameId,
+          timeRemaining: gameTimers[gameId].timeRemaining
         })
       }
     })
@@ -57,19 +72,29 @@ export const webSocketFn: WebSocketFn = (io) => {
       })
 
       // If both teams are ready, start the draft
-      if (gameReadyStates[gameId].blue && gameReadyStates[gameId].red) {
+      const bothTeamsReady = gameReadyStates[gameId].blue === true && gameReadyStates[gameId].red === true
+      console.log('Ready states:', gameReadyStates[gameId], 'Both teams ready:', bothTeamsReady)
+      
+      if (bothTeamsReady) {
         console.log('Both teams ready, starting draft for game:', gameId)
-        // Update game status to IN_PROGRESS
-        await prisma.game.update({
-          where: { id: gameId },
-          data: { status: 'IN_PROGRESS' }
-        })
+        try {
+          // Update game status to IN_PROGRESS
+          await prisma.game.update({
+            where: { id: gameId },
+            data: { status: 'IN_PROGRESS' }
+          })
 
-        // Emit draft start event
-        io.to(gameId).emit('draftStart', { gameId })
+          // Start the timer
+          startTimer(io, gameId)
 
-        // Clear ready states
-        delete gameReadyStates[gameId]
+          // Emit draft start event
+          io.to(gameId).emit('draftStart', { gameId })
+
+          // Clear ready states
+          delete gameReadyStates[gameId]
+        } catch (error) {
+          console.error('Error starting draft:', error)
+        }
       }
     })
 
@@ -142,6 +167,24 @@ export const webSocketFn: WebSocketFn = (io) => {
           }
         })
 
+        // Check if this was the last action (position 19 is the last pick)
+        if (position === 19) {
+          // Update game status to DRAFT_COMPLETE
+          await prisma.game.update({
+            where: { id: gameId },
+            data: { status: 'DRAFT_COMPLETE' }
+          })
+
+          // Clear the timer if it exists
+          if (gameTimers[gameId]?.intervalId) {
+            clearInterval(gameTimers[gameId].intervalId)
+            delete gameTimers[gameId]
+          }
+        } else {
+          // Reset timer for next action
+          resetTimer(io, gameId)
+        }
+
         // Emit the action to all clients in the game room
         io.to(gameId).emit('draftActionUpdate', {
           gameId,
@@ -156,4 +199,37 @@ export const webSocketFn: WebSocketFn = (io) => {
       console.log('Client disconnected')
     })
   })
+}
+
+// Timer management functions
+function startTimer(io: any, gameId: string) {
+  // Clear existing timer if any
+  if (gameTimers[gameId]?.intervalId) {
+    clearInterval(gameTimers[gameId].intervalId)
+  }
+
+  // Initialize timer state
+  gameTimers[gameId] = {
+    timeRemaining: PHASE_TIME_LIMIT,
+    intervalId: setInterval(() => {
+      // Decrement timer
+      gameTimers[gameId].timeRemaining--
+
+      // Emit timer update
+      io.to(gameId).emit('timerUpdate', {
+        gameId,
+        timeRemaining: gameTimers[gameId].timeRemaining
+      })
+
+      // Stop at 0 but don't clear the timer
+      if (gameTimers[gameId].timeRemaining <= 0) {
+        clearInterval(gameTimers[gameId].intervalId)
+        gameTimers[gameId].intervalId = undefined
+      }
+    }, 1000)
+  }
+}
+
+function resetTimer(io: any, gameId: string) {
+  startTimer(io, gameId)
 } 

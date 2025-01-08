@@ -1,4 +1,4 @@
-app roke {
+app wardstonepickban {
   wasp: {
     version: "^0.15.1"
   },
@@ -47,15 +47,15 @@ app roke {
   },
   emailSender: {
     provider: Dummy,
+  },
+  webSocket: {
+    fn: import { webSocketFn } from "@src/draft/webSocket",
+    autoConnect: true
   }
 }
 
 //#region Routes
 route Landing { path: "/", to: Landing }
-route Guide { path: "/guide", to: Guide }
-route NoteExample { path: "/note-example", to: NoteExample }
-route Motion { path: "/motion", to: Motion }
-route Utils { path: "/utils", to: Utils }
 route Profile { path: "/profile/:id", to: ProfilePage }
 route LoginRoute { path: "/login", to: LoginPage }
 route SignupRoute { path: "/signup", to: SignupPage }
@@ -63,27 +63,17 @@ route RequestPasswordResetRoute { path: "/request-password-reset", to: RequestPa
 route PasswordResetRoute { path: "/password-reset", to: PasswordResetPage }
 route EmailVerificationRoute { path: "/email-verification", to: EmailVerificationPage }
 route NotFoundRoute { path: "*", to: NotFoundPage }
+
+// Draft Routes
+route CreateSeriesRoute { path: "/draft/create", to: CreateSeriesPage }
+route DraftRoute { path: "/draft/:seriesId/:gameNumber/:side/:auth?", to: DraftPage }
+// route AdminDashboardRoute { path: "/admin", to: AdminDashboardPage }
+
 //#endregion
 
 //#region Pages
 page Landing {
   component: import Landing from "@src/landing/LandingPage",
-}
-
-page Guide {
-  component: import Guide from "@src/GuidePage",
-}
-
-page NoteExample {
-  component: import NoteExample from "@src/notes/NotesPage",
-}
-
-page Motion {
-  component: import Motion from "@src/motion/MotionPage",
-}
-
-page Utils {
-  component: import Utils from "@src/UtilsPage",
 }
 
 page ProfilePage {
@@ -114,39 +104,44 @@ page EmailVerificationPage {
 page NotFoundPage {
   component: import NotFound from "@src/404Page"
 }
+
+// Draft Pages
+page CreateSeriesPage {
+  component: import { CreateSeriesPage } from "@src/draft/pages/CreateSeriesPage"
+}
+
+page DraftPage {
+  component: import { DraftPage } from "@src/draft/pages/DraftPage"
+}
+
+// page AdminDashboardPage {
+//   component: import { AdminDashboardPage } from "@src/admin/AdminDashboardPage",
+//   authRequired: true
+// }
 //#endregion
 
-//#region Notes
-action createNote {
-  fn: import { createNote } from "@src/notes/operations",
-  entities: [User, Note],
+// Operations
+query getSeries {
+  fn: import { getSeries } from "@src/draft/operations/series",
+  entities: [Series]
 }
 
-query getNotes {
-  fn: import { getNotes } from "@src/notes/operations",
-  entities: [User, Note],
+query getGame {
+  fn: import { getGame } from "@src/draft/operations/games",
+  entities: [Game]
 }
 
-action updateNote {
-  fn: import { updateNote } from "@src/notes/operations",
-  entities: [User, Note],
+action createSeries {
+  fn: import { createSeries } from "@src/draft/operations/series",
+  entities: [Series]
+}
+action updateGame {
+  fn: import { updateGame } from "@src/draft/operations/games",
+  entities: [Game, DraftAction]
 }
 
-action deleteNote {
-  fn: import { deleteNote } from "@src/notes/operations",
-  entities: [User, Note],
+action createDraftAction {
+  fn: import { createDraftAction } from "@src/draft/operations/draftActions",
+  entities: [DraftAction, Game]
 }
-//#endregion
 
-//#region Jobs
-job exampleJob {
-  executor: PgBoss,
-  perform: {
-    fn: import { exampleJob } from "@src/jobs/example-job",
-  },
-  entities: [User, Note],
-  schedule: {
-    cron: "0 0 * * 0"
-  }
-}
-//#endregion

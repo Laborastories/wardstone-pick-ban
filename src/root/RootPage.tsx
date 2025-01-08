@@ -7,7 +7,6 @@ import { Footer } from './components/footer'
 import { Nav } from './components/nav'
 import { ScrollToTop } from './components/scroll-to-top'
 import { Toaster } from './components/toaster'
-import { TransitionPlayground } from './components/transition-playground'
 import { transitions } from '../motion/transitionPresets'
 import './Root.css'
 import '@fontsource-variable/grenze-gotisch'
@@ -36,7 +35,6 @@ export default function Root() {
                 <Footer />
               </div>
             </footer>
-            <TransitionPlayground />
           </div>
         </MotionProvider>
       </ThemeProvider>

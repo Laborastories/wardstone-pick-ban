@@ -72,6 +72,12 @@ export function DraftPage() {
     }
   }, [isConnected])
 
+  // Reset ready state when game number changes
+  useEffect(() => {
+    setIsReady(false)
+    setReadyStates({})
+  }, [gameNumber])
+
   // Listen for ready state updates
   useSocketListener('readyStateUpdate', (data: ServerToClientPayload<'readyStateUpdate'>) => {
     setReadyStates(data.readyStates)
@@ -430,9 +436,15 @@ export function DraftPage() {
             <ChampionGrid 
               onSelect={handleChampionSelect}
               disabled={!side || !isTeamTurn(side.toUpperCase() as 'BLUE' | 'RED', currentTurn)}
+              bannedChampions={gameWithRelations.actions
+                .filter(a => a.type === 'BAN')
+                .map(a => a.champion)
+              }
               usedChampions={[
-                // Current game champions
-                ...gameWithRelations.actions.map(a => a.champion),
+                // Current game picks
+                ...gameWithRelations.actions
+                  .filter(a => a.type === 'PICK')
+                  .map(a => a.champion),
                 // Previously picked champions in series if fearless draft is enabled
                 ...(gameWithRelations.series.fearlessDraft 
                   ? gameWithRelations.series.games

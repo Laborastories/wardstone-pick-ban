@@ -33,15 +33,22 @@ export type DraftActionUpdate = {
 }
 
 export type ServerToClientEvents = {
-  readyStateUpdate: (data: ReadyStateUpdate) => void
-  draftStart: (data: DraftStart) => void
-  draftActionUpdate: (data: DraftActionUpdate) => void
+  readyStateUpdate: (data: { readyStates: { blue?: boolean, red?: boolean } }) => void
+  draftStart: (data: { gameId: string }) => void
+  draftActionUpdate: (data: { gameId: string }) => void
+  timerUpdate: (data: { timeRemaining: number }) => void
+  gameUpdated: (data: { gameId: string }) => void
+  gameCreated: (data: { seriesId: string }) => void
+  seriesUpdated: (data: { seriesId: string }) => void
+  sideSelected: (data: { seriesId: string, gameNumber: number }) => void
 }
 
 export type ClientToServerEvents = {
   joinGame: (gameId: string) => void
-  readyState: (data: ReadyState) => void
-  draftAction: (data: DraftAction) => void
+  readyState: (data: { gameId: string, side: 'blue' | 'red', isReady: boolean }) => void
+  draftAction: (data: { gameId: string, type: 'PICK' | 'BAN', phase: number, team: 'BLUE' | 'RED', champion: string, position: number }) => void
+  setWinner: (data: { gameId: string, winner: 'BLUE' | 'RED' }) => void
+  selectSide: (data: { seriesId: string, gameNumber: number, side: 'blue' | 'red' }) => void
 }
 
 export type InterServerEvents = Record<string, never>

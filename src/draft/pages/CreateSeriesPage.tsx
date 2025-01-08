@@ -13,8 +13,8 @@ import { Button } from '../../client/components/ui/button'
 import { Copy, Check } from '@phosphor-icons/react'
 
 type SeriesArgs = {
-  blueTeamName: string
-  redTeamName: string
+  team1Name: string
+  team2Name: string
   matchName: string
   format: 'BO1' | 'BO3' | 'BO5'
   fearlessDraft: boolean
@@ -31,7 +31,7 @@ export function CreateSeriesPage() {
   const [copied, setCopied] = useState(false)
 
   const handleCopyAll = () => {
-    const formattedLinks = `${urls.blueUrl ? `Blue Team: ${urls.blueUrl}\n` : ''}${urls.redUrl ? `Red Team: ${urls.redUrl}\n` : ''}${urls.spectatorUrl ? `Spectator: ${urls.spectatorUrl}` : ''}`
+    const formattedLinks = `${urls.blueUrl ? `Team 1: ${urls.blueUrl}\n` : ''}${urls.redUrl ? `Team 2: ${urls.redUrl}\n` : ''}${urls.spectatorUrl ? `Spectator: ${urls.spectatorUrl}` : ''}`
     navigator.clipboard.writeText(formattedLinks)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -45,8 +45,8 @@ export function CreateSeriesPage() {
 
     const formData = new FormData(e.currentTarget)
     const data: SeriesArgs = {
-      blueTeamName: formData.get('blueTeamName') as string,
-      redTeamName: formData.get('redTeamName') as string,
+      team1Name: formData.get('team1Name') as string,
+      team2Name: formData.get('team2Name') as string,
       matchName: formData.get('matchName') as string,
       format: formData.get('format') as 'BO1' | 'BO3' | 'BO5',
       fearlessDraft: formData.get('fearlessDraft') === 'on'
@@ -56,8 +56,8 @@ export function CreateSeriesPage() {
       const series = await createSeries(data)
       const baseUrl = window.location.origin
       setUrls({
-        blueUrl: `${baseUrl}/draft/${series.id}/1/blue/${series.blueAuthToken}`,
-        redUrl: `${baseUrl}/draft/${series.id}/1/red/${series.redAuthToken}`,
+        blueUrl: `${baseUrl}/draft/${series.id}/1/team1/${series.team1AuthToken}`,
+        redUrl: `${baseUrl}/draft/${series.id}/1/team2/${series.team2AuthToken}`,
         spectatorUrl: `${baseUrl}/draft/${series.id}/1`
       })
     } catch (err: any) {
@@ -92,13 +92,13 @@ export function CreateSeriesPage() {
           </div>
 
           <div>
-            <label htmlFor='blueTeamName' className='block text-sm font-medium'>
-              Blue Team Name
+            <label htmlFor='team1Name' className='block text-sm font-medium'>
+              Team 1 Name
             </label>
             <Input
               type='text'
-              name='blueTeamName'
-              id='blueTeamName'
+              name='team1Name'
+              id='team1Name'
               required
               className='mt-1'
               placeholder='e.g. Cloud9'
@@ -106,13 +106,13 @@ export function CreateSeriesPage() {
           </div>
 
           <div>
-            <label htmlFor='redTeamName' className='block text-sm font-medium'>
-              Red Team Name
+            <label htmlFor='team2Name' className='block text-sm font-medium'>
+              Team 2 Name
             </label>
             <Input
               type='text'
-              name='redTeamName'
-              id='redTeamName'
+              name='team2Name'
+              id='team2Name'
               required
               className='mt-1'
               placeholder='e.g. Team Liquid'
@@ -195,7 +195,7 @@ export function CreateSeriesPage() {
             </div>
             
             <div className='space-y-2'>
-              <p className='text-sm font-medium text-blue-500'>Blue Team URL:</p>
+              <p className='text-sm font-medium'>Team 1 URL:</p>
               <Input
                 type='text'
                 readOnly
@@ -206,7 +206,7 @@ export function CreateSeriesPage() {
             </div>
 
             <div className='space-y-2'>
-              <p className='text-sm font-medium text-red-500'>Red Team URL:</p>
+              <p className='text-sm font-medium'>Team 2 URL:</p>
               <Input
                 type='text'
                 readOnly

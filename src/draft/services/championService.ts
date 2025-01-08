@@ -39,7 +39,17 @@ export async function getChampions(): Promise<Champion[]> {
   }
 }
 
-export function getChampionImageUrl(champion: Champion): string {
+export function getChampionImageUrl(champion: Champion | string): string {
+  if (typeof champion === 'string') {
+    // If just the champion ID is provided, find the champion in cache to get numeric key
+    const championData = championsCache?.find(c => c.id === champion)
+    if (championData) {
+      return `${COMMUNITY_DRAGON_URL}/${championData.key}.png`
+    }
+    // Fallback to using the champion name directly
+    return `${COMMUNITY_DRAGON_URL}/${champion}.png`
+  }
+  // If full champion object is provided, use its key
   return `${COMMUNITY_DRAGON_URL}/${champion.key}.png`
 }
 

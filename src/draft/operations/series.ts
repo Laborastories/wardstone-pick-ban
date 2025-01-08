@@ -3,8 +3,8 @@ import { type Series } from 'wasp/entities'
 import { type GetSeries, type CreateSeries } from 'wasp/server/operations'
 
 type SeriesArgs = {
-  blueTeamName: string
-  redTeamName: string
+  team1Name: string
+  team2Name: string
   matchName: string
   format: 'BO1' | 'BO3' | 'BO5'
   fearlessDraft: boolean
@@ -33,25 +33,25 @@ export const getSeries: GetSeries<{ seriesId: string }, Series> = async (args, c
 
 export const createSeries: CreateSeries<SeriesArgs, Series> = async (args, context) => {
   // Generate random auth tokens
-  const blueAuthToken = Math.random().toString(36).substring(2, 15)
-  const redAuthToken = Math.random().toString(36).substring(2, 15)
+  const team1AuthToken = Math.random().toString(36).substring(2, 15)
+  const team2AuthToken = Math.random().toString(36).substring(2, 15)
 
   const series = await context.entities.Series.create({
     data: {
-      blueTeamName: args.blueTeamName,
-      redTeamName: args.redTeamName,
+      team1Name: args.team1Name,
+      team2Name: args.team2Name,
       matchName: args.matchName,
       format: args.format,
       fearlessDraft: args.fearlessDraft,
-      blueAuthToken,
-      redAuthToken,
+      team1AuthToken: team1AuthToken,
+      team2AuthToken: team2AuthToken,
       status: 'PENDING',
       games: {
         create: [
           {
             gameNumber: 1,
-            blueSide: args.blueTeamName,
-            redSide: args.redTeamName,
+            blueSide: '',
+            redSide: '',
             status: 'PENDING'
           }
         ]

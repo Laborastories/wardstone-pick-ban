@@ -9,19 +9,28 @@ export interface ServerToClientEvents {
   timerUpdate: (data: { gameId: string, timeRemaining: number }) => void
   gameUpdated: (data: { gameId: string, status: string, winner?: 'BLUE' | 'RED' }) => void
   gameCreated: (data: { gameId: string, seriesId: string, gameNumber: number }) => void
-  seriesUpdated: (data: { seriesId: string, status: string, winner?: 'BLUE' | 'RED' }) => void
+  seriesUpdated: (data: { seriesId: string, status: string, winner?: 'team1' | 'team2' }) => void
+}
+
+interface ClientToServerEvents {
+  joinGame: (gameId: string) => void
+  readyState: (data: { gameId: string, side: 'blue' | 'red', isReady: boolean }) => void
+  draftAction: (data: { gameId: string, type: 'PICK' | 'BAN', phase: number, team: 'BLUE' | 'RED', champion: string, position: number }) => void
+  setWinner: (data: { gameId: string, winner: 'BLUE' | 'RED' }) => void
+  selectSide: (data: { seriesId: string, gameNumber: number, side: 'blue' | 'red', auth: string }) => void
+}
+
+interface InterServerEvents {}
+
+interface SocketData extends WaspSocketData {
+  token?: string
 }
 
 type WebSocketFn = WebSocketDefinition<
-  {
-    joinGame: (gameId: string) => void
-    readyState: (data: { gameId: string, side: 'blue' | 'red', isReady: boolean }) => void
-    draftAction: (data: { gameId: string, type: 'PICK' | 'BAN', phase: number, team: 'BLUE' | 'RED', champion: string, position: number }) => void
-    setWinner: (data: { gameId: string, winner: 'BLUE' | 'RED' }) => void
-  },
+  ClientToServerEvents,
   ServerToClientEvents,
-  Record<string, never>,
-  WaspSocketData
+  InterServerEvents,
+  SocketData
 >
 
 // Store ready states and timers in memory
@@ -37,7 +46,7 @@ export const webSocketFn: WebSocketFn = (io) => {
   console.log('WebSocket server initialized')
   
   io.on('connection', (socket) => {
-    console.log('Client connected, socket id:', socket.id)
+    console.log('Client connected, socket id:', socket.id, 'auth:', socket.data?.token)
 
     socket.on('joinGame', (gameId) => {
       console.log('Client joining game:', gameId)
@@ -259,9 +268,6 @@ export const webSocketFn: WebSocketFn = (io) => {
     })
 
     socket.on('setWinner', async ({ gameId, winner }) => {
-      console.log('\n=== Set Winner Event ===')
-      console.log('Details:', { gameId, winner })
-
       try {
         // Get the game to validate it's in DRAFT_COMPLETE state
         const game = await prisma.game.findUnique({
@@ -314,27 +320,79 @@ export const webSocketFn: WebSocketFn = (io) => {
 
         // If game is completed, check if we need to create next game
         const series = game.series
-        const blueWins = series.games.filter(g => g.winner === 'BLUE').length
-        const redWins = series.games.filter(g => g.winner === 'RED').length
+        // Count wins for each team by checking if they were on the winning side in each game
+        const team1Wins = series.games.filter(g => 
+          (g.status === 'COMPLETED' && g.winner === 'BLUE' && g.blueSide === series.team1Name) || 
+          (g.status === 'COMPLETED' && g.winner === 'RED' && g.redSide === series.team1Name)
+        ).length + (
+          (winner === 'BLUE' && game.blueSide === series.team1Name) || 
+          (winner === 'RED' && game.redSide === series.team1Name) ? 1 : 0
+        )
+        const team2Wins = series.games.filter(g => 
+          (g.status === 'COMPLETED' && g.winner === 'BLUE' && g.blueSide === series.team2Name) || 
+          (g.status === 'COMPLETED' && g.winner === 'RED' && g.redSide === series.team2Name)
+        ).length + (
+          (winner === 'BLUE' && game.blueSide === series.team2Name) || 
+          (winner === 'RED' && game.redSide === series.team2Name) ? 1 : 0
+        )
         const gamesNeeded = series.format === 'BO5' ? 3 : (series.format === 'BO3' ? 2 : 1)
 
-        if (blueWins < gamesNeeded && redWins < gamesNeeded) {
-          // Create next game
+        console.log('Win counts:', {
+          team1: series.team1Name,
+          team2: series.team2Name,
+          team1Wins,
+          team2Wins,
+          currentGame: {
+            winner,
+            blueSide: game.blueSide,
+            redSide: game.redSide
+          }
+        })
+
+        // Check if someone has won the series
+        if (team1Wins >= gamesNeeded || team2Wins >= gamesNeeded) {
+          // Update series as completed
+          const updatedSeries = await prisma.series.update({
+            where: { id: series.id },
+            data: {
+              status: 'COMPLETED',
+              winner: team1Wins > team2Wins ? 'team1' : 'team2'
+            }
+          })
+
+          console.log('✓ Series completed:', {
+            id: updatedSeries.id,
+            status: updatedSeries.status,
+            winner: updatedSeries.winner,
+            team1Wins,
+            team2Wins,
+            gamesNeeded
+          })
+
+          // Emit series updated event
+          io.emit('seriesUpdated', {
+            seriesId: series.id,
+            status: updatedSeries.status,
+            winner: updatedSeries.winner as 'team1' | 'team2' | undefined
+          })
+        } else if (series.games.length < (series.format === 'BO5' ? 5 : (series.format === 'BO3' ? 3 : 1))) {
+          // Only create next game if we haven't reached the maximum number of games
           const nextGameNumber = series.games.length + 1
           const nextGame = await prisma.game.create({
             data: {
               seriesId: series.id,
               gameNumber: nextGameNumber,
-              // Swap sides for next game
-              blueSide: game.redSide,
-              redSide: game.blueSide,
+              blueSide: '',
+              redSide: '',
               status: 'PENDING'
             }
           })
 
           console.log('✓ Created next game:', {
             id: nextGame.id,
-            gameNumber: nextGame.gameNumber
+            gameNumber: nextGame.gameNumber,
+            maxGames: series.format === 'BO5' ? 5 : (series.format === 'BO3' ? 3 : 1),
+            currentGames: series.games.length + 1
           })
 
           // Emit game created event
@@ -343,31 +401,66 @@ export const webSocketFn: WebSocketFn = (io) => {
             seriesId: series.id,
             gameNumber: nextGameNumber
           })
-        } else {
-          // Update series as completed
-          const updatedSeries = await prisma.series.update({
-            where: { id: series.id },
-            data: {
-              status: 'COMPLETED',
-              winner: blueWins > redWins ? 'BLUE' : 'RED'
-            }
-          })
-
-          console.log('✓ Series completed:', {
-            id: updatedSeries.id,
-            status: updatedSeries.status,
-            winner: updatedSeries.winner
-          })
-
-          // Emit series updated event
-          io.emit('seriesUpdated', {
-            seriesId: series.id,
-            status: updatedSeries.status,
-            winner: updatedSeries.winner as 'BLUE' | 'RED' | undefined
-          })
         }
       } catch (error) {
         console.error('❌ Error setting winner:', error)
+      }
+    })
+
+    socket.on('selectSide', async ({ seriesId, gameNumber, side, auth }) => {
+      try {
+        // First get the current game and series
+        const currentGame = await prisma.game.findFirst({
+          where: { 
+            seriesId,
+            gameNumber
+          },
+          include: {
+            series: true
+          }
+        })
+
+        if (!currentGame) {
+          console.error('Game not found')
+          return
+        }
+
+        // Get the team making the selection from the auth token
+        const isTeam1 = auth === currentGame.series.team1AuthToken
+        console.log('Side selection:', {
+          auth,
+          team1Token: currentGame.series.team1AuthToken,
+          team2Token: currentGame.series.team2AuthToken,
+          isTeam1
+        })
+
+        // The team making the selection is choosing which side they want to play on
+        const updatedGame = await prisma.game.update({
+          where: { 
+            id: currentGame.id
+          },
+          data: {
+            // If team1 is selecting:
+            //   - blue side -> team1 on blue, team2 on red
+            //   - red side -> team2 on blue, team1 on red
+            // If team2 is selecting:
+            //   - blue side -> team2 on blue, team1 on red
+            //   - red side -> team1 on blue, team2 on red
+            blueSide: isTeam1 
+              ? (side === 'blue' ? currentGame.series.team1Name : currentGame.series.team2Name)
+              : (side === 'blue' ? currentGame.series.team2Name : currentGame.series.team1Name),
+            redSide: isTeam1
+              ? (side === 'blue' ? currentGame.series.team2Name : currentGame.series.team1Name)
+              : (side === 'blue' ? currentGame.series.team1Name : currentGame.series.team2Name)
+          }
+        })
+
+        io.emit('gameUpdated', {
+          gameId: updatedGame.id,
+          status: updatedGame.status
+        })
+      } catch (error) {
+        console.error('Error selecting side:', error)
       }
     })
 

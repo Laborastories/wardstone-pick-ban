@@ -20,11 +20,11 @@ model Series {
   id            String    @id @default(uuid())
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  blueTeamName  String
-  redTeamName   String
+  team1Name     String
+  team2Name     String
   matchName     String
-  blueAuthToken String    @unique
-  redAuthToken  String    @unique
+  team1AuthToken String    @unique
+  team2AuthToken String    @unique
   format        String    // "BO1", "BO3", "BO5"
   fearlessDraft Boolean   @default(false)
   games         Game[]

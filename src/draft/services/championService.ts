@@ -1,9 +1,11 @@
 const DDRAGON_VERSION = '14.24.1'
 const DDRAGON_LANG = 'en_US'
 const DDRAGON_BASE_URL = `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/data/${DDRAGON_LANG}`
+const COMMUNITY_DRAGON_URL = 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons'
 
 export interface Champion {
   id: string
+  key: string // Champion numeric ID
   name: string
   image: {
     full: string
@@ -37,8 +39,8 @@ export async function getChampions(): Promise<Champion[]> {
   }
 }
 
-export function getChampionImageUrl(championId: string): string {
-  return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${championId}.png`
+export function getChampionImageUrl(champion: Champion): string {
+  return `${COMMUNITY_DRAGON_URL}/${champion.key}.png`
 }
 
 // Filter champions by search term (name or tag)

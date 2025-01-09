@@ -70,13 +70,13 @@ export function Footer() {
             </nav>
           </div>
           <div className='flex items-center gap-4'>
-            <a 
-              href="https://www.buymeacoffee.com/wardbox"
-              aria-label="Buy me a coffee"
+            <a
+              href='https://www.buymeacoffee.com/wardbox'
+              aria-label='Buy me a coffee'
             >
-              <img 
-                src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wardbox&button_colour=404040&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00"
-                alt="Buy me a coffee"
+              <img
+                src='https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wardbox&button_colour=404040&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00'
+                alt='Buy me a coffee'
               />
             </a>
 

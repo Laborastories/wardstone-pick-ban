@@ -105,8 +105,8 @@ ${baseUrl}/draft/${series.id}/1`
                 <motion.span 
                   className={`font-bold uppercase tracking-wider ${
                     team1Wins >= gamesNeeded 
-                      ? 'text-[hsl(var(--team-blue))] opacity-100' 
-                      : 'text-[hsl(var(--team-blue))] opacity-90'
+                      ? 'opacity-100' 
+                      : 'opacity-90'
                   }`}
                   animate={team1Wins >= gamesNeeded ? {
                     textShadow: [
@@ -130,20 +130,13 @@ ${baseUrl}/draft/${series.id}/1`
             </div>
             <div className='w-[200px] flex justify-start'>
               <div className='flex items-center gap-2'>
-                {team2Wins >= gamesNeeded && <Crown className='text-[hsl(var(--team-red))]' size={20} weight='fill' />}
+                {team2Wins >= gamesNeeded && <Crown size={20} weight='fill' />}
                 <motion.span 
                   className={`font-bold uppercase tracking-wider ${
                     team2Wins >= gamesNeeded 
-                      ? 'text-[hsl(var(--team-red))] opacity-100' 
-                      : 'text-[hsl(var(--team-red))] opacity-90'
+                      ? 'opacity-100' 
+                      : 'opacity-90'
                   }`}
-                  animate={team2Wins >= gamesNeeded ? {
-                    textShadow: [
-                      '0 0 4px hsl(var(--team-red) / 0.7)',
-                      '0 0 8px hsl(var(--team-red) / 0.7)',
-                      '0 0 4px hsl(var(--team-red) / 0.7)'
-                    ]
-                  } : {}}
                   transition={{
                     repeat: Infinity,
                     duration: 2
@@ -303,7 +296,7 @@ ${baseUrl}/draft/${series.id}/1`
                                           stiffness: 400,
                                           damping: 25
                                         }}
-                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        className='relative w-6 h-6 overflow-hidden rounded-sm group'
                                         title={a.champion}
                                       >
                                         <img
@@ -335,7 +328,7 @@ ${baseUrl}/draft/${series.id}/1`
                                           stiffness: 400,
                                           damping: 25
                                         }}
-                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        className='relative w-6 h-6 overflow-hidden rounded-sm group'
                                         title={`Ban: ${a.champion}`}
                                       >
                                         <img
@@ -381,7 +374,7 @@ ${baseUrl}/draft/${series.id}/1`
                                           stiffness: 400,
                                           damping: 25
                                         }}
-                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        className='relative 6 h-6 overflow-hidden rounded-sm group'
                                         title={a.champion}
                                       >
                                         <img
@@ -413,7 +406,7 @@ ${baseUrl}/draft/${series.id}/1`
                                           stiffness: 400,
                                           damping: 25
                                         }}
-                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        className='relative w-6 h-6 overflow-hidden rounded-sm group'
                                         title={`Ban: ${a.champion}`}
                                       >
                                         <img

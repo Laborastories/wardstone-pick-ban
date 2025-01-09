@@ -28,6 +28,28 @@ export function SideSelection({ series, gameNumber, side }: SideSelectionProps) 
     setSelectedSide(null)
   }
 
+  // If no side is provided, this is a spectator
+  if (!side) {
+    return (
+      <div className='space-y-6'>
+        <h3 className='text-lg font-medium text-center'>Waiting for Teams</h3>
+        <div className='text-sm text-muted-foreground text-center'>
+          Teams are selecting their sides for this game...
+        </div>
+        <div className='grid grid-cols-2 gap-4 opacity-50'>
+          <div className='p-6 rounded-lg bg-[hsl(var(--team-blue))]'>
+            <div className='text-[hsl(var(--team-blue-foreground))] font-medium'>Blue Side</div>
+            <div className='text-sm text-[hsl(var(--team-blue-foreground))/0.8]'>Waiting for team...</div>
+          </div>
+          <div className='p-6 rounded-lg bg-[hsl(var(--team-red))]'>
+            <div className='text-[hsl(var(--team-red-foreground))] font-medium'>Red Side</div>
+            <div className='text-sm text-[hsl(var(--team-red-foreground))/0.8]'>Waiting for team...</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className='space-y-6'>
       <h3 className='text-lg font-medium text-center'>Select Side</h3>

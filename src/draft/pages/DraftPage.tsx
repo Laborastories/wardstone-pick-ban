@@ -312,10 +312,10 @@ export function DraftPage() {
                   )}
                   alt={action.champion}
                   className={cn(
-                    'absolute inset-0 h-full w-full scale-110',
+                    'absolute inset-0 w-full',
                     type === 'PICK'
-                      ? 'scale-150 object-cover object-[center_-80%]'
-                      : 'object-contain',
+                      ? '-top-[12%] h-[200%] object-cover'
+                      : 'h-full scale-[1.15] object-cover',
                   )}
                   loading='lazy'
                 />
@@ -345,10 +345,10 @@ export function DraftPage() {
                   )}
                   alt={pendingAction.champion}
                   className={cn(
-                    'absolute inset-0 h-full w-full',
+                    'absolute inset-0 w-full',
                     type === 'PICK'
-                      ? 'scale-150 object-cover object-[center_-80%] saturate-50'
-                      : 'object-contain',
+                      ? '-top-[12%] h-[200%] object-cover saturate-50'
+                      : 'h-full scale-[1.15] object-cover',
                   )}
                   loading='lazy'
                 />
@@ -373,10 +373,10 @@ export function DraftPage() {
                   )}
                   alt={previewedChampions[position]}
                   className={cn(
-                    'absolute inset-0 h-full w-full',
+                    'absolute inset-0 w-full',
                     type === 'PICK'
-                      ? 'scale-150 object-cover object-[center_-80%] saturate-50'
-                      : 'object-contain',
+                      ? '-top-[12%] h-[200%] object-cover saturate-50'
+                      : 'h-full scale-[1.15] object-cover',
                   )}
                   loading='lazy'
                 />
@@ -392,7 +392,7 @@ export function DraftPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className='absolute inset-0 flex items-center justify-center text-muted-foreground'
+                className='absolute inset-0 flex items-center justify-center text-2xl text-muted-foreground'
               >
                 {type === 'PICK'
                   ? `${team[0]}${index + 1}`
@@ -678,22 +678,36 @@ export function DraftPage() {
             </div>
 
             {/* Center Actions */}
-            <div className='flex-none'>
+            <div className='flex h-[48px] w-[200px] flex-none items-center justify-center'>
               {/* Confirmation Button */}
-              {pendingAction && isCurrentTeam && (
+              {pendingAction && isCurrentTeam ? (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className='flex justify-center'
+                  className='flex w-full justify-center'
                 >
                   <Button
                     size='lg'
                     onClick={handleConfirmAction}
-                    className='min-w-[200px] font-medium'
+                    className='w-full font-medium'
                   >
                     Lock In
                   </Button>
                 </motion.div>
+              ) : (
+                nextAction &&
+                !isCurrentTeam && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className='text-sm font-medium text-muted-foreground'
+                  >
+                    Waiting for{' '}
+                    {nextAction.team === 'BLUE'
+                      ? gameWithRelations.blueSide
+                      : gameWithRelations.redSide}
+                  </motion.div>
+                )
               )}
             </div>
 

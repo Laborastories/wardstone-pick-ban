@@ -55,8 +55,7 @@ export function Footer() {
           <div className='flex items-center gap-4'>
             <Strategy size={16} weight='fill' />
             <span className='text-xs text-muted-foreground'>
-              &copy; {new Date().getFullYear()}{' '}
-              {import.meta.env.REACT_APP_NAME || 'Wardstone'}
+              &copy; {new Date().getFullYear()} SCOUT AHEAD
             </span>
             <nav className='flex gap-4' aria-label='Footer'>
               {navigation.main.map(item => (
@@ -70,8 +69,17 @@ export function Footer() {
               ))}
             </nav>
           </div>
-
           <div className='flex items-center gap-4'>
+            <a
+              href='https://www.buymeacoffee.com/wardbox'
+              aria-label='Buy me a coffee'
+            >
+              <img
+                src='https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wardbox&button_colour=404040&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00'
+                alt='Buy me a coffee'
+              />
+            </a>
+
             <div className='flex gap-4'>
               {navigation.social.map(item => (
                 <a

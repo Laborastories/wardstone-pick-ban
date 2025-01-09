@@ -19,19 +19,17 @@ export default function Root() {
     <MotionConfig reducedMotion='user' transition={transitions.snappy}>
       <ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
         <MotionProvider>
-          <div className='flex h-screen flex-col'>
+          <div className='flex min-h-screen flex-col'>
             <header className='border-b'>
               <Nav user={user} userLoading={isLoading} />
             </header>
-            <main className='flex-1 px-4 py-12 sm:px-6 sm:py-40 lg:px-8'>
-              <div className='mx-auto max-w-7xl'>
-                <Outlet />
-              </div>
+            <main className='flex-1'>
+              <Outlet />
             </main>
             <Toaster />
             <ScrollToTop />
-            <footer className='relative z-50 border-t border-input bg-background'>
-              <div className='relative z-50 mx-auto max-w-7xl'>
+            <footer className='border-t border-input bg-background'>
+              <div className='mx-auto max-w-7xl'>
                 <Footer />
               </div>
             </footer>

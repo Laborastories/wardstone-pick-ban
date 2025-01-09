@@ -1,17 +1,18 @@
 import { useQuery } from 'wasp/client/operations'
 import { getGame, getSeries } from 'wasp/client/operations'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { type Game, type Series } from 'wasp/entities'
 import { useEffect, useState } from 'react'
 import { useSocket, useSocketListener, ServerToClientPayload } from 'wasp/client/webSocket'
 import { Button } from '../../client/components/ui/button'
-import { Check, X } from '@phosphor-icons/react'
+import { X } from '@phosphor-icons/react'
 import { ChampionGrid } from '../components/ChampionGrid'
 import { getChampionImageUrl, type Champion } from '../services/championService'
-import { getCurrentTurn, getNextAction, isTeamTurn, getCurrentPhase } from '../utils/draftSequence'
+import { getCurrentTurn, getNextAction, isTeamTurn } from '../utils/draftSequence'
 import { SeriesInfo } from '../components/SeriesInfo'
 import { useParams } from 'react-router-dom'
 import { SideSelection } from '../components/SideSelection'
+import { cn } from '../../lib/utils'
 
 type GameWithRelations = Game & {
   series: Series & {
@@ -32,19 +33,21 @@ type GameWithRelations = Game & {
   }[]
 }
 
-type ReadyStates = {
-  blue?: boolean
-  red?: boolean
-}
-
 export function DraftPage() {
   const params = useParams()
   const team = params.team as 'team1' | 'team2' | undefined
   const { seriesId = '', gameNumber = '1', auth } = params
-  const [readyStates, setReadyStates] = useState<ReadyStates>({})
-  const [isReady, setIsReady] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
+  const [pendingAction, setPendingAction] = useState<{
+    type: 'PICK' | 'BAN'
+    champion: string
+    position: number
+    phase: number
+    team: 'BLUE' | 'RED'
+  } | null>(null)
   const { socket, isConnected } = useSocket()
+  const [previewedChampions, setPreviewedChampions] = useState<Record<number, string | null>>({})
+  const [readyStates, setReadyStates] = useState<{ blue?: boolean, red?: boolean }>({})
 
   // Set auth token when socket connects
   useEffect(() => {
@@ -65,25 +68,7 @@ export function DraftPage() {
     socket.emit('joinGame', game.id)
   }, [socket, game, isConnected])
 
-  // Reset ready state when disconnected
-  useEffect(() => {
-    if (!isConnected) {
-      setIsReady(false)
-      setReadyStates({})
-    }
-  }, [isConnected])
-
-  // Reset ready state when game number changes
-  useEffect(() => {
-    setIsReady(false)
-    setReadyStates({})
-  }, [gameNumber])
-
   // Socket event listeners
-  useSocketListener('readyStateUpdate', (data: ServerToClientPayload<'readyStateUpdate'>) => {
-    setReadyStates(data.readyStates)
-  })
-
   useSocketListener('draftStart', (data: ServerToClientPayload<'draftStart'>) => {
     console.log('Draft starting!', data.gameId)
     refetch()
@@ -125,6 +110,17 @@ export function DraftPage() {
     }
   }, [socket, game?.id, game?.seriesId, refetch])
 
+  useSocketListener('championPreview', (data: ServerToClientPayload<'championPreview'>) => {
+    setPreviewedChampions(prev => ({
+      ...prev,
+      [data.position]: data.champion
+    }))
+  })
+
+  useSocketListener('readyStateUpdate', (data: ServerToClientPayload<'readyStateUpdate'>) => {
+    setReadyStates(data.readyStates)
+  })
+
   // Convert team1/team2 to blue/red based on the selected sides in the current game
   const getTeamSide = (team: 'team1' | 'team2' | undefined, game: GameWithRelations): 'blue' | 'red' | undefined => {
     if (!team) return undefined
@@ -159,21 +155,6 @@ export function DraftPage() {
     )
   }
 
-  const handleReadyClick = () => {
-    if (!socket || !game || !team || !isConnected) return
-
-    const newReadyState = !isReady
-    setIsReady(newReadyState)
-    const gameSide = getTeamSide(team, game as GameWithRelations)
-    if (!gameSide) return
-
-    socket.emit('readyState', {
-      gameId: game.id,
-      side: gameSide,
-      isReady: newReadyState
-    })
-  }
-
   const handleChampionSelect = (champion: Champion) => {
     if (!socket || !game || !team || !isConnected) return
 
@@ -191,14 +172,186 @@ export function DraftPage() {
       return
     }
 
-    socket.emit('draftAction', {
-      gameId: game.id,
+    // Set pending action and emit preview
+    setPendingAction({
       type: nextAction.type,
       phase: nextAction.phase,
       team: nextAction.team,
       champion: champion.id,
       position: nextAction.position
     })
+
+    // Emit preview to other clients
+    socket.emit('previewChampion', {
+      gameId: game.id,
+      position: nextAction.position,
+      champion: champion.id
+    })
+  }
+
+  const handleConfirmAction = () => {
+    if (!socket || !game || !pendingAction) return
+
+    socket.emit('draftAction', {
+      gameId: game.id,
+      type: pendingAction.type,
+      phase: pendingAction.phase,
+      team: pendingAction.team,
+      champion: pendingAction.champion,
+      position: pendingAction.position
+    })
+
+    // Clear preview when confirming
+    socket.emit('previewChampion', {
+      gameId: game.id,
+      position: pendingAction.position,
+      champion: null
+    })
+
+    setPendingAction(null)
+  }
+
+  const handleReadyClick = () => {
+    if (!socket || !gameSide || !gameWithRelations) return
+    socket.emit('readyState', {
+      gameId: gameWithRelations.id,
+      side: gameSide,
+      isReady: !readyStates[gameSide]
+    })
+  }
+
+  const renderSlot = (
+    type: 'PICK' | 'BAN',
+    position: number,
+    index: number,
+    team: 'BLUE' | 'RED',
+    action?: { champion: string }
+  ) => {
+    const isActive = !action && getCurrentTurn(gameWithRelations.actions) === position
+    const isPending = !action && pendingAction?.position === position
+    const isPreviewed = !action && !isPending && previewedChampions[position]
+
+    return (
+      <div
+        key={`${team.toLowerCase()}-${type.toLowerCase()}-${position}`}
+        className='group relative'
+      >
+        <div
+          className={cn(
+            'relative overflow-hidden border',
+            type === 'PICK' ? 'h-full' : 'aspect-square w-16',
+            isActive && 'ring-2 ring-primary shadow-[0_0_15px_rgba(var(--primary)/0.5)]',
+            (isPending || isPreviewed) && 'ring-2 ring-primary',
+            !isActive && !isPending && !isPreviewed && 'border-border',
+            isActive && 'animate-[glow_3s_ease-in-out_infinite]'
+          )}
+        >
+          <AnimatePresence mode='wait'>
+            {action ? (
+              <motion.div
+                key='locked'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+                className={cn(
+                  'absolute inset-0',
+                  type === 'BAN' && action && 'opacity-75 grayscale'
+                )}
+              >
+                <motion.div
+                  initial={{ filter: 'brightness(2)', opacity: 0.8 }}
+                  animate={{ filter: 'brightness(1)', opacity: 1 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                  className='absolute inset-0 bg-primary/20'
+                />
+                <motion.img
+                  initial={{ filter: 'brightness(2)' }}
+                  animate={{ filter: 'brightness(1)' }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                  src={getChampionImageUrl(action.champion, type === 'PICK' ? 'splash' : 'icon')}
+                  alt={action.champion}
+                  className={cn(
+                    'absolute inset-0 w-full h-full',
+                    type === 'PICK' ? 'object-cover' : 'object-contain'
+                  )}
+                  loading='lazy'
+                />
+                {type === 'BAN' && (
+                  <motion.div 
+                    initial={{ opacity: 0, filter: 'brightness(2)' }}
+                    animate={{ opacity: 1, filter: 'brightness(1)' }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className='absolute inset-0 bg-black/50 flex items-center justify-center'
+                  >
+                    <X size={24} weight='bold' className='text-white' />
+                  </motion.div>
+                )}
+              </motion.div>
+            ) : isPending ? (
+              <motion.div
+                key='pending'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className='absolute inset-0'
+              >
+                <motion.img
+                  src={getChampionImageUrl(pendingAction.champion, type === 'PICK' ? 'splash' : 'icon')}
+                  alt={pendingAction.champion}
+                  className={cn(
+                    'absolute inset-0 w-full h-full',
+                    type === 'PICK' ? 'object-cover' : 'object-contain'
+                  )}
+                  loading='lazy'
+                />
+                {type === 'BAN' && (
+                  <motion.div 
+                    className='absolute inset-0 bg-black/25 flex items-center justify-center'
+                  >
+                    <X size={24} weight='bold' className='text-white' />
+                  </motion.div>
+                )}
+              </motion.div>
+            ) : isPreviewed && previewedChampions[position] ? (
+              <motion.div
+                key='preview'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.6 }}
+                exit={{ opacity: 0 }}
+                className='absolute inset-0'
+              >
+                <motion.img
+                  src={getChampionImageUrl(previewedChampions[position], type === 'PICK' ? 'splash' : 'icon')}
+                  alt={previewedChampions[position]}
+                  className={cn(
+                    'absolute inset-0 w-full h-full',
+                    type === 'PICK' ? 'object-cover' : 'object-contain'
+                  )}
+                  loading='lazy'
+                />
+                {type === 'BAN' && (
+                  <motion.div 
+                    className='absolute inset-0 bg-black/25 flex items-center justify-center'
+                  >
+                    <X size={24} weight='bold' className='text-white' />
+                  </motion.div>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key='empty'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className='absolute inset-0 flex items-center justify-center text-muted-foreground text-xs'
+              >
+                {type === 'PICK' ? `${team[0]}${index + 1}` : `Ban ${index + 1}`}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    )
   }
 
   if (isLoading) {
@@ -227,397 +380,241 @@ export function DraftPage() {
 
   const gameWithRelations = game as GameWithRelations
   const currentTurn = getCurrentTurn(gameWithRelations.actions)
-  const currentPhase = getCurrentPhase(currentTurn)
   const nextAction = getNextAction(currentTurn)
   const gameSide = getTeamSide(team, gameWithRelations)
+  const isCurrentTeam = gameSide?.toUpperCase() === nextAction?.team
 
   return (
-    <div className='min-h-screen bg-background p-8'>
+    <div className='h-screen overflow-hidden bg-background p-12'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='max-w-7xl mx-auto space-y-8'
+        className='h-full flex flex-col p-2'
       >
-        {/* Series Info */}
-        {(game as GameWithRelations)?.series && (
-          <SeriesInfo
-            series={(game as GameWithRelations).series}
-            currentGameNumber={parseInt(gameNumber)}
-            side={team}
-          />
-        )}
+        {/* Main Draft UI */}
+        <div className='h-full flex flex-col gap-4'>
+          {/* Top Section: Picks and Series Info */}
+          <div className='flex-1 min-h-0 flex gap-4 pb-2'>
+            {/* Blue Side - Vertical */}
+            <div className='w-[20%] flex flex-col min-h-0'>
+              <motion.h2 
+                className={cn(
+                  'text-sm font-bold text-center uppercase tracking-wider mb-1 flex-none',
+                  gameWithRelations.series.winner === gameWithRelations.blueSide 
+                    ? 'text-blue-400' 
+                    : 'text-blue-500'
+                )}
+                animate={gameWithRelations.series.winner === gameWithRelations.blueSide ? {
+                  textShadow: [
+                    '0 0 4px rgb(59 130 246 / 0.5)',
+                    '0 0 8px rgb(59 130 246 / 0.5)',
+                    '0 0 4px rgb(59 130 246 / 0.5)'
+                  ]
+                } : {}}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
+                {gameWithRelations.blueSide || 'Blue Side'}
+              </motion.h2>
 
-        {/* Side Selection - Show when game is new and sides haven't been selected */}
-        {gameWithRelations.status === 'PENDING' && (!gameWithRelations.blueSide || !gameWithRelations.redSide || gameWithRelations.blueSide === '' || gameWithRelations.redSide === '') && (
-          <SideSelection
-            series={gameWithRelations.series}
-            gameNumber={parseInt(gameNumber)}
-            side={team}
-          />
-        )}
+              {/* Blue Picks */}
+              <div className='flex-1 grid grid-rows-5 gap-2'>
+                {[6, 9, 10, 17, 18].map((i, index) => {
+                  const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
+                  return renderSlot('PICK', i, index, 'BLUE', action)
+                })}
+              </div>
+            </div>
 
-        {/* Only show the rest of the UI if sides have been selected */}
-        {gameWithRelations.blueSide && (
-          <>
-            {/* Game Status Header */}
-            <header className='text-center relative'>
-              {/* Draft Status - Only show in development */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className='absolute top-0 right-0 text-xs text-muted-foreground'>
-                  Status: {gameWithRelations.status}
-                </div>
-              )}
+            {/* Center Content */}
+            <div className='flex flex-col gap-4 min-w-0 flex-1'>
+              {/* Series Info */}
+              <div className='flex-none'>
+                {(game as GameWithRelations)?.series && (
+                  <SeriesInfo
+                    series={(game as GameWithRelations).series}
+                    currentGameNumber={parseInt(gameNumber)}
+                    side={team}
+                  />
+                )}
+              </div>
 
-              {/* Draft Phase - Only show when IN_PROGRESS */}
-              {gameWithRelations.status === 'IN_PROGRESS' && currentPhase && (
-                <div className='space-y-2'>
-                  {/* Timer */}
-                  {timeRemaining !== null && (
-                    <div className={`text-6xl font-bold tracking-tight ${
-                      timeRemaining <= 5 ? 'text-destructive animate-pulse' : 
-                      timeRemaining <= 10 ? 'text-destructive' : 
-                      'text-foreground'
-                    }`}>
-                      {timeRemaining}
-                    </div>
-                  )}
-                  <div className='text-lg font-medium'>
-                    {nextAction ? (
-                      <span className={nextAction.team === 'BLUE' ? 'text-blue-500' : 'text-red-500'}>
-                        {nextAction.team === 'BLUE' ? gameWithRelations.blueSide : gameWithRelations.redSide}
-                        &apos;s turn to {nextAction.type.toLowerCase()}
-                      </span>
-                    ) : (
-                      'Draft Complete'
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Ready Status - Only show when PENDING */}
-              {gameWithRelations.status === 'PENDING' && (
-                <div className='space-y-6'>
-                  <div className='flex justify-center gap-16'>
-                    <div className='flex flex-col items-center gap-3'>
-                      <div 
-                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                          readyStates.blue 
-                            ? 'bg-blue-500 text-white ring-2 ring-blue-500 ring-offset-2 ring-offset-background' 
-                            : 'bg-muted text-muted-foreground'
-                        }`} 
-                        title={`${gameWithRelations.blueSide} ${readyStates.blue ? 'Ready' : 'Not Ready'}`}
-                      >
-                        {readyStates.blue ? <Check size={24} weight="bold" /> : <X size={24} weight="bold" />}
-                      </div>
-                      <motion.span 
-                        className={`text-sm font-medium uppercase tracking-wider ${
-                          gameWithRelations.series.winner === gameWithRelations.blueSide 
-                            ? 'text-blue-400' 
-                            : 'text-blue-500'
-                        }`}
-                        animate={gameWithRelations.series.winner === gameWithRelations.blueSide ? {
-                          textShadow: [
-                            '0 0 4px rgb(59 130 246 / 0.5)',
-                            '0 0 8px rgb(59 130 246 / 0.5)',
-                            '0 0 4px rgb(59 130 246 / 0.5)'
-                          ]
-                        } : {}}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 2
-                        }}
-                      >
-                        {gameWithRelations.blueSide}
-                      </motion.span>
-                    </div>
-                    <div className='flex flex-col items-center gap-3'>
-                      <div 
-                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                          readyStates.red 
-                            ? 'bg-red-500 text-white ring-2 ring-red-500 ring-offset-2 ring-offset-background' 
-                            : 'bg-muted text-muted-foreground'
-                        }`}
-                        title={`Red Team ${readyStates.red ? 'Ready' : 'Not Ready'}`}
-                      >
-                        {readyStates.red ? <Check size={24} weight="bold" /> : <X size={24} weight="bold" />}
-                      </div>
-                      <motion.span 
-                        className={`text-sm font-medium uppercase tracking-wider ${
-                          gameWithRelations.series.winner === gameWithRelations.redSide 
-                            ? 'text-red-400' 
-                            : 'text-red-500'
-                        }`}
-                        animate={gameWithRelations.series.winner === gameWithRelations.redSide ? {
-                          textShadow: [
-                            '0 0 4px rgb(239 68 68 / 0.5)',
-                            '0 0 8px rgb(239 68 68 / 0.5)',
-                            '0 0 4px rgb(239 68 68 / 0.5)'
-                          ]
-                        } : {}}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 2
-                        }}
-                      >
-                        {gameWithRelations.redSide}
-                      </motion.span>
-                    </div>
-                  </div>
-                  {/* Ready Button (only shown to team captains) */}
-                  {team && (
-                    <div>
-                      <Button
-                        onClick={handleReadyClick}
-                        variant={isReady ? 'destructive' : 'default'}
-                        size='lg'
-                        className='min-w-[160px] font-medium'
-                        disabled={!isConnected}
-                      >
-                        {isReady ? 'Not Ready' : 'Ready'}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </header>
-
-            {/* Champion Selection */}
-            {gameWithRelations.status !== 'PENDING' && (
-              <>
-                {/* Draft Grid */}
-                <div className='grid grid-cols-2 gap-12'>
-                  {/* Blue Side */}
-                  <div className='space-y-8'>
-                    <motion.h2 
-                      className={`text-4xl font-bold text-center uppercase tracking-wider ${
-                        gameWithRelations.series.winner === gameWithRelations.blueSide 
-                          ? 'text-blue-400' 
-                          : 'text-blue-500'
-                      }`}
-                      animate={gameWithRelations.series.winner === gameWithRelations.blueSide ? {
-                        textShadow: [
-                          '0 0 4px rgb(59 130 246 / 0.5)',
-                          '0 0 8px rgb(59 130 246 / 0.5)',
-                          '0 0 4px rgb(59 130 246 / 0.5)'
-                        ]
-                      } : {}}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 2
-                      }}
-                    >
-                      {gameWithRelations.blueSide}
-                    </motion.h2>
-                    <div className='space-y-8'>
-                      {/* Picks */}
-                      <div>
-                        <h3 className='text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider'>Picks</h3>
-                        <div className='grid grid-cols-5 gap-3'>
-                          {[6, 9, 10, 17, 18].map((i, index) => {
-                            const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
-                            return (
-                              <div
-                                key={`blue-pick-${i}`}
-                                className='aspect-square bg-card rounded-lg border border-border overflow-hidden group relative'
-                              >
-                                {action ? (
-                                  <motion.img
-                                    initial={{ opacity: 0, scale: 0.3 }}
-                                    animate={{ opacity: 1, scale: 1.15 }}
-                                    transition={{ type: 'spring', stiffness: 1500, damping: 50 }}
-                                    src={getChampionImageUrl(action.champion)}
-                                    alt={action.champion}
-                                    className='w-full h-full object-cover'
-                                    loading='lazy'
-                                  />
-                                ) : (
-                                  <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
-                                    B{index + 1}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      {/* Bans */}
-                      <div>
-                        <h3 className='text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider'>Bans</h3>
-                        <div className='grid grid-cols-5 gap-3'>
-                          {[0, 2, 4, 13, 15].map((i, index) => {
-                            const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
-                            return (
-                              <div
-                                key={`blue-ban-${i}`}
-                                className='aspect-square bg-card rounded-lg border border-border overflow-hidden group relative'
-                              >
-                                {action ? (
-                                  <motion.div 
-                                    initial={{ opacity: 0, scale: 0.3 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ type: 'spring', stiffness: 1500, damping: 50 }}
-                                    className='relative w-full h-full'
-                                  >
-                                    <motion.img
-                                      src={getChampionImageUrl(action.champion)}
-                                      alt={action.champion}
-                                      className='w-full h-full object-cover scale-[115%] opacity-75 grayscale'
-                                      loading='lazy'
-                                    />
-                                    <motion.div 
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
-                                      transition={{ delay: 0.1 }}
-                                      className='absolute inset-0 bg-black/50 flex items-center justify-center'
-                                    >
-                                      <X size={24} weight='bold' className='text-white' />
-                                    </motion.div>
-                                  </motion.div>
-                                ) : (
-                                  <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
-                                    Ban {index + 1}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Red Side */}
-                  <div className='space-y-8'>
-                    <motion.h2 
-                      className={`text-4xl font-bold text-center uppercase tracking-wider ${
-                        gameWithRelations.series.winner === gameWithRelations.redSide 
-                          ? 'text-red-400' 
-                          : 'text-red-500'
-                      }`}
-                      animate={gameWithRelations.series.winner === gameWithRelations.redSide ? {
-                        textShadow: [
-                          '0 0 4px rgb(239 68 68 / 0.5)',
-                          '0 0 8px rgb(239 68 68 / 0.5)',
-                          '0 0 4px rgb(239 68 68 / 0.5)'
-                        ]
-                      } : {}}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 2
-                      }}
-                    >
-                      {gameWithRelations.redSide}
-                    </motion.h2>
-                    <div className='space-y-8'>
-                      {/* Picks */}
-                      <div>
-                        <h3 className='text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider'>Picks</h3>
-                        <div className='grid grid-cols-5 gap-3'>
-                          {[7, 8, 11, 16, 19].map((i, index) => {
-                            const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
-                            return (
-                              <div
-                                key={`red-pick-${i}`}
-                                className='aspect-square bg-card rounded-lg border border-border overflow-hidden group relative'
-                              >
-                                {action ? (
-                                  <motion.img
-                                    initial={{ opacity: 0, scale: 0.3 }}
-                                    animate={{ opacity: 1, scale: 1.15 }}
-                                    transition={{ type: 'spring', stiffness: 1500, damping: 50 }}
-                                    src={getChampionImageUrl(action.champion)}
-                                    alt={action.champion}
-                                    className='w-full h-full object-cover'
-                                    loading='lazy'
-                                  />
-                                ) : (
-                                  <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
-                                    R{index + 1}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      {/* Bans */}
-                      <div>
-                        <h3 className='text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider'>Bans</h3>
-                        <div className='grid grid-cols-5 gap-3'>
-                          {[1, 3, 5, 12, 14].map((i, index) => {
-                            const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
-                            return (
-                              <div
-                                key={`red-ban-${i}`}
-                                className='aspect-square bg-card rounded-lg border border-border overflow-hidden group relative'
-                              >
-                                {action ? (
-                                  <motion.div 
-                                    initial={{ opacity: 0, scale: 0.3 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ type: 'spring', stiffness: 1500, damping: 50 }}
-                                    className='relative w-full h-full'
-                                  >
-                                    <motion.img
-                                      src={getChampionImageUrl(action.champion)}
-                                      alt={action.champion}
-                                      className='w-full h-full object-cover scale-[115%] opacity-75 grayscale'
-                                      loading='lazy'
-                                    />
-                                    <motion.div 
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
-                                      transition={{ delay: 0.1 }}
-                                      className='absolute inset-0 bg-black/50 flex items-center justify-center'
-                                    >
-                                      <X size={24} weight='bold' className='text-white' />
-                                    </motion.div>
-                                  </motion.div>
-                                ) : (
-                                  <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
-                                    Ban {index + 1}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Champion Selection - Only show in IN_PROGRESS */}
-                {gameWithRelations.status === 'IN_PROGRESS' && (
-                  <div className='mt-12'>
-                    <ChampionGrid 
-                      onSelect={handleChampionSelect}
-                      disabled={!gameSide || !isTeamTurn(gameSide.toUpperCase() as 'BLUE' | 'RED', currentTurn)}
-                      bannedChampions={gameWithRelations.actions
-                        .filter(a => a.type === 'BAN')
-                        .map(a => a.champion)
-                      }
-                      usedChampions={[
-                        // Current game picks
-                        ...gameWithRelations.actions
-                          .filter(a => a.type === 'PICK')
-                          .map(a => a.champion),
-                        // Previously picked champions in series if fearless draft is enabled
-                        ...(gameWithRelations.series.fearlessDraft 
-                          ? gameWithRelations.series.games
-                              .filter(g => g.gameNumber < gameWithRelations.gameNumber)
-                              .flatMap(g => g.actions)
-                              .filter(a => a.type === 'PICK')
-                              .map(a => a.champion)
-                          : [])
-                      ]}
+              {/* Side Selection or Draft Content */}
+              <div className='flex-1 min-h-0 flex flex-col'>
+                {gameWithRelations.status === 'PENDING' && (!gameWithRelations.blueSide || !gameWithRelations.redSide) ? (
+                  <div className='flex-1 min-h-0 flex items-center justify-center'>
+                    <SideSelection
+                      series={gameWithRelations.series}
+                      gameNumber={parseInt(gameNumber)}
+                      side={team}
                     />
                   </div>
+                ) : (
+                  <>
+                    {/* Timer and Phase */}
+                    <div className='text-center mb-2 space-y-1 flex-none h-[72px] flex flex-col justify-center'>
+                      {gameWithRelations.status === 'IN_PROGRESS' ? (
+                        <>
+                          {timeRemaining !== null && (
+                            <div className={cn(
+                              'text-4xl font-bold tracking-tight',
+                              timeRemaining <= 5 ? 'text-destructive animate-pulse' : 
+                              timeRemaining <= 10 ? 'text-destructive' : 
+                              'text-foreground'
+                            )}>
+                              {timeRemaining}
+                            </div>
+                          )}
+                          <div className='text-sm font-medium'>
+                            {nextAction ? (
+                              <span className={nextAction.team === 'BLUE' ? 'text-blue-500' : 'text-red-500'}>
+                                {nextAction.team === 'BLUE' ? gameWithRelations.blueSide : gameWithRelations.redSide}
+                                &apos;s turn to {nextAction.type.toLowerCase()}
+                              </span>
+                            ) : (
+                              'Draft Complete'
+                            )}
+                          </div>
+                        </>
+                      ) : gameWithRelations.status === 'COMPLETE' || gameWithRelations.status === 'DRAFT_COMPLETE' ? (
+                        <div className='text-2xl font-bold text-primary'>
+                          Draft Complete!
+                        </div>
+                      ) : gameWithRelations.status === 'PENDING' && gameWithRelations.blueSide && gameWithRelations.redSide ? (
+                        <div className='flex flex-col items-center gap-2'>
+                          <div className='text-sm font-medium text-muted-foreground'>
+                            {gameSide ? (
+                              readyStates[gameSide] ? 'Waiting for other team...' : 'Click ready to start'
+                            ) : (
+                              'Waiting for teams to ready up...'
+                            )}
+                          </div>
+                          {gameSide && (
+                            <Button
+                              size='sm'
+                              variant={readyStates[gameSide] ? 'destructive' : 'default'}
+                              onClick={handleReadyClick}
+                            >
+                              {readyStates[gameSide] ? 'Cancel' : 'Ready'}
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className='text-sm font-medium text-muted-foreground'>
+                          Waiting for draft to start...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Champion Grid */}
+                    <div className='flex-1 min-h-0'>
+                      <ChampionGrid 
+                        onSelect={handleChampionSelect}
+                        disabled={
+                          gameWithRelations.status !== 'IN_PROGRESS' || 
+                          !gameSide || 
+                          !isTeamTurn(gameSide.toUpperCase() as 'BLUE' | 'RED', currentTurn)
+                        }
+                        bannedChampions={gameWithRelations.actions
+                          .filter(a => a.type === 'BAN')
+                          .map(a => a.champion)
+                        }
+                        usedChampions={[
+                          ...gameWithRelations.actions
+                            .filter(a => a.type === 'PICK')
+                            .map(a => a.champion),
+                          ...(gameWithRelations.series.fearlessDraft 
+                            ? gameWithRelations.series.games
+                                .filter(g => g.gameNumber < gameWithRelations.gameNumber)
+                                .flatMap(g => g.actions)
+                                .filter(a => a.type === 'PICK')
+                                .map(a => a.champion)
+                            : [])
+                        ]}
+                      />
+                    </div>
+                  </>
                 )}
-              </>
-            )}
-          </>
-        )}
+              </div>
+            </div>
+
+            {/* Red Side - Vertical */}
+            <div className='w-[20%] flex flex-col min-h-0'>
+              <motion.h2 
+                className={cn(
+                  'text-sm font-bold text-center uppercase tracking-wider mb-1 flex-none',
+                  gameWithRelations.series.winner === gameWithRelations.redSide 
+                    ? 'text-red-400' 
+                    : 'text-red-500'
+                )}
+                animate={gameWithRelations.series.winner === gameWithRelations.redSide ? {
+                  textShadow: [
+                    '0 0 4px rgb(239 68 68 / 0.5)',
+                    '0 0 8px rgb(239 68 68 / 0.5)',
+                    '0 0 4px rgb(239 68 68 / 0.5)'
+                  ]
+                } : {}}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
+                {gameWithRelations.redSide || 'Red Side'}
+              </motion.h2>
+
+              {/* Red Picks */}
+              <div className='flex-1 grid grid-rows-5 gap-2'>
+                {[7, 8, 11, 16, 19].map((i, index) => {
+                  const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
+                  return renderSlot('PICK', i, index, 'RED', action)
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Section: Bans and Actions */}
+          <div className='flex-none flex items-center justify-between gap-4 mt-0'>
+            {/* Blue Bans */}
+            <div className='flex gap-0.5 justify-center'>
+              {[0, 2, 4, 13, 15].map((i, index) => {
+                const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
+                return (
+                  <div key={i}>
+                    {renderSlot('BAN', i, index, 'BLUE', action)}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Center Actions */}
+            <div className='flex-none'>
+              {/* Confirmation Button */}
+              {pendingAction && isCurrentTeam && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className='flex justify-center'
+                >
+                  <Button
+                    size='lg'
+                    onClick={handleConfirmAction}
+                    className='min-w-[200px] font-medium'
+                  >
+                    Lock In
+                  </Button>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Red Bans */}
+            <div className='flex gap-0.5 justify-center'>
+              {[1, 3, 5, 12, 14].map((i, index) => {
+                const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
+                return (
+                  <div key={i}>
+                    {renderSlot('BAN', i, index, 'RED', action)}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       </motion.div>
     </div>
   )

@@ -11,6 +11,7 @@ export interface ServerToClientEvents {
   gameUpdated: (data: { gameId: string, status: string, winner?: 'BLUE' | 'RED' }) => void
   gameCreated: (data: { gameId: string, seriesId: string, gameNumber: number }) => void
   seriesUpdated: (data: { seriesId: string, status: string, winner?: 'team1' | 'team2' }) => void
+  championPreview: (data: { gameId: string, position: number, champion: string | null }) => void
 }
 
 interface ClientToServerEvents {
@@ -19,6 +20,7 @@ interface ClientToServerEvents {
   draftAction: (data: { gameId: string, type: 'PICK' | 'BAN', phase: number, team: 'BLUE' | 'RED', champion: string, position: number }) => void
   setWinner: (data: { gameId: string, winner: 'BLUE' | 'RED' }) => void
   selectSide: (data: { seriesId: string, gameNumber: number, side: 'blue' | 'red', auth: string }) => void
+  previewChampion: (data: { gameId: string, position: number, champion: string | null }) => void
 }
 
 interface InterServerEvents {}
@@ -440,6 +442,16 @@ export const webSocketFn: WebSocketFn = (io) => {
       } catch (error) {
         console.error('Error selecting side:', error)
       }
+    })
+
+    socket.on('previewChampion', ({ gameId, position, champion }) => {
+      console.log(`[WS] Champion preview: ${champion || 'cleared'} for position ${position}`)
+      // Broadcast preview to all other clients in the game room
+      socket.to(gameId).emit('championPreview', {
+        gameId,
+        position,
+        champion
+      })
     })
 
     socket.on('disconnect', () => {

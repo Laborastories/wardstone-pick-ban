@@ -3,14 +3,19 @@ import { Input } from '../../client/components/ui/input'
 import { MagnifyingGlass } from '@phosphor-icons/react'
 import { type Champion, getChampions, filterChampions, getChampionImageUrl } from '../services/championService'
 
-interface ChampionGridProps {
-  onSelect?: (champion: Champion) => void
+export interface ChampionGridProps {
+  onSelect: (champion: Champion) => void
   disabled?: boolean
-  usedChampions?: string[] // Array of champion IDs that were picked
-  bannedChampions?: string[] // Array of champion IDs that were banned
+  bannedChampions?: string[]
+  usedChampions?: string[]
 }
 
-export function ChampionGrid({ onSelect, disabled, usedChampions = [], bannedChampions = [] }: ChampionGridProps) {
+export function ChampionGrid({
+  onSelect,
+  disabled = false,
+  bannedChampions = [],
+  usedChampions = []
+}: ChampionGridProps) {
   const [champions, setChampions] = useState<Champion[]>([])
   const [filteredChampions, setFilteredChampions] = useState<Champion[]>([])
   const [search, setSearch] = useState('')
@@ -28,21 +33,21 @@ export function ChampionGrid({ onSelect, disabled, usedChampions = [], bannedCha
   }, [search, champions])
 
   return (
-    <div className='space-y-4'>
+    <div className='h-full flex flex-col space-y-2'>
       {/* Search */}
-      <div className='relative'>
+      <div className='relative flex-none'>
         <MagnifyingGlass className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground' size={16} />
         <Input
           type='text'
           placeholder='Search champions...'
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className='pl-9'
+          className='pl-9 h-8 text-sm'
         />
       </div>
 
       {/* Grid */}
-      <div className='grid grid-cols-12 gap-3 max-h-96 overflow-y-auto p-1'>
+      <div className='flex-1 min-h-0 grid grid-cols-10 gap-2 overflow-y-auto p-0.5'>
         {filteredChampions.map(champion => {
           const isUsed = usedChampions.includes(champion.id)
           const isBanned = bannedChampions.includes(champion.id)
@@ -50,7 +55,7 @@ export function ChampionGrid({ onSelect, disabled, usedChampions = [], bannedCha
           return (
             <button
               key={champion.id}
-              onClick={() => onSelect?.(champion)}
+              onClick={() => onSelect(champion)}
               disabled={isDisabled}
               className={`
                 aspect-square rounded hover:bg-accent transition-colors
@@ -74,10 +79,10 @@ export function ChampionGrid({ onSelect, disabled, usedChampions = [], bannedCha
                   ${isUsed || isBanned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} 
                   transition-opacity rounded flex items-center justify-center
                 `}>
-                  <span className='text-[10px] font-medium text-white text-center px-0.5 leading-tight'>
+                  <span className='text-[6px] font-medium text-white text-center px-0.5 leading-tight'>
                     {champion.name}
-                    {isUsed && <div className='text-[8px] text-red-400'>Already Picked</div>}
-                    {isBanned && <div className='text-[8px] text-yellow-400'>Banned</div>}
+                    {isUsed && <div className='text-[5px] text-red-400'>Already Picked</div>}
+                    {isBanned && <div className='text-[5px] text-yellow-400'>Banned</div>}
                   </span>
                 </div>
               </div>

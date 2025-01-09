@@ -238,8 +238,8 @@ export function DraftPage() {
       >
         <div
           className={cn(
-            'relative overflow-hidden border',
-            type === 'PICK' ? 'h-full' : 'aspect-square w-16',
+            'relative overflow-hidden border rounded-sm',
+            type === 'PICK' ? 'h-full' : 'aspect-square w-24',
             isActive && 'ring-2 ring-primary shadow-[0_0_15px_rgba(var(--primary)/0.5)]',
             (isPending || isPreviewed) && 'ring-2 ring-primary',
             !isActive && !isPending && !isPreviewed && 'border-border',
@@ -271,8 +271,8 @@ export function DraftPage() {
                   src={getChampionImageUrl(action.champion, type === 'PICK' ? 'splash' : 'icon')}
                   alt={action.champion}
                   className={cn(
-                    'absolute inset-0 w-full h-full',
-                    type === 'PICK' ? 'object-cover' : 'object-contain'
+                    'absolute inset-0 w-full h-full scale-110',
+                    type === 'PICK' ? 'object-cover object-[center_-80%] scale-150' : 'object-contain'
                   )}
                   loading='lazy'
                 />
@@ -300,7 +300,7 @@ export function DraftPage() {
                   alt={pendingAction.champion}
                   className={cn(
                     'absolute inset-0 w-full h-full',
-                    type === 'PICK' ? 'object-cover' : 'object-contain'
+                    type === 'PICK' ? 'object-cover object-[center_-80%] scale-150 saturate-50' : 'object-contain'
                   )}
                   loading='lazy'
                 />
@@ -325,7 +325,7 @@ export function DraftPage() {
                   alt={previewedChampions[position]}
                   className={cn(
                     'absolute inset-0 w-full h-full',
-                    type === 'PICK' ? 'object-cover' : 'object-contain'
+                    type === 'PICK' ? 'object-cover object-[center_-80%] scale-150 saturate-50' : 'object-contain'
                   )}
                   loading='lazy'
                 />
@@ -343,7 +343,7 @@ export function DraftPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className='absolute inset-0 flex items-center justify-center text-muted-foreground text-xs'
+                className='absolute inset-0 flex items-center justify-center text-muted-foreground'
               >
                 {type === 'PICK' ? `${team[0]}${index + 1}` : `Ban ${index + 1}`}
               </motion.div>
@@ -396,7 +396,7 @@ export function DraftPage() {
           {/* Top Section: Picks and Series Info */}
           <div className='flex-1 min-h-0 flex gap-4 pb-2'>
             {/* Blue Side - Vertical */}
-            <div className='w-[20%] flex flex-col min-h-0'>
+            <div className='w-[20%] min-w-[16rem] flex flex-col min-h-0 rounded-sm bg-gradient-to-b from-blue-400/30 to-transparent p-6'>
               <motion.h2 
                 className={cn(
                   'text-2xl font-bold text-center uppercase tracking-wider mb-1 flex-none',
@@ -426,7 +426,7 @@ export function DraftPage() {
             </div>
 
             {/* Center Content */}
-            <div className='flex flex-col gap-4 min-w-0 flex-1'>
+            <div className='flex flex-col gap-4 flex-1'>
               {/* Series Info */}
               <div className='flex-none'>
                 {(game as GameWithRelations)?.series && (
@@ -509,31 +509,33 @@ export function DraftPage() {
                     </div>
 
                     {/* Champion Grid */}
-                    <div className='flex-1 min-h-0'>
-                      <ChampionGrid 
-                        onSelect={handleChampionSelect}
-                        disabled={
-                          gameWithRelations.status !== 'IN_PROGRESS' || 
-                          !gameSide || 
-                          !isTeamTurn(gameSide.toUpperCase() as 'BLUE' | 'RED', currentTurn)
-                        }
-                        bannedChampions={gameWithRelations.actions
-                          .filter(a => a.type === 'BAN')
-                          .map(a => a.champion)
-                        }
-                        usedChampions={[
-                          ...gameWithRelations.actions
-                            .filter(a => a.type === 'PICK')
-                            .map(a => a.champion),
-                          ...(gameWithRelations.series.fearlessDraft 
-                            ? gameWithRelations.series.games
-                                .filter(g => g.gameNumber < gameWithRelations.gameNumber)
-                                .flatMap(g => g.actions)
-                                .filter(a => a.type === 'PICK')
-                                .map(a => a.champion)
-                            : [])
-                        ]}
-                      />
+                    <div className='flex-1 min-h-0 flex justify-center'>
+                      <div className='w-fit'>
+                        <ChampionGrid 
+                          onSelect={handleChampionSelect}
+                          disabled={
+                            gameWithRelations.status !== 'IN_PROGRESS' || 
+                            !gameSide || 
+                            !isTeamTurn(gameSide.toUpperCase() as 'BLUE' | 'RED', currentTurn)
+                          }
+                          bannedChampions={gameWithRelations.actions
+                            .filter(a => a.type === 'BAN')
+                            .map(a => a.champion)
+                          }
+                          usedChampions={[
+                            ...gameWithRelations.actions
+                              .filter(a => a.type === 'PICK')
+                              .map(a => a.champion),
+                            ...(gameWithRelations.series.fearlessDraft 
+                              ? gameWithRelations.series.games
+                                  .filter(g => g.gameNumber < gameWithRelations.gameNumber)
+                                  .flatMap(g => g.actions)
+                                  .filter(a => a.type === 'PICK')
+                                  .map(a => a.champion)
+                              : [])
+                          ]}
+                        />
+                      </div>
                     </div>
                   </>
                 )}
@@ -541,7 +543,7 @@ export function DraftPage() {
             </div>
 
             {/* Red Side - Vertical */}
-            <div className='w-[20%] flex flex-col min-h-0'>
+            <div className='w-[20%] min-w-[16rem] flex flex-col min-h-0 rounded-lg bg-gradient-to-b from-red-400/40 to-transparent p-6'>
               <motion.h2 
                 className={cn(
                   'text-2xl font-bold text-center uppercase tracking-wider mb-1 flex-none',

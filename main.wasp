@@ -17,7 +17,8 @@ app wardstonepickban {
     "<meta property='twitter:url' content='https://scoutahead.pro'>",
     "<meta name='twitter:title' content='Scout Ahead: A Drafting Tool for League of Legends that supports fearless drafting'>",
     "<meta name='twitter:description' content='Scout Ahead is a drafting tool for League of Legends that supports fearless drafting.'>",
-    "<meta name='twitter:image' content='https://scoutahead.pro/scoutahead.png'>"
+    "<meta name='twitter:image' content='https://scoutahead.pro/scoutahead.png'>",
+    "<script defer data-domain='scoutahead.pro' src='https://plausible.io/js/script.js'></script>"
   ],
   auth: {
     userEntity: User,

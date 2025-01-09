@@ -65,7 +65,7 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
           >
             <Strategy size={24} />
             <span className='font-bold'>
-              {import.meta.env.REACT_APP_NAME || 'Roke'}
+              SCOUT AHEAD
             </span>
           </Link>
           <div className='hidden items-center space-x-4 text-muted-foreground md:flex lg:space-x-6'>

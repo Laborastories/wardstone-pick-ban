@@ -283,9 +283,7 @@ export function DraftPage() {
           )}
         >
           {isActive && (
-            <div
-              className='absolute inset-0 animate-glow bg-primary/40'
-            />
+            <div className='absolute inset-0 animate-glow bg-primary/40' />
           )}
           <AnimatePresence mode='wait'>
             {action ? (
@@ -486,7 +484,7 @@ export function DraftPage() {
             </div>
 
             {/* Center Content */}
-            <div className='flex flex-1 flex-col gap-4 min-w-min'>
+            <div className='flex min-w-min flex-1 flex-col gap-4'>
               {/* Series Info */}
               <div className='flex-none'>
                 {(game as GameWithRelations)?.series && (

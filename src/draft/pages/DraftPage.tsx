@@ -413,7 +413,7 @@ export function DraftPage() {
                       <div>
                         <h3 className='text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider'>Picks</h3>
                         <div className='grid grid-cols-5 gap-3'>
-                          {[6, 9, 10, 17, 18].map(i => {
+                          {[6, 9, 10, 17, 18].map((i, index) => {
                             const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
                             return (
                               <div
@@ -432,7 +432,7 @@ export function DraftPage() {
                                   />
                                 ) : (
                                   <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
-                                    B{Math.floor(i/4) + 1}
+                                    B{index + 1}
                                   </div>
                                 )}
                               </div>
@@ -444,7 +444,7 @@ export function DraftPage() {
                       <div>
                         <h3 className='text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider'>Bans</h3>
                         <div className='grid grid-cols-5 gap-3'>
-                          {[0, 2, 4, 13, 15].map(i => {
+                          {[0, 2, 4, 13, 15].map((i, index) => {
                             const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
                             return (
                               <div
@@ -475,7 +475,7 @@ export function DraftPage() {
                                   </motion.div>
                                 ) : (
                                   <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
-                                    Ban {Math.floor(i/4) + 1}
+                                    Ban {index + 1}
                                   </div>
                                 )}
                               </div>
@@ -513,7 +513,7 @@ export function DraftPage() {
                       <div>
                         <h3 className='text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider'>Picks</h3>
                         <div className='grid grid-cols-5 gap-3'>
-                          {[7, 8, 11, 16, 19].map(i => {
+                          {[7, 8, 11, 16, 19].map((i, index) => {
                             const action = gameWithRelations.actions.find(a => a.type === 'PICK' && a.position === i)
                             return (
                               <div
@@ -532,7 +532,7 @@ export function DraftPage() {
                                   />
                                 ) : (
                                   <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
-                                    R{Math.floor(i/4) + 1}
+                                    R{index + 1}
                                   </div>
                                 )}
                               </div>
@@ -544,7 +544,7 @@ export function DraftPage() {
                       <div>
                         <h3 className='text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider'>Bans</h3>
                         <div className='grid grid-cols-5 gap-3'>
-                          {[1, 3, 5, 12, 14].map(i => {
+                          {[1, 3, 5, 12, 14].map((i, index) => {
                             const action = gameWithRelations.actions.find(a => a.type === 'BAN' && a.position === i)
                             return (
                               <div
@@ -575,7 +575,7 @@ export function DraftPage() {
                                   </motion.div>
                                 ) : (
                                   <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
-                                    Ban {Math.floor(i/4) + 1}
+                                    Ban {index + 1}
                                   </div>
                                 )}
                               </div>

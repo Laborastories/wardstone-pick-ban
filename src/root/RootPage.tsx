@@ -9,8 +9,8 @@ import { ScrollToTop } from './components/scroll-to-top'
 import { Toaster } from './components/toaster'
 import { transitions } from '../motion/transitionPresets'
 import './Root.css'
-import '@fontsource-variable/grenze-gotisch'
-import '@fontsource-variable/public-sans'
+// Supports weights 100-900
+import '@fontsource-variable/inter';
 
 export default function Root() {
   const { data: user, isLoading } = useAuth()

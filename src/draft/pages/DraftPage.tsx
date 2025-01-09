@@ -309,7 +309,26 @@ export function DraftPage() {
                       >
                         {readyStates.blue ? <Check size={24} weight="bold" /> : <X size={24} weight="bold" />}
                       </div>
-                      <span className='text-sm font-medium text-blue-500'>{gameWithRelations.blueSide}</span>
+                      <motion.span 
+                        className={`text-sm font-medium uppercase tracking-wider ${
+                          gameWithRelations.series.winner === gameWithRelations.blueSide 
+                            ? 'text-blue-400' 
+                            : 'text-blue-500'
+                        }`}
+                        animate={gameWithRelations.series.winner === gameWithRelations.blueSide ? {
+                          textShadow: [
+                            '0 0 4px rgb(59 130 246 / 0.5)',
+                            '0 0 8px rgb(59 130 246 / 0.5)',
+                            '0 0 4px rgb(59 130 246 / 0.5)'
+                          ]
+                        } : {}}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 2
+                        }}
+                      >
+                        {gameWithRelations.blueSide}
+                      </motion.span>
                     </div>
                     <div className='flex flex-col items-center gap-3'>
                       <div 
@@ -322,7 +341,26 @@ export function DraftPage() {
                       >
                         {readyStates.red ? <Check size={24} weight="bold" /> : <X size={24} weight="bold" />}
                       </div>
-                      <span className='text-sm font-medium text-red-500'>{gameWithRelations.redSide}</span>
+                      <motion.span 
+                        className={`text-sm font-medium uppercase tracking-wider ${
+                          gameWithRelations.series.winner === gameWithRelations.redSide 
+                            ? 'text-red-400' 
+                            : 'text-red-500'
+                        }`}
+                        animate={gameWithRelations.series.winner === gameWithRelations.redSide ? {
+                          textShadow: [
+                            '0 0 4px rgb(239 68 68 / 0.5)',
+                            '0 0 8px rgb(239 68 68 / 0.5)',
+                            '0 0 4px rgb(239 68 68 / 0.5)'
+                          ]
+                        } : {}}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 2
+                        }}
+                      >
+                        {gameWithRelations.redSide}
+                      </motion.span>
                     </div>
                   </div>
                   {/* Ready Button (only shown to team captains) */}
@@ -350,7 +388,26 @@ export function DraftPage() {
                 <div className='grid grid-cols-2 gap-12'>
                   {/* Blue Side */}
                   <div className='space-y-8'>
-                    <h2 className='text-2xl font-bold text-blue-500 text-center'>{gameWithRelations.blueSide}</h2>
+                    <motion.h2 
+                      className={`text-4xl font-bold text-center uppercase tracking-wider ${
+                        gameWithRelations.series.winner === gameWithRelations.blueSide 
+                          ? 'text-blue-400' 
+                          : 'text-blue-500'
+                      }`}
+                      animate={gameWithRelations.series.winner === gameWithRelations.blueSide ? {
+                        textShadow: [
+                          '0 0 4px rgb(59 130 246 / 0.5)',
+                          '0 0 8px rgb(59 130 246 / 0.5)',
+                          '0 0 4px rgb(59 130 246 / 0.5)'
+                        ]
+                      } : {}}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2
+                      }}
+                    >
+                      {gameWithRelations.blueSide}
+                    </motion.h2>
                     <div className='space-y-8'>
                       {/* Picks */}
                       <div>
@@ -364,10 +421,13 @@ export function DraftPage() {
                                 className='aspect-square bg-card rounded-lg border border-border overflow-hidden group relative'
                               >
                                 {action ? (
-                                  <img
+                                  <motion.img
+                                    initial={{ opacity: 0, scale: 0.3 }}
+                                    animate={{ opacity: 1, scale: 1.15 }}
+                                    transition={{ type: 'spring', stiffness: 1500, damping: 50 }}
                                     src={getChampionImageUrl(action.champion)}
                                     alt={action.champion}
-                                    className='w-full h-full object-cover scale-[115%]'
+                                    className='w-full h-full object-cover'
                                     loading='lazy'
                                   />
                                 ) : (
@@ -392,17 +452,27 @@ export function DraftPage() {
                                 className='aspect-square bg-card rounded-lg border border-border overflow-hidden group relative'
                               >
                                 {action ? (
-                                  <>
-                                      <img
-                                        src={getChampionImageUrl(action.champion)}
-                                        alt={action.champion}
-                                        className='w-full h-full object-cover scale-[115%] opacity-75 grayscale'
-                                        loading='lazy'
+                                  <motion.div 
+                                    initial={{ opacity: 0, scale: 0.3 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ type: 'spring', stiffness: 1500, damping: 50 }}
+                                    className='relative w-full h-full'
+                                  >
+                                    <motion.img
+                                      src={getChampionImageUrl(action.champion)}
+                                      alt={action.champion}
+                                      className='w-full h-full object-cover scale-[115%] opacity-75 grayscale'
+                                      loading='lazy'
                                     />
-                                    <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
+                                    <motion.div 
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      transition={{ delay: 0.1 }}
+                                      className='absolute inset-0 bg-black/50 flex items-center justify-center'
+                                    >
                                       <X size={24} weight='bold' className='text-white' />
-                                    </div>
-                                  </>
+                                    </motion.div>
+                                  </motion.div>
                                 ) : (
                                   <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
                                     Ban {Math.floor(i/4) + 1}
@@ -418,7 +488,26 @@ export function DraftPage() {
 
                   {/* Red Side */}
                   <div className='space-y-8'>
-                    <h2 className='text-2xl font-bold text-red-500 text-center'>{gameWithRelations.redSide}</h2>
+                    <motion.h2 
+                      className={`text-4xl font-bold text-center uppercase tracking-wider ${
+                        gameWithRelations.series.winner === gameWithRelations.redSide 
+                          ? 'text-red-400' 
+                          : 'text-red-500'
+                      }`}
+                      animate={gameWithRelations.series.winner === gameWithRelations.redSide ? {
+                        textShadow: [
+                          '0 0 4px rgb(239 68 68 / 0.5)',
+                          '0 0 8px rgb(239 68 68 / 0.5)',
+                          '0 0 4px rgb(239 68 68 / 0.5)'
+                        ]
+                      } : {}}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2
+                      }}
+                    >
+                      {gameWithRelations.redSide}
+                    </motion.h2>
                     <div className='space-y-8'>
                       {/* Picks */}
                       <div>
@@ -432,10 +521,13 @@ export function DraftPage() {
                                 className='aspect-square bg-card rounded-lg border border-border overflow-hidden group relative'
                               >
                                 {action ? (
-                                  <img
+                                  <motion.img
+                                    initial={{ opacity: 0, scale: 0.3 }}
+                                    animate={{ opacity: 1, scale: 1.15 }}
+                                    transition={{ type: 'spring', stiffness: 1500, damping: 50 }}
                                     src={getChampionImageUrl(action.champion)}
                                     alt={action.champion}
-                                    className='w-full h-full object-cover scale-[115%]'
+                                    className='w-full h-full object-cover'
                                     loading='lazy'
                                   />
                                 ) : (
@@ -460,17 +552,27 @@ export function DraftPage() {
                                 className='aspect-square bg-card rounded-lg border border-border overflow-hidden group relative'
                               >
                                 {action ? (
-                                  <>
-                                    <img
+                                  <motion.div 
+                                    initial={{ opacity: 0, scale: 0.3 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ type: 'spring', stiffness: 1500, damping: 50 }}
+                                    className='relative w-full h-full'
+                                  >
+                                    <motion.img
                                       src={getChampionImageUrl(action.champion)}
                                       alt={action.champion}
                                       className='w-full h-full object-cover scale-[115%] opacity-75 grayscale'
                                       loading='lazy'
                                     />
-                                    <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
+                                    <motion.div 
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      transition={{ delay: 0.1 }}
+                                      className='absolute inset-0 bg-black/50 flex items-center justify-center'
+                                    >
                                       <X size={24} weight='bold' className='text-white' />
-                                    </div>
-                                  </>
+                                    </motion.div>
+                                  </motion.div>
                                 ) : (
                                   <div className='w-full h-full flex items-center justify-center text-muted-foreground text-xs'>
                                     Ban {Math.floor(i/4) + 1}

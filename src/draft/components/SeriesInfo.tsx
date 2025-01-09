@@ -69,7 +69,26 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
         <div className='flex items-center justify-center gap-8 text-xl'>
           <div className='w-[200px] flex justify-end'>
             <div className='flex items-center gap-2'>
-              <span className='font-bold text-[hsl(var(--team-blue))]'>{series.team1Name}</span>
+              <motion.span 
+                className={`font-bold uppercase tracking-wider ${
+                  team1Wins >= gamesNeeded 
+                    ? 'text-[hsl(var(--team-blue))] opacity-100' 
+                    : 'text-[hsl(var(--team-blue))] opacity-90'
+                }`}
+                animate={team1Wins >= gamesNeeded ? {
+                  textShadow: [
+                    '0 0 4px hsl(var(--team-blue) / 0.7)',
+                    '0 0 8px hsl(var(--team-blue) / 0.7)',
+                    '0 0 4px hsl(var(--team-blue) / 0.7)'
+                  ]
+                } : {}}
+                transition={{
+                  repeat: Infinity,
+                  duration: 2
+                }}
+              >
+                {series.team1Name}
+              </motion.span>
               {team1Wins >= gamesNeeded && <Crown className='text-[hsl(var(--team-blue))]' size={20} weight='fill' />}
             </div>
           </div>
@@ -79,7 +98,26 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
           <div className='w-[200px] flex justify-start'>
             <div className='flex items-center gap-2'>
               {team2Wins >= gamesNeeded && <Crown className='text-[hsl(var(--team-red))]' size={20} weight='fill' />}
-              <span className='font-bold text-[hsl(var(--team-red))]'>{series.team2Name}</span>
+              <motion.span 
+                className={`font-bold uppercase tracking-wider ${
+                  team2Wins >= gamesNeeded 
+                    ? 'text-[hsl(var(--team-red))] opacity-100' 
+                    : 'text-[hsl(var(--team-red))] opacity-90'
+                }`}
+                animate={team2Wins >= gamesNeeded ? {
+                  textShadow: [
+                    '0 0 4px hsl(var(--team-red) / 0.7)',
+                    '0 0 8px hsl(var(--team-red) / 0.7)',
+                    '0 0 4px hsl(var(--team-red) / 0.7)'
+                  ]
+                } : {}}
+                transition={{
+                  repeat: Infinity,
+                  duration: 2
+                }}
+              >
+                {series.team2Name}
+              </motion.span>
             </div>
           </div>
         </div>

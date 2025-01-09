@@ -17,27 +17,27 @@ export const getGame: GetGame<GetGameArgs, Game> = async (args, context) => {
   const game = await context.entities.Game.findFirst({
     where: {
       seriesId,
-      gameNumber: parseInt(gameNumber)
+      gameNumber: parseInt(gameNumber),
     },
     include: {
       series: {
         include: {
           games: {
             include: {
-              actions: true
+              actions: true,
             },
             orderBy: {
-              gameNumber: 'asc'
-            }
-          }
-        }
+              gameNumber: 'asc',
+            },
+          },
+        },
       },
       actions: {
         orderBy: {
-          position: 'asc'
-        }
-      }
-    }
+          position: 'asc',
+        },
+      },
+    },
   })
 
   if (!game) {
@@ -50,43 +50,49 @@ export const getGame: GetGame<GetGameArgs, Game> = async (args, context) => {
     seriesId: game.seriesId,
     gameNumber: game.gameNumber,
     seriesGames: game.series.games.length,
-    actions: game.actions.length
+    actions: game.actions.length,
   })
 
   return game
 }
 
-export const updateGame: UpdateGame<UpdateGameArgs, Game> = async (args, context) => {
+export const updateGame: UpdateGame<UpdateGameArgs, Game> = async (
+  args,
+  context,
+) => {
   const { gameId, status, winner } = args
-  
+
   const game = await context.entities.Game.update({
     where: { id: gameId },
     data: {
       status,
-      winner
+      winner,
     },
     include: {
       series: true,
-      actions: true
-    }
+      actions: true,
+    },
   })
 
   // If game is completed, create next game in series if needed
   if (status === 'COMPLETED' && winner) {
     const series = await context.entities.Series.findUnique({
       where: { id: game.seriesId },
-      include: { games: true }
+      include: { games: true },
     })
 
     if (!series) throw new HttpError(404, 'Series not found')
 
     // Count wins for each team
-    const blueWins = series.games.filter((g: Game) => g.winner === 'BLUE').length
+    const blueWins = series.games.filter(
+      (g: Game) => g.winner === 'BLUE',
+    ).length
     const redWins = series.games.filter((g: Game) => g.winner === 'RED').length
-    
+
     // Calculate games needed to win based on format
-    const gamesNeeded = series.format === 'BO5' ? 3 : (series.format === 'BO3' ? 2 : 1)
-    
+    const gamesNeeded =
+      series.format === 'BO5' ? 3 : series.format === 'BO3' ? 2 : 1
+
     // If neither team has won enough games yet, create next game
     if (blueWins < gamesNeeded && redWins < gamesNeeded) {
       const nextGameNumber = series.games.length + 1
@@ -97,8 +103,8 @@ export const updateGame: UpdateGame<UpdateGameArgs, Game> = async (args, context
           // Swap sides for next game
           blueSide: game.redSide,
           redSide: game.blueSide,
-          status: 'PENDING'
-        }
+          status: 'PENDING',
+        },
       })
     } else {
       // Update series as completed with winner
@@ -106,12 +112,11 @@ export const updateGame: UpdateGame<UpdateGameArgs, Game> = async (args, context
         where: { id: series.id },
         data: {
           status: 'COMPLETED',
-          winner: blueWins > redWins ? 'BLUE' : 'RED'
-        }
+          winner: blueWins > redWins ? 'BLUE' : 'RED',
+        },
       })
     }
   }
 
   return game
-} 
-
+}

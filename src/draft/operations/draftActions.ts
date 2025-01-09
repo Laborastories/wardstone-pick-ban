@@ -19,22 +19,24 @@ type GameWithActions = Game & {
   actions: DraftAction[]
 }
 
-
-export const createDraftAction: CreateDraftAction<DraftActionArgs, DraftAction> = async (args, context) => {
+export const createDraftAction: CreateDraftAction<
+  DraftActionArgs,
+  DraftAction
+> = async (args, context) => {
   const { gameId, type, phase, team, champion, position } = args
 
   // Get the game and its actions to validate the draft action
-  const game = await context.entities.Game.findUnique({
+  const game = (await context.entities.Game.findUnique({
     where: { id: gameId },
     include: {
       series: true,
       actions: {
         orderBy: {
-          position: 'asc'
-        }
-      }
-    }
-  }) as GameWithActions | null
+          position: 'asc',
+        },
+      },
+    },
+  })) as GameWithActions | null
 
   if (!game) {
     throw new HttpError(404, 'Game not found')
@@ -46,29 +48,37 @@ export const createDraftAction: CreateDraftAction<DraftActionArgs, DraftAction> 
   }
 
   // Validate champion hasn't been picked or banned
-  const championUsed = game.actions.some((action: DraftAction) => action.champion === champion)
+  const championUsed = game.actions.some(
+    (action: DraftAction) => action.champion === champion,
+  )
   if (championUsed) {
     throw new HttpError(400, 'Champion has already been picked or banned')
   }
 
   // If fearless draft is enabled, check if champion was used in previous games
-  if (game.series.fearlessDraft && position && position <= 10) { // Only check for picks, not bans
-    const previousGames = await context.entities.Game.findMany({
+  if (game.series.fearlessDraft && position && position <= 10) {
+    // Only check for picks, not bans
+    const previousGames = (await context.entities.Game.findMany({
       where: {
         seriesId: game.series.id,
-        gameNumber: { lt: game.gameNumber }
+        gameNumber: { lt: game.gameNumber },
       },
       include: {
-        actions: true
-      }
-    }) as GameWithActions[]
+        actions: true,
+      },
+    })) as GameWithActions[]
 
-    const championUsedInSeries = previousGames.some((g: GameWithActions) => 
-      g.actions.some((a: DraftAction) => a.champion === champion && a.type === 'PICK')
+    const championUsedInSeries = previousGames.some((g: GameWithActions) =>
+      g.actions.some(
+        (a: DraftAction) => a.champion === champion && a.type === 'PICK',
+      ),
     )
 
     if (championUsedInSeries) {
-      throw new HttpError(400, 'Champion has already been picked in this series')
+      throw new HttpError(
+        400,
+        'Champion has already been picked in this series',
+      )
     }
   }
 
@@ -80,9 +90,9 @@ export const createDraftAction: CreateDraftAction<DraftActionArgs, DraftAction> 
       phase,
       team,
       champion,
-      position: position || 0 // Default to 0 if position is not provided
-    }
+      position: position || 0, // Default to 0 if position is not provided
+    },
   })
 
   return draftAction
-} 
+}

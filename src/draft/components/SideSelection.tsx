@@ -1,7 +1,16 @@
 import { useSocket } from 'wasp/client/webSocket'
 import { type Series } from 'wasp/entities'
 import { useState } from 'react'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../client/components/ui/alert-dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../client/components/ui/alert-dialog'
 
 type SideSelectionProps = {
   series: Series
@@ -9,7 +18,11 @@ type SideSelectionProps = {
   side?: 'team1' | 'team2'
 }
 
-export function SideSelection({ series, gameNumber, side }: SideSelectionProps) {
+export function SideSelection({
+  series,
+  gameNumber,
+  side,
+}: SideSelectionProps) {
   const { socket } = useSocket()
   const [selectedSide, setSelectedSide] = useState<'blue' | 'red' | null>(null)
 
@@ -23,7 +36,7 @@ export function SideSelection({ series, gameNumber, side }: SideSelectionProps) 
       seriesId: series.id,
       gameNumber,
       side: selectedSide,
-      auth: side === 'team1' ? series.team1AuthToken : series.team2AuthToken
+      auth: side === 'team1' ? series.team1AuthToken : series.team2AuthToken,
     })
     setSelectedSide(null)
   }
@@ -32,18 +45,26 @@ export function SideSelection({ series, gameNumber, side }: SideSelectionProps) 
   if (!side) {
     return (
       <div className='space-y-6'>
-        <h3 className='text-lg font-medium text-center'>Waiting for Teams</h3>
-        <div className='text-sm text-muted-foreground text-center'>
+        <h3 className='text-center text-lg font-medium'>Waiting for Teams</h3>
+        <div className='text-center text-sm text-muted-foreground'>
           Teams are selecting their sides for this game...
         </div>
         <div className='grid grid-cols-2 gap-4 opacity-50'>
-          <div className='p-6 rounded-lg bg-[hsl(var(--team-blue))]'>
-            <div className='text-[hsl(var(--team-blue-foreground))] font-medium'>Blue Side</div>
-            <div className='text-sm text-[hsl(var(--team-blue-foreground))/0.8]'>Waiting for team...</div>
+          <div className='rounded-lg bg-[hsl(var(--team-blue))] p-6'>
+            <div className='font-medium text-[hsl(var(--team-blue-foreground))]'>
+              Blue Side
+            </div>
+            <div className='text-sm text-[hsl(var(--team-blue-foreground))/0.8]'>
+              Waiting for team...
+            </div>
           </div>
-          <div className='p-6 rounded-lg bg-[hsl(var(--team-red))]'>
-            <div className='text-[hsl(var(--team-red-foreground))] font-medium'>Red Side</div>
-            <div className='text-sm text-[hsl(var(--team-red-foreground))/0.8]'>Waiting for team...</div>
+          <div className='rounded-lg bg-[hsl(var(--team-red))] p-6'>
+            <div className='font-medium text-[hsl(var(--team-red-foreground))]'>
+              Red Side
+            </div>
+            <div className='text-sm text-[hsl(var(--team-red-foreground))/0.8]'>
+              Waiting for team...
+            </div>
           </div>
         </div>
       </div>
@@ -52,30 +73,43 @@ export function SideSelection({ series, gameNumber, side }: SideSelectionProps) 
 
   return (
     <div className='space-y-6'>
-      <h3 className='text-lg font-medium text-center'>Select Side</h3>
+      <h3 className='text-center text-lg font-medium'>Select Side</h3>
       <div className='grid grid-cols-2 gap-4'>
         <button
           onClick={() => handleSideSelect('blue')}
-          className='p-6 rounded-lg bg-[hsl(var(--team-blue))] hover:scale-[1.02] transition-transform'
+          className='rounded-lg bg-[hsl(var(--team-blue))] p-6 transition-transform hover:scale-[1.02]'
         >
-          <div className='text-[hsl(var(--team-blue-foreground))] font-medium'>Blue Side</div>
-          <div className='text-sm text-[hsl(var(--team-blue-foreground))/0.8]'>Click to play on Blue Side</div>
+          <div className='font-medium text-[hsl(var(--team-blue-foreground))]'>
+            Blue Side
+          </div>
+          <div className='text-sm text-[hsl(var(--team-blue-foreground))/0.8]'>
+            Click to play on Blue Side
+          </div>
         </button>
         <button
           onClick={() => handleSideSelect('red')}
-          className='p-6 rounded-lg bg-[hsl(var(--team-red))] hover:scale-[1.02] transition-transform'
+          className='rounded-lg bg-[hsl(var(--team-red))] p-6 transition-transform hover:scale-[1.02]'
         >
-          <div className='text-[hsl(var(--team-red-foreground))] font-medium'>Red Side</div>
-          <div className='text-sm text-[hsl(var(--team-red-foreground))/0.8]'>Click to play on Red Side</div>
+          <div className='font-medium text-[hsl(var(--team-red-foreground))]'>
+            Red Side
+          </div>
+          <div className='text-sm text-[hsl(var(--team-red-foreground))/0.8]'>
+            Click to play on Red Side
+          </div>
         </button>
       </div>
 
-      <AlertDialog open={!!selectedSide} onOpenChange={() => setSelectedSide(null)}>
+      <AlertDialog
+        open={!!selectedSide}
+        onOpenChange={() => setSelectedSide(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Side Selection</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to play on {selectedSide === 'blue' ? 'Blue' : 'Red'} side? This cannot be changed once confirmed.
+              Are you sure you want to play on{' '}
+              {selectedSide === 'blue' ? 'Blue' : 'Red'} side? This cannot be
+              changed once confirmed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -88,4 +122,4 @@ export function SideSelection({ series, gameNumber, side }: SideSelectionProps) 
       </AlertDialog>
     </div>
   )
-} 
+}

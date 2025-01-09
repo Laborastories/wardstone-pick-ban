@@ -31,9 +31,7 @@ const ScrollToTopLink = ({
 }
 
 const navigation = {
-  main: [
-    { name: 'Home', href: '/' },
-  ],
+  main: [{ name: 'Home', href: '/' }],
   social: [
     {
       name: 'GitHub',

@@ -64,9 +64,7 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
             onMouseEnter={() => prefetch('/', undefined, { assets: true })}
           >
             <Strategy size={24} />
-            <span className='font-bold'>
-              SCOUT AHEAD
-            </span>
+            <span className='font-bold'>SCOUT AHEAD</span>
           </Link>
           <div className='hidden items-center space-x-4 text-muted-foreground md:flex lg:space-x-6'>
             <Link

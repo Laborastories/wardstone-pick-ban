@@ -29,7 +29,7 @@ const DRAFT_SEQUENCE = [
   { phase: 4, type: 'PICK', team: 'RED', position: 19 },
 ] as const
 
-export type DraftAction = typeof DRAFT_SEQUENCE[number]
+export type DraftAction = (typeof DRAFT_SEQUENCE)[number]
 export type DraftPhase = 1 | 2 | 3 | 4
 export type DraftTeam = 'BLUE' | 'RED'
 export type DraftType = 'PICK' | 'BAN'
@@ -70,10 +70,16 @@ export function getActionType(position: number): DraftType | undefined {
   return DRAFT_SEQUENCE[position]?.type
 }
 
-export function isPhaseComplete(phase: DraftPhase, actions: { phase: number }[]): boolean {
-  return actions.filter(a => a.phase === phase).length === DRAFT_SEQUENCE.filter(a => a.phase === phase).length
+export function isPhaseComplete(
+  phase: DraftPhase,
+  actions: { phase: number }[],
+): boolean {
+  return (
+    actions.filter(a => a.phase === phase).length ===
+    DRAFT_SEQUENCE.filter(a => a.phase === phase).length
+  )
 }
 
 export function isDraftComplete(actions: { position: number }[]): boolean {
   return actions.length === DRAFT_SEQUENCE.length
-} 
+}

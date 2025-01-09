@@ -50,7 +50,7 @@ export function CreateSeriesPage() {
       team2Name: formData.get('team2Name') as string,
       matchName: formData.get('matchName') as string,
       format: formData.get('format') as 'BO1' | 'BO3' | 'BO5',
-      fearlessDraft: formData.get('fearlessDraft') === 'on'
+      fearlessDraft: formData.get('fearlessDraft') === 'on',
     }
 
     try {
@@ -59,7 +59,7 @@ export function CreateSeriesPage() {
       setUrls({
         blueUrl: `${baseUrl}/draft/${series.id}/1/team1/${series.team1AuthToken}`,
         redUrl: `${baseUrl}/draft/${series.id}/1/team2/${series.team2AuthToken}`,
-        spectatorUrl: `${baseUrl}/draft/${series.id}/1`
+        spectatorUrl: `${baseUrl}/draft/${series.id}/1`,
       })
     } catch (err: any) {
       setError(err.message || 'Failed to create series')
@@ -69,15 +69,20 @@ export function CreateSeriesPage() {
   }
 
   return (
-    <div className='bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8'>
-      <motion.div 
+    <div className='bg-background px-4 py-12 text-foreground sm:px-6 lg:px-8'>
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='max-w-md mx-auto'
+        className='mx-auto max-w-md'
       >
-        <h1 className='text-3xl font-bold text-center mb-8'>Create Draft Series</h1>
-        
-        <form onSubmit={handleSubmit} className='space-y-6 bg-card p-6 rounded-lg shadow-xl'>
+        <h1 className='mb-8 text-center text-3xl font-bold'>
+          Create Draft Series
+        </h1>
+
+        <form
+          onSubmit={handleSubmit}
+          className='space-y-6 rounded-lg bg-card p-6 shadow-xl'
+        >
           <div>
             <label htmlFor='matchName' className='block text-sm font-medium'>
               Match Name
@@ -137,12 +142,10 @@ export function CreateSeriesPage() {
           </div>
 
           <div className='flex items-center'>
-            <Checkbox
-              name='fearlessDraft'
-              id='fearlessDraft'
-            />
+            <Checkbox name='fearlessDraft' id='fearlessDraft' />
             <label htmlFor='fearlessDraft' className='ml-2 block text-sm'>
-              Enable Fearless Draft (champions can only be picked once per series)
+              Enable Fearless Draft (champions can only be picked once per
+              series)
             </label>
           </div>
 
@@ -150,7 +153,7 @@ export function CreateSeriesPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className='text-destructive text-sm'
+              className='text-sm text-destructive'
             >
               {error}
             </motion.div>
@@ -159,19 +162,19 @@ export function CreateSeriesPage() {
           <Button
             type='submit'
             disabled={isLoading}
-            className='w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50'
+            className='flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50'
           >
             {isLoading ? 'Creating...' : 'Create Series'}
           </Button>
         </form>
 
         {urls.blueUrl && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className='mt-8 space-y-4 bg-card p-6 rounded-lg'
+            className='mt-8 space-y-4 rounded-lg bg-card p-6'
           >
-            <div className='flex items-center justify-between mb-4'>
+            <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-xl font-semibold'>Series Created!</h2>
               <Button
                 variant='outline'
@@ -192,7 +195,7 @@ export function CreateSeriesPage() {
                 )}
               </Button>
             </div>
-            
+
             <div className='space-y-2'>
               <p className='text-sm font-medium'>Team 1 URL:</p>
               <Input
@@ -216,7 +219,9 @@ export function CreateSeriesPage() {
             </div>
 
             <div className='space-y-2'>
-              <p className='text-sm font-medium text-muted-foreground'>Spectator URL:</p>
+              <p className='text-sm font-medium text-muted-foreground'>
+                Spectator URL:
+              </p>
               <Input
                 type='text'
                 readOnly
@@ -230,4 +235,4 @@ export function CreateSeriesPage() {
       </motion.div>
     </div>
   )
-} 
+}

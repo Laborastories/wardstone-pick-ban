@@ -475,7 +475,10 @@ export function DraftPage() {
                             )}
                           </div>
                         </>
-                      ) : gameWithRelations.status === 'COMPLETE' || gameWithRelations.status === 'DRAFT_COMPLETE' ? (
+                      ) : gameWithRelations.status === 'COMPLETE' || 
+                          gameWithRelations.status === 'DRAFT_COMPLETE' || 
+                          gameWithRelations.series.winner || 
+                          gameWithRelations.actions.length >= 20 ? (
                         <div className='text-2xl font-bold text-primary'>
                           Draft Complete!
                         </div>

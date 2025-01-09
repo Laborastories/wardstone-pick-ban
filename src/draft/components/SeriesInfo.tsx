@@ -303,7 +303,7 @@ ${baseUrl}/draft/${series.id}/1`
                                           stiffness: 400,
                                           damping: 25
                                         }}
-                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        className='relative w-6 h-6 overflow-hidden rounded-sm group'
                                         title={a.champion}
                                       >
                                         <img
@@ -335,7 +335,7 @@ ${baseUrl}/draft/${series.id}/1`
                                           stiffness: 400,
                                           damping: 25
                                         }}
-                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        className='relative w-6 h-6 overflow-hidden rounded-sm group'
                                         title={`Ban: ${a.champion}`}
                                       >
                                         <img
@@ -381,7 +381,7 @@ ${baseUrl}/draft/${series.id}/1`
                                           stiffness: 400,
                                           damping: 25
                                         }}
-                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        className='relative 6 h-6 overflow-hidden rounded-sm group'
                                         title={a.champion}
                                       >
                                         <img
@@ -413,7 +413,7 @@ ${baseUrl}/draft/${series.id}/1`
                                           stiffness: 400,
                                           damping: 25
                                         }}
-                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        className='relative w-6 h-6 overflow-hidden rounded-sm group'
                                         title={`Ban: ${a.champion}`}
                                       >
                                         <img

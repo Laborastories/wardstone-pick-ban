@@ -1,10 +1,9 @@
-import { Link } from 'wasp/client/router'
-import { type Game, type Series } from 'wasp/entities'
-import { Button } from '../../client/components/ui/button'
-import { Trophy } from '@phosphor-icons/react'
 import { useSocket } from 'wasp/client/webSocket'
-import { getChampionImageUrl, getChampions } from '../services/championService'
+import { type Series, type Game } from 'wasp/entities'
+import { Crown } from '@phosphor-icons/react'
+import { Link } from 'wasp/client/router'
 import { useEffect } from 'react'
+import { getChampions, getChampionImageUrl } from '../services/championService'
 
 type SeriesInfoProps = {
   series: Series & {
@@ -12,6 +11,8 @@ type SeriesInfoProps = {
       actions: {
         type: string
         champion: string
+        team: 'BLUE' | 'RED'
+        position: number
       }[]
     })[]
   }
@@ -59,54 +60,81 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
   }
 
   return (
-    <div className='space-y-6 p-6 bg-card rounded-lg border border-border'>
-      {/* Team Indicator - Always show if a team is selected */}
-      {side && (
-        <div className='text-sm font-medium text-primary text-center mb-4'>
-          Playing as {side === 'team1' ? series.team1Name : series.team2Name}
-        </div>
-      )}
-
-      {/* Header */}
-      <div className='text-center'>
-        <h2 className='text-xl font-bold mb-4'>{series.matchName}</h2>
-        
-        {/* Game Navigation */}
-        <div className='flex justify-center gap-2 mb-4'>
-          {series.games.map(game => (
-            <Link
-              key={game.id}
-              to="/draft/:seriesId/:gameNumber/:team?/:auth?"
-              params={{
-                seriesId: series.id,
-                gameNumber: game.gameNumber.toString(),
-                team: side || '',
-                auth: side ? (side === 'team1' ? series.team1AuthToken : series.team2AuthToken) : ''
-              }}
-              className={`
-                px-4 py-2 rounded-lg font-medium transition-colors
-                ${game.gameNumber === currentGameNumber
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted hover:bg-muted/80'
-                }
-              `}
-            >
-              Game {game.gameNumber}
-            </Link>
-          ))}
-        </div>
-
-        {/* Score Display */}
-        <div className='flex items-center justify-center gap-8 text-xl font-bold'>
-          <div className='flex-1 flex justify-end'>
-            {series.team1Name}
+    <div className='space-y-8 p-6 bg-card rounded-lg border border-border max-w-4xl mx-auto'>
+      {/* Series Header */}
+      <div className='space-y-4'>
+        {/* Match Name and Score */}
+        <div className='flex items-center justify-center gap-8 text-xl'>
+          <div className='w-[200px] flex justify-end'>
+            <div className='flex items-center gap-2'>
+              <span className='font-bold text-[hsl(var(--team-blue))]'>{series.team1Name}</span>
+              {team1Wins >= gamesNeeded && <Crown className='text-[hsl(var(--team-blue))]' size={20} weight='fill' />}
+            </div>
           </div>
-          <div className='min-w-[80px] px-6 py-2 bg-muted rounded-lg text-center shrink-0'>
+          <div className='min-w-[80px] px-6 py-2 bg-muted rounded-lg text-center font-bold shrink-0'>
             {team1Wins} - {team2Wins}
           </div>
-          <div className='flex-1 flex justify-start'>
-            {series.team2Name}
+          <div className='w-[200px] flex justify-start'>
+            <div className='flex items-center gap-2'>
+              {team2Wins >= gamesNeeded && <Crown className='text-[hsl(var(--team-red))]' size={20} weight='fill' />}
+              <span className='font-bold text-[hsl(var(--team-red))]'>{series.team2Name}</span>
+            </div>
           </div>
+        </div>
+
+        {/* Game Navigation */}
+        <div className='flex justify-center gap-2'>
+          {Array.from({ length: series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1 }).map((_, i) => {
+            const gameNum = i + 1
+            const isCurrentGame = gameNum === currentGameNumber
+            const isPreviousGame = gameNum < currentGameNumber
+            const isSeriesOver = team1Wins >= gamesNeeded || team2Wins >= gamesNeeded
+            const game = series.games.find(g => g.gameNumber === gameNum)
+            const isNextGame = !isSeriesOver && 
+              gameNum === Math.max(...series.games
+                .filter(g => g.status === 'COMPLETED')
+                .map(g => g.gameNumber)) + 1
+            const isCompleted = game?.status === 'COMPLETED'
+            const isDisabled = !isCurrentGame && !isNextGame && !isCompleted && 
+              (isSeriesOver || (!isPreviousGame && !isCurrentGame))
+
+            return (
+              <Link
+                key={gameNum}
+                to="/draft/:seriesId/:gameNumber/:team?/:auth?"
+                params={{
+                  seriesId: series.id,
+                  gameNumber: gameNum.toString(),
+                  team: side || '',
+                  auth: side ? (side === 'team1' ? series.team1AuthToken : series.team2AuthToken) : ''
+                }}
+                className={`
+                  px-4 py-2 rounded-lg font-medium transition-all
+                  ${isCurrentGame
+                    ? 'bg-primary text-primary-foreground'
+                    : isNextGame
+                      ? 'bg-[hsl(var(--accent))] text-accent-foreground animate-pulse'
+                      : isDisabled
+                        ? 'bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50'
+                        : 'bg-muted hover:bg-muted/80'
+                  }
+                  ${game?.status === 'COMPLETED' && !isCurrentGame ? 'ring-2 ring-accent' : ''}
+                `}
+                onClick={e => {
+                  if (isDisabled) {
+                    e.preventDefault()
+                  }
+                }}
+              >
+                <div className='text-sm'>Game {gameNum}</div>
+                {game?.status === 'COMPLETED' && (
+                  <div className='text-xs mt-1 opacity-75'>
+                    {game.winner === 'BLUE' ? game.blueSide : game.redSide} won
+                  </div>
+                )}
+              </Link>
+            )
+          })}
         </div>
       </div>
 
@@ -120,89 +148,166 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
       {/* Draft Complete - Select Winner */}
       {currentGame.status === 'DRAFT_COMPLETE' && side && (
         <div className='space-y-4'>
-          <div className='text-lg font-bold'>Draft Complete!</div>
-          <div className='text-sm text-muted-foreground'>Select the winner:</div>
-          <div className='flex gap-4'>
-            <Button
+          <div className='text-lg font-bold text-center'>Draft Complete!</div>
+          <div className='text-sm text-muted-foreground text-center'>Select the winner:</div>
+          <div className='grid grid-cols-2 gap-4'>
+            <button
               onClick={() => handleSetWinner('BLUE')}
-              variant='outline'
-              className='flex-1 text-blue-500 hover:text-blue-600'
+              className='p-6 rounded-lg bg-[hsl(var(--team-blue))] hover:scale-[1.02] transition-transform'
             >
-              {currentGame.blueSide} Wins
-            </Button>
-            <Button
+              <div className='text-[hsl(var(--team-blue-foreground))] font-medium'>{currentGame.blueSide} Wins</div>
+            </button>
+            <button
               onClick={() => handleSetWinner('RED')}
-              variant='outline'
-              className='flex-1 text-red-500 hover:text-red-600'
+              className='p-6 rounded-lg bg-[hsl(var(--team-red))] hover:scale-[1.02] transition-transform'
             >
-              {currentGame.redSide} Wins
-            </Button>
+              <div className='text-[hsl(var(--team-red-foreground))] font-medium'>{currentGame.redSide} Wins</div>
+            </button>
           </div>
         </div>
       )}
 
-      {currentGame.status === 'COMPLETED' && currentGame.winner && (
+      {/* Previous Games */}
+      {currentGameNumber > 1 && (
         <div className='space-y-4'>
-          <div className='flex items-center gap-2 text-lg font-bold'>
-            <Trophy weight='fill' className='text-yellow-500' />
-            {currentGame.winner === 'BLUE' ? currentGame.blueSide : currentGame.redSide} wins!
-          </div>
-          {team1Wins < gamesNeeded && team2Wins < gamesNeeded && series.games.length > currentGameNumber && (
-            <Link
-              to="/draft/:seriesId/:gameNumber/:team?/:auth?"
-              params={{
-                seriesId: series.id,
-                gameNumber: (currentGameNumber + 1).toString(),
-                team: side || '',
-                auth: side ? (side === 'team1' ? series.team1AuthToken : series.team2AuthToken) : ''
-              }}
-              className='inline-block'
-            >
-              <Button>Next Game</Button>
-            </Link>
-          )}
-          {(team1Wins >= gamesNeeded || team2Wins >= gamesNeeded) && (
-            <div className='text-lg font-bold'>
-              Series Winner: {series.winner === 'BLUE' ? series.team1Name : series.team2Name}!
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Previous Game Champions */}
-      {currentGameNumber > 1 && series.fearlessDraft && (
-        <div className='space-y-3'>
-          <h3 className='text-sm font-medium text-muted-foreground'>
-            Previously Picked Champions (Unavailable)
+          <h3 className='text-sm font-medium text-muted-foreground text-center'>
+            Previous Games
           </h3>
-          <div className='grid grid-cols-10 gap-2'>
+          <div className='space-y-3 w-fit mx-auto'>
             {series.games
-              .filter(g => g.gameNumber < currentGameNumber)
-              .flatMap(g => g.actions)
-              .filter(a => a.type === 'PICK')
-              .filter((action, index, self) => 
-                index === self.findIndex(a => a.champion === action.champion)
-              )
-              .sort((a, b) => a.champion.localeCompare(b.champion))
-              .map(a => (
-                <div
-                  key={a.champion}
-                  className='relative aspect-square w-full overflow-hidden rounded group'
-                  title={a.champion}
-                >
-                  <img
-                    src={getChampionImageUrl(a.champion)}
-                    alt={a.champion}
-                    className='w-full h-full object-cover rounded scale-[115%] grayscale'
-                    loading='lazy'
-                  />
-                  <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center'>
-                    <span className='text-[10px] font-medium text-white text-center px-0.5 leading-tight'>
-                      {a.champion}
-                    </span>
+              .filter(g => g.status === 'COMPLETED' && g.gameNumber < currentGameNumber)
+              .sort((a, b) => a.gameNumber - b.gameNumber)
+              .map(g => {
+                const blueWon = g.winner === 'BLUE'
+                return (
+                  <div key={g.id} className='bg-card/50 rounded-lg p-3'>
+                    <div className='flex items-start gap-6'>
+                      {/* Blue Side */}
+                      <div className={`${blueWon ? 'opacity-100' : 'opacity-70'}`}>
+                        {/* Blue Team Name */}
+                        <div className='flex items-center gap-2 mb-2 w-[200px] justify-end'>
+                          <div className={`text-xs font-medium ${blueWon ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {g.blueSide}
+                          </div>
+                          {blueWon && <Crown className='text-emerald-500' size={16} weight='fill' />}
+                        </div>
+                        {/* Blue Picks & Bans */}
+                        <div className='space-y-2'>
+                          {/* Blue Picks */}
+                          <div className='flex gap-1 justify-end'>
+                            {g.actions
+                              .filter(a => a.type === 'PICK' && a.team === 'BLUE')
+                              .sort((a, b) => a.position - b.position)
+                              .map(a => (
+                                <div
+                                  key={a.position}
+                                  className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                  title={a.champion}
+                                >
+                                  <img
+                                    src={getChampionImageUrl(a.champion)}
+                                    alt={a.champion}
+                                    className='w-full h-full object-cover scale-[115%]'
+                                    loading='lazy'
+                                  />
+                                  <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
+                                    <span className='text-[8px] font-medium text-white text-center px-0.5 leading-tight'>
+                                      {a.champion}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                          {/* Blue Bans */}
+                          <div className='flex gap-1 justify-end'>
+                            {g.actions
+                              .filter(a => a.type === 'BAN' && a.team === 'BLUE')
+                              .sort((a, b) => a.position - b.position)
+                              .map(a => (
+                                <div
+                                  key={a.position}
+                                  className='relative w-9 h-9 overflow-hidden rounded-sm group opacity-75'
+                                  title={`Ban: ${a.champion}`}
+                                >
+                                  <img
+                                    src={getChampionImageUrl(a.champion)}
+                                    alt={a.champion}
+                                    className='w-full h-full object-cover scale-[115%] grayscale'
+                                    loading='lazy'
+                                  />
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Game Number */}
+                      <div className='text-xs font-medium text-muted-foreground min-w-[60px] text-center mt-2'>
+                        Game {g.gameNumber}
+                      </div>
+
+                      {/* Red Side */}
+                      <div className={`${!blueWon ? 'opacity-100' : 'opacity-70'}`}>
+                        {/* Red Team Name */}
+                        <div className='flex items-center gap-2 mb-2 w-[200px]'>
+                          {!blueWon && <Crown className='text-emerald-500' size={16} weight='fill' />}
+                          <div className={`text-xs font-medium ${!blueWon ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {g.redSide}
+                          </div>
+                        </div>
+                        {/* Red Picks & Bans */}
+                        <div className='space-y-2'>
+                          {/* Red Picks */}
+                          <div className='flex gap-1'>
+                            {g.actions
+                              .filter(a => a.type === 'PICK' && a.team === 'RED')
+                              .sort((a, b) => a.position - b.position)
+                              .map(a => (
+                                <div
+                                  key={a.position}
+                                  className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                  title={a.champion}
+                                >
+                                  <img
+                                    src={getChampionImageUrl(a.champion)}
+                                    alt={a.champion}
+                                    className='w-full h-full object-cover scale-[115%]'
+                                    loading='lazy'
+                                  />
+                                  <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
+                                    <span className='text-[8px] font-medium text-white text-center px-0.5 leading-tight'>
+                                      {a.champion}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                          {/* Red Bans */}
+                          <div className='flex gap-1'>
+                            {g.actions
+                              .filter(a => a.type === 'BAN' && a.team === 'RED')
+                              .sort((a, b) => a.position - b.position)
+                              .map(a => (
+                                <div
+                                  key={a.position}
+                                  className='relative w-9 h-9 overflow-hidden rounded-sm group opacity-75'
+                                  title={`Ban: ${a.champion}`}
+                                >
+                                  <img
+                                    src={getChampionImageUrl(a.champion)}
+                                    alt={a.champion}
+                                    className='w-full h-full object-cover scale-[115%] grayscale'
+                                    loading='lazy'
+                                  />
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
           </div>
         </div>
       )}

@@ -11,6 +11,7 @@ import {
 } from '../../client/components/ui/select'
 import { Button } from '../../client/components/ui/button'
 import { Copy, Check } from '@phosphor-icons/react'
+import { Checkbox } from '../../client/components/ui/checkbox'
 
 type SeriesArgs = {
   team1Name: string
@@ -136,11 +137,9 @@ export function CreateSeriesPage() {
           </div>
 
           <div className='flex items-center'>
-            <input
-              type='checkbox'
+            <Checkbox
               name='fearlessDraft'
               id='fearlessDraft'
-              className='h-4 w-4 rounded bg-input border-input text-primary focus:ring-ring'
             />
             <label htmlFor='fearlessDraft' className='ml-2 block text-sm'>
               Enable Fearless Draft (champions can only be picked once per series)
@@ -157,13 +156,13 @@ export function CreateSeriesPage() {
             </motion.div>
           )}
 
-          <button
+          <Button
             type='submit'
             disabled={isLoading}
             className='w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50'
           >
             {isLoading ? 'Creating...' : 'Create Series'}
-          </button>
+          </Button>
         </form>
 
         {urls.blueUrl && (

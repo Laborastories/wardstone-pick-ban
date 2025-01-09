@@ -1,7 +1,7 @@
 import { useQuery } from 'wasp/client/operations'
 import { getGame, getSeries } from 'wasp/client/operations'
 import { motion } from 'motion/react'
-import { type Game, type Series, type DraftAction } from 'wasp/entities'
+import { type Game, type Series } from 'wasp/entities'
 import { useEffect, useState } from 'react'
 import { useSocket, useSocketListener, ServerToClientPayload } from 'wasp/client/webSocket'
 import { Button } from '../../client/components/ui/button'
@@ -16,10 +16,20 @@ import { SideSelection } from '../components/SideSelection'
 type GameWithRelations = Game & {
   series: Series & {
     games: (Game & {
-      actions: DraftAction[]
+      actions: {
+        type: string
+        champion: string
+        team: 'BLUE' | 'RED'
+        position: number
+      }[]
     })[]
   }
-  actions: DraftAction[]
+  actions: {
+    type: string
+    champion: string
+    team: 'BLUE' | 'RED'
+    position: number
+  }[]
 }
 
 type ReadyStates = {

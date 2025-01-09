@@ -152,7 +152,7 @@ export function ChampionGrid({
                 prefetchImage(getChampionImageUrl(champion.id, 'splash'))
               }}
               disabled={isDisabled}
-              className={`group relative flex h-16 w-16 flex-col items-center justify-center rounded transition-colors hover:bg-accent ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
+              className={`group relative flex h-24 w-24 flex-col items-center justify-center rounded transition-colors hover:bg-accent ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
               title={`${champion.name}${isUsed ? ' (Already picked in this series)' : isBanned ? ' (Banned this game)' : ''}`}
             >
               <div className='relative aspect-square h-full w-full overflow-hidden rounded'>

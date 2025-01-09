@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import './auth.css'
 
 import type { CustomizationOptions } from 'wasp/client/auth'
-import { Mountains } from '@phosphor-icons/react'
+import { Strategy } from '@phosphor-icons/react'
 
 export const authAppearance: CustomizationOptions['appearance'] = {
   colors: {
@@ -24,7 +24,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export function Login() {
   return (
     <Layout>
-      <Mountains size={100} weight='thin' />
+      <Strategy size={100} weight='thin' />
       <div className='login'>
         <LoginForm appearance={authAppearance} />
       </div>
@@ -51,7 +51,7 @@ export function Login() {
 export function Signup() {
   return (
     <Layout>
-      <Mountains size={100} weight='thin' />
+      <Strategy size={100} weight='thin' />
       <div className='login login-text'>
         <SignupForm appearance={authAppearance} />
       </div>

@@ -45,9 +45,18 @@ export function CreateSeriesPage() {
     setUrls({})
 
     const formData = new FormData(e.currentTarget)
+    const team1Name = formData.get('team1Name') as string
+    const team2Name = formData.get('team2Name') as string
+
+    if (team1Name.toLowerCase() === team2Name.toLowerCase()) {
+      setError('Team names must be different')
+      setIsLoading(false)
+      return
+    }
+
     const data: SeriesArgs = {
-      team1Name: formData.get('team1Name') as string,
-      team2Name: formData.get('team2Name') as string,
+      team1Name,
+      team2Name,
       matchName: formData.get('matchName') as string,
       format: formData.get('format') as 'BO1' | 'BO3' | 'BO5',
       fearlessDraft: formData.get('fearlessDraft') === 'on',

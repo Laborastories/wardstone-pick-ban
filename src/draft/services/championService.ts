@@ -89,7 +89,7 @@ const championRoles: Record<string, ChampionRole[]> = {
   Aatrox: ['top'],
   Ahri: ['mid'],
   Akali: ['top', 'mid'],
-  Akshan: ['mid'],
+  Akshan: ['top', 'mid'],
   Alistar: ['support'],
   Ambessa: ['top', 'jungle'],
   Amumu: ['jungle'],
@@ -115,16 +115,16 @@ const championRoles: Record<string, ChampionRole[]> = {
   Diana: ['jungle'],
   DrMundo: ['top', 'jungle'],
   Draven: ['bot'],
-  Ekko: ['jungle'],
+  Ekko: ['jungle', 'mid'],
   Elise: ['jungle'],
   Evelynn: ['jungle'],
   Ezreal: ['bot'],
-  Fiddlesticks: ['jungle'],
+  Fiddlesticks: ['jungle', 'support'],
   Fiora: ['top'],
   Fizz: ['mid'],
   Galio: ['mid'],
   Gangplank: ['top'],
-  Garen: ['top'],
+  Garen: ['top', 'mid'],
   Gnar: ['top'],
   Gragas: ['top', 'jungle'],
   Graves: ['jungle'],
@@ -165,7 +165,7 @@ const championRoles: Record<string, ChampionRole[]> = {
   Lux: ['support', 'mid'],
   Malphite: ['top'],
   Malzahar: ['mid'],
-  Maokai: ['support'],
+  Maokai: ['top', 'jungle', 'support'],
   MasterYi: ['jungle'],
   Milio: ['support'],
   MissFortune: ['bot'],
@@ -254,7 +254,7 @@ const championRoles: Record<string, ChampionRole[]> = {
   Ziggs: ['mid'],
   Zilean: ['support'],
   Zoe: ['mid'],
-  // 'Zyra': ['support'],
+  Zyra: ['support'],
 }
 
 // Fallback role mapping from DDragon tags to our roles
@@ -265,7 +265,6 @@ function getDefaultRolesFromTags(tags: string[]): ChampionRole[] {
     roles.push('bot')
   }
   if (tags.includes('Support')) {
-    console.log('Support tag found')
     roles.push('support')
   }
   if (tags.includes('Tank') && !roles.length) {

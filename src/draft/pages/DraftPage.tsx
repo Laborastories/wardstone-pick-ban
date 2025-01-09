@@ -277,13 +277,16 @@ export function DraftPage() {
           className={cn(
             'relative overflow-hidden rounded-sm border',
             type === 'PICK' ? 'h-full' : 'aspect-square w-24',
-            isActive &&
-              'shadow-[0_0_15px_rgba(var(--primary)/0.5)] ring-2 ring-primary',
+            isActive && 'ring-2 ring-primary',
             (isPending || isPreviewed) && 'ring-2 ring-primary',
             !isActive && !isPending && !isPreviewed && 'border-border',
-            isActive && 'animate-[glow_3s_ease-in-out_infinite]',
           )}
         >
+          {isActive && (
+            <div
+              className='absolute inset-0 animate-glow bg-primary/40'
+            />
+          )}
           <AnimatePresence mode='wait'>
             {action ? (
               <motion.div
@@ -483,7 +486,7 @@ export function DraftPage() {
             </div>
 
             {/* Center Content */}
-            <div className='flex flex-1 flex-col gap-4'>
+            <div className='flex flex-1 flex-col gap-4 min-w-min'>
               {/* Series Info */}
               <div className='flex-none'>
                 {(game as GameWithRelations)?.series && (
@@ -586,7 +589,7 @@ export function DraftPage() {
 
                     {/* Champion Grid */}
                     <div className='flex min-h-0 flex-1 justify-center'>
-                      <div className='w-fit'>
+                      <div className='min-w-[800px]'>
                         <ChampionGrid
                           onSelect={handleChampionSelect}
                           disabled={
@@ -601,9 +604,11 @@ export function DraftPage() {
                             .filter(a => a.type === 'BAN')
                             .map(a => a.champion)}
                           usedChampions={[
+                            // Current game picks
                             ...gameWithRelations.actions
                               .filter(a => a.type === 'PICK')
                               .map(a => a.champion),
+                            // If fearless draft, add all picks from previous games
                             ...(gameWithRelations.series.fearlessDraft
                               ? gameWithRelations.series.games
                                   .filter(

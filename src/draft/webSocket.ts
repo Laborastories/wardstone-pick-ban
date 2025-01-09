@@ -217,8 +217,8 @@ export const webSocketFn: WebSocketFn = io => {
             },
           })
 
-          if (series?.fearlessDraft) {
-            const isChampionUsed = series.games
+          if (series?.fearlessDraft && type === 'PICK') {
+            const isChampionUsedInSeries = series.games
               .filter(g => g.gameNumber < game.gameNumber)
               .some(g =>
                 g.actions.some(
@@ -226,7 +226,7 @@ export const webSocketFn: WebSocketFn = io => {
                 ),
               )
 
-            if (isChampionUsed) {
+            if (isChampionUsedInSeries) {
               console.log(
                 `[WS] ❌ Champion ${champion} already used in series (fearless draft)`,
               )
@@ -466,11 +466,20 @@ export const webSocketFn: WebSocketFn = io => {
             currentGames: series.games.length + 1,
           })
 
+          // Initialize ready states for the new game
+          gameReadyStates[nextGame.id] = {}
+
           // Emit game created event
           io.emit('gameCreated', {
             gameId: nextGame.id,
             seriesId: series.id,
             gameNumber: nextGameNumber,
+          })
+
+          // Emit ready state update for the new game
+          io.emit('readyStateUpdate', {
+            gameId: nextGame.id,
+            readyStates: gameReadyStates[nextGame.id],
           })
         }
       } catch (error) {

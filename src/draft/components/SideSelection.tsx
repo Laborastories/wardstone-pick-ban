@@ -1,5 +1,7 @@
 import { useSocket } from 'wasp/client/webSocket'
 import { type Series } from 'wasp/entities'
+import { useState } from 'react'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../client/components/ui/alert-dialog'
 
 type SideSelectionProps = {
   series: Series
@@ -9,15 +11,21 @@ type SideSelectionProps = {
 
 export function SideSelection({ series, gameNumber, side }: SideSelectionProps) {
   const { socket } = useSocket()
+  const [selectedSide, setSelectedSide] = useState<'blue' | 'red' | null>(null)
 
-  const handleSideSelect = (selectedSide: 'blue' | 'red') => {
-    if (!socket) return
+  const handleSideSelect = (side: 'blue' | 'red') => {
+    setSelectedSide(side)
+  }
+
+  const handleConfirm = () => {
+    if (!socket || !selectedSide) return
     socket.emit('selectSide', {
       seriesId: series.id,
       gameNumber,
       side: selectedSide,
       auth: side === 'team1' ? series.team1AuthToken : series.team2AuthToken
     })
+    setSelectedSide(null)
   }
 
   return (
@@ -39,6 +47,23 @@ export function SideSelection({ series, gameNumber, side }: SideSelectionProps) 
           <div className='text-sm text-[hsl(var(--team-red-foreground))/0.8]'>Click to play on Red Side</div>
         </button>
       </div>
+
+      <AlertDialog open={!!selectedSide} onOpenChange={() => setSelectedSide(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Side Selection</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to play on {selectedSide === 'blue' ? 'Blue' : 'Red'} side? This cannot be changed once confirmed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>
+              Confirm {selectedSide === 'blue' ? 'Blue' : 'Red'} Side
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 } 

@@ -1,8 +1,9 @@
 import { useSocket } from 'wasp/client/webSocket'
 import { type Series, type Game } from 'wasp/entities'
-import { Crown } from '@phosphor-icons/react'
+import { Crown, CaretDown } from '@phosphor-icons/react'
 import { Link } from 'wasp/client/router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { getChampions, getChampionImageUrl } from '../services/championService'
 
 type SeriesInfoProps = {
@@ -22,6 +23,7 @@ type SeriesInfoProps = {
 
 export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps) {
   const { socket } = useSocket()
+  const [showPreviousGames, setShowPreviousGames] = useState(false)
 
   // Load champion data on mount
   useEffect(() => {
@@ -109,14 +111,14 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
                   auth: side ? (side === 'team1' ? series.team1AuthToken : series.team2AuthToken) : ''
                 }}
                 className={`
-                  px-4 py-2 rounded-lg font-medium transition-all
+                  w-[120px] px-4 py-2 rounded-lg font-medium transition-all
                   ${isCurrentGame
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-accent text-accent-foreground'
                     : isNextGame
                       ? 'bg-[hsl(var(--accent))] text-accent-foreground animate-pulse'
                       : isDisabled
                         ? 'bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50'
-                        : 'bg-muted hover:bg-muted/80'
+                        : 'bg-muted hover:bg-accent hover:text-accent-foreground'
                   }
                   ${game?.status === 'COMPLETED' && !isCurrentGame ? 'ring-2 ring-accent' : ''}
                 `}
@@ -128,8 +130,8 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
               >
                 <div className='text-sm'>Game {gameNum}</div>
                 {game?.status === 'COMPLETED' && (
-                  <div className='text-xs mt-1 opacity-75'>
-                    {game.winner === 'BLUE' ? game.blueSide : game.redSide} won
+                  <div className='text-xs mt-1 opacity-75 truncate'>
+                    {game.winner === 'BLUE' ? game.blueSide : game.redSide}
                   </div>
                 )}
               </Link>
@@ -169,146 +171,198 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
 
       {/* Previous Games */}
       {currentGameNumber > 1 && (
-        <div className='space-y-4'>
-          <h3 className='text-sm font-medium text-muted-foreground text-center'>
-            Previous Games
-          </h3>
-          <div className='space-y-3 w-fit mx-auto'>
-            {series.games
-              .filter(g => g.status === 'COMPLETED' && g.gameNumber < currentGameNumber)
-              .sort((a, b) => a.gameNumber - b.gameNumber)
-              .map(g => {
-                const blueWon = g.winner === 'BLUE'
-                return (
-                  <div key={g.id} className='bg-card/50 rounded-lg p-3'>
-                    <div className='flex items-start gap-6'>
-                      {/* Blue Side */}
-                      <div className={`${blueWon ? 'opacity-100' : 'opacity-70'}`}>
-                        {/* Blue Team Name */}
-                        <div className='flex items-center gap-2 mb-2 w-[200px] justify-end'>
-                          <div className={`text-xs font-medium ${blueWon ? 'text-emerald-500' : 'text-red-500'}`}>
-                            {g.blueSide}
-                          </div>
-                          {blueWon && <Crown className='text-emerald-500' size={16} weight='fill' />}
-                        </div>
-                        {/* Blue Picks & Bans */}
-                        <div className='space-y-2'>
-                          {/* Blue Picks */}
-                          <div className='flex gap-1 justify-end'>
-                            {g.actions
-                              .filter(a => a.type === 'PICK' && a.team === 'BLUE')
-                              .sort((a, b) => a.position - b.position)
-                              .map(a => (
-                                <div
-                                  key={a.position}
-                                  className='relative w-9 h-9 overflow-hidden rounded-sm group'
-                                  title={a.champion}
-                                >
-                                  <img
-                                    src={getChampionImageUrl(a.champion)}
-                                    alt={a.champion}
-                                    className='w-full h-full object-cover scale-[115%]'
-                                    loading='lazy'
-                                  />
-                                  <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
-                                    <span className='text-[8px] font-medium text-white text-center px-0.5 leading-tight'>
-                                      {a.champion}
-                                    </span>
-                                  </div>
+        <div className='space-y-2'>
+          <button 
+            onClick={() => setShowPreviousGames(!showPreviousGames)}
+            className='w-full flex items-center justify-between px-4 py-2 bg-card/50 rounded-lg hover:bg-card/80 transition-colors'
+          >
+            <h3 className='text-sm font-medium text-muted-foreground'>
+              Previous Games
+            </h3>
+            <motion.div
+              animate={{ rotate: showPreviousGames ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <CaretDown className='text-muted-foreground' size={16} />
+            </motion.div>
+          </button>
+          
+          <AnimatePresence>
+            {showPreviousGames && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className='overflow-hidden'
+              >
+                <div className='space-y-3 w-fit mx-auto pt-2'>
+                  {series.games
+                    .filter(g => g.status === 'COMPLETED' && g.gameNumber < currentGameNumber)
+                    .sort((a, b) => a.gameNumber - b.gameNumber)
+                    .map(g => {
+                      const blueWon = g.winner === 'BLUE'
+                      return (
+                        <div key={g.id} className='bg-card/50 rounded-lg p-3'>
+                          <div className='flex items-start gap-6'>
+                            {/* Blue Side */}
+                            <div className={`${blueWon ? 'opacity-100' : 'opacity-70'}`}>
+                              {/* Blue Team Name */}
+                              <div className='flex items-center gap-2 mb-2 w-[200px] justify-end'>
+                                <div className={`text-xs font-medium ${blueWon ? 'text-[hsl(var(--team-blue))]' : 'text-muted-foreground'}`}>
+                                  {g.blueSide}
                                 </div>
-                              ))}
-                          </div>
-                          {/* Blue Bans */}
-                          <div className='flex gap-1 justify-end'>
-                            {g.actions
-                              .filter(a => a.type === 'BAN' && a.team === 'BLUE')
-                              .sort((a, b) => a.position - b.position)
-                              .map(a => (
-                                <div
-                                  key={a.position}
-                                  className='relative w-9 h-9 overflow-hidden rounded-sm group opacity-75'
-                                  title={`Ban: ${a.champion}`}
-                                >
-                                  <img
-                                    src={getChampionImageUrl(a.champion)}
-                                    alt={a.champion}
-                                    className='w-full h-full object-cover scale-[115%] grayscale'
-                                    loading='lazy'
-                                  />
+                                {blueWon && <Crown className='text-[hsl(var(--team-blue))]' size={16} weight='fill' />}
+                              </div>
+                              {/* Blue Picks & Bans */}
+                              <div className='space-y-2'>
+                                {/* Blue Picks */}
+                                <div className='flex gap-1 justify-end'>
+                                  {g.actions
+                                    .filter(a => a.type === 'PICK' && a.team === 'BLUE')
+                                    .sort((a, b) => a.position - b.position)
+                                    .map(a => (
+                                      <motion.div
+                                        key={a.position}
+                                        initial={{ scale: 0.8, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        transition={{ 
+                                          type: "spring",
+                                          stiffness: 400,
+                                          damping: 25
+                                        }}
+                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        title={a.champion}
+                                      >
+                                        <img
+                                          src={getChampionImageUrl(a.champion)}
+                                          alt={a.champion}
+                                          className='w-full h-full object-cover scale-[115%]'
+                                          loading='lazy'
+                                        />
+                                        <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
+                                          <span className='text-[8px] font-medium text-white text-center px-0.5 leading-tight'>
+                                            {a.champion}
+                                          </span>
+                                        </div>
+                                      </motion.div>
+                                    ))}
                                 </div>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
+                                {/* Blue Bans */}
+                                <div className='flex gap-1 justify-end'>
+                                  {g.actions
+                                    .filter(a => a.type === 'BAN' && a.team === 'BLUE')
+                                    .sort((a, b) => a.position - b.position)
+                                    .map(a => (
+                                      <motion.div
+                                        key={a.position}
+                                        initial={{ scale: 0.8, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 0.75 }}
+                                        transition={{ 
+                                          type: "spring",
+                                          stiffness: 400,
+                                          damping: 25
+                                        }}
+                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        title={`Ban: ${a.champion}`}
+                                      >
+                                        <img
+                                          src={getChampionImageUrl(a.champion)}
+                                          alt={a.champion}
+                                          className='w-full h-full object-cover scale-[115%] grayscale'
+                                          loading='lazy'
+                                        />
+                                      </motion.div>
+                                    ))}
+                                </div>
+                              </div>
+                            </div>
 
-                      {/* Game Number */}
-                      <div className='text-xs font-medium text-muted-foreground min-w-[60px] text-center mt-2'>
-                        Game {g.gameNumber}
-                      </div>
+                            {/* Game Number */}
+                            <div className='text-xs font-medium text-muted-foreground min-w-[60px] text-center mt-2'>
+                              Game {g.gameNumber}
+                            </div>
 
-                      {/* Red Side */}
-                      <div className={`${!blueWon ? 'opacity-100' : 'opacity-70'}`}>
-                        {/* Red Team Name */}
-                        <div className='flex items-center gap-2 mb-2 w-[200px]'>
-                          {!blueWon && <Crown className='text-emerald-500' size={16} weight='fill' />}
-                          <div className={`text-xs font-medium ${!blueWon ? 'text-emerald-500' : 'text-red-500'}`}>
-                            {g.redSide}
+                            {/* Red Side */}
+                            <div className={`${!blueWon ? 'opacity-100' : 'opacity-70'}`}>
+                              {/* Red Team Name */}
+                              <div className='flex items-center gap-2 mb-2 w-[200px]'>
+                                {!blueWon && <Crown className='text-[hsl(var(--team-red))]' size={16} weight='fill' />}
+                                <div className={`text-xs font-medium ${!blueWon ? 'text-[hsl(var(--team-red))]' : 'text-muted-foreground'}`}>
+                                  {g.redSide}
+                                </div>
+                              </div>
+                              {/* Red Picks & Bans */}
+                              <div className='space-y-2'>
+                                {/* Red Picks */}
+                                <div className='flex gap-1'>
+                                  {g.actions
+                                    .filter(a => a.type === 'PICK' && a.team === 'RED')
+                                    .sort((a, b) => a.position - b.position)
+                                    .map(a => (
+                                      <motion.div
+                                        key={a.position}
+                                        initial={{ scale: 0.8, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        transition={{ 
+                                          type: "spring",
+                                          stiffness: 400,
+                                          damping: 25
+                                        }}
+                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        title={a.champion}
+                                      >
+                                        <img
+                                          src={getChampionImageUrl(a.champion)}
+                                          alt={a.champion}
+                                          className='w-full h-full object-cover scale-[115%]'
+                                          loading='lazy'
+                                        />
+                                        <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
+                                          <span className='text-[8px] font-medium text-white text-center px-0.5 leading-tight'>
+                                            {a.champion}
+                                          </span>
+                                        </div>
+                                      </motion.div>
+                                    ))}
+                                </div>
+                                {/* Red Bans */}
+                                <div className='flex gap-1'>
+                                  {g.actions
+                                    .filter(a => a.type === 'BAN' && a.team === 'RED')
+                                    .sort((a, b) => a.position - b.position)
+                                    .map(a => (
+                                      <motion.div
+                                        key={a.position}
+                                        initial={{ scale: 0.8, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 0.75 }}
+                                        transition={{ 
+                                          type: "spring",
+                                          stiffness: 400,
+                                          damping: 25
+                                        }}
+                                        className='relative w-9 h-9 overflow-hidden rounded-sm group'
+                                        title={`Ban: ${a.champion}`}
+                                      >
+                                        <img
+                                          src={getChampionImageUrl(a.champion)}
+                                          alt={a.champion}
+                                          className='w-full h-full object-cover scale-[115%] grayscale'
+                                          loading='lazy'
+                                        />
+                                      </motion.div>
+                                    ))}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        {/* Red Picks & Bans */}
-                        <div className='space-y-2'>
-                          {/* Red Picks */}
-                          <div className='flex gap-1'>
-                            {g.actions
-                              .filter(a => a.type === 'PICK' && a.team === 'RED')
-                              .sort((a, b) => a.position - b.position)
-                              .map(a => (
-                                <div
-                                  key={a.position}
-                                  className='relative w-9 h-9 overflow-hidden rounded-sm group'
-                                  title={a.champion}
-                                >
-                                  <img
-                                    src={getChampionImageUrl(a.champion)}
-                                    alt={a.champion}
-                                    className='w-full h-full object-cover scale-[115%]'
-                                    loading='lazy'
-                                  />
-                                  <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
-                                    <span className='text-[8px] font-medium text-white text-center px-0.5 leading-tight'>
-                                      {a.champion}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                          {/* Red Bans */}
-                          <div className='flex gap-1'>
-                            {g.actions
-                              .filter(a => a.type === 'BAN' && a.team === 'RED')
-                              .sort((a, b) => a.position - b.position)
-                              .map(a => (
-                                <div
-                                  key={a.position}
-                                  className='relative w-9 h-9 overflow-hidden rounded-sm group opacity-75'
-                                  title={`Ban: ${a.champion}`}
-                                >
-                                  <img
-                                    src={getChampionImageUrl(a.champion)}
-                                    alt={a.champion}
-                                    className='w-full h-full object-cover scale-[115%] grayscale'
-                                    loading='lazy'
-                                  />
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-          </div>
+                      )
+                    })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>

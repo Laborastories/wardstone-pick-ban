@@ -1,10 +1,12 @@
 import { useSocket } from 'wasp/client/webSocket'
 import { type Series, type Game } from 'wasp/entities'
-import { Crown, CaretDown } from '@phosphor-icons/react'
+import { Crown, CaretDown, Copy } from '@phosphor-icons/react'
 import { Link } from 'wasp/client/router'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { getChampions, getChampionImageUrl } from '../services/championService'
+import { Button } from '../../client/components/ui/button'
+import { useToast } from '../../hooks/use-toast'
 
 type SeriesInfoProps = {
   series: Series & {
@@ -24,11 +26,31 @@ type SeriesInfoProps = {
 export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps) {
   const { socket } = useSocket()
   const [showPreviousGames, setShowPreviousGames] = useState(false)
+  const { toast } = useToast()
 
   // Load champion data on mount
   useEffect(() => {
     getChampions()
   }, [])
+
+  const handleCopyUrls = () => {
+    const baseUrl = window.location.origin
+    const urls = `${series.team1Name}:
+${baseUrl}/draft/${series.id}/1/team1/${series.team1AuthToken}
+
+${series.team2Name}:
+${baseUrl}/draft/${series.id}/1/team2/${series.team2AuthToken}
+
+Spectator URL:
+${baseUrl}/draft/${series.id}/1`
+
+    navigator.clipboard.writeText(urls).then(() => {
+      toast({
+        title: "URLs Copied",
+        description: "All draft URLs have been copied to your clipboard."
+      })
+    })
+  }
 
   if (!series?.games) {
     return null
@@ -66,58 +88,70 @@ export function SeriesInfo({ series, currentGameNumber, side }: SeriesInfoProps)
       {/* Series Header */}
       <div className='space-y-4'>
         {/* Match Name and Score */}
-        <div className='flex items-center justify-center gap-8 text-xl'>
-          <div className='w-[200px] flex justify-end'>
-            <div className='flex items-center gap-2'>
-              <motion.span 
-                className={`font-bold uppercase tracking-wider ${
-                  team1Wins >= gamesNeeded 
-                    ? 'text-[hsl(var(--team-blue))] opacity-100' 
-                    : 'text-[hsl(var(--team-blue))] opacity-90'
-                }`}
-                animate={team1Wins >= gamesNeeded ? {
-                  textShadow: [
-                    '0 0 4px hsl(var(--team-blue) / 0.7)',
-                    '0 0 8px hsl(var(--team-blue) / 0.7)',
-                    '0 0 4px hsl(var(--team-blue) / 0.7)'
-                  ]
-                } : {}}
-                transition={{
-                  repeat: Infinity,
-                  duration: 2
-                }}
-              >
-                {series.team1Name}
-              </motion.span>
-              {team1Wins >= gamesNeeded && <Crown className='text-[hsl(var(--team-blue))]' size={20} weight='fill' />}
+        <div className='relative'>
+          <div className='absolute right-0 top-0'>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCopyUrls}
+              className='h-8 w-8'
+            >
+              <Copy size={14} />
+            </Button>
+          </div>
+          <div className='flex items-center justify-center gap-8 text-xl'>
+            <div className='w-[200px] flex justify-end'>
+              <div className='flex items-center gap-2'>
+                <motion.span 
+                  className={`font-bold uppercase tracking-wider ${
+                    team1Wins >= gamesNeeded 
+                      ? 'text-[hsl(var(--team-blue))] opacity-100' 
+                      : 'text-[hsl(var(--team-blue))] opacity-90'
+                  }`}
+                  animate={team1Wins >= gamesNeeded ? {
+                    textShadow: [
+                      '0 0 4px hsl(var(--team-blue) / 0.7)',
+                      '0 0 8px hsl(var(--team-blue) / 0.7)',
+                      '0 0 4px hsl(var(--team-blue) / 0.7)'
+                    ]
+                  } : {}}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2
+                  }}
+                >
+                  {series.team1Name}
+                </motion.span>
+                {team1Wins >= gamesNeeded && <Crown className='text-[hsl(var(--team-blue))]' size={20} weight='fill' />}
+              </div>
             </div>
-          </div>
-          <div className='min-w-[80px] px-6 py-2 bg-muted rounded-lg text-center font-bold shrink-0'>
-            {team1Wins} - {team2Wins}
-          </div>
-          <div className='w-[200px] flex justify-start'>
-            <div className='flex items-center gap-2'>
-              {team2Wins >= gamesNeeded && <Crown className='text-[hsl(var(--team-red))]' size={20} weight='fill' />}
-              <motion.span 
-                className={`font-bold uppercase tracking-wider ${
-                  team2Wins >= gamesNeeded 
-                    ? 'text-[hsl(var(--team-red))] opacity-100' 
-                    : 'text-[hsl(var(--team-red))] opacity-90'
-                }`}
-                animate={team2Wins >= gamesNeeded ? {
-                  textShadow: [
-                    '0 0 4px hsl(var(--team-red) / 0.7)',
-                    '0 0 8px hsl(var(--team-red) / 0.7)',
-                    '0 0 4px hsl(var(--team-red) / 0.7)'
-                  ]
-                } : {}}
-                transition={{
-                  repeat: Infinity,
-                  duration: 2
-                }}
-              >
-                {series.team2Name}
-              </motion.span>
+            <div className='min-w-[80px] px-6 py-2 bg-muted rounded-lg text-center font-bold shrink-0'>
+              {team1Wins} - {team2Wins}
+            </div>
+            <div className='w-[200px] flex justify-start'>
+              <div className='flex items-center gap-2'>
+                {team2Wins >= gamesNeeded && <Crown className='text-[hsl(var(--team-red))]' size={20} weight='fill' />}
+                <motion.span 
+                  className={`font-bold uppercase tracking-wider ${
+                    team2Wins >= gamesNeeded 
+                      ? 'text-[hsl(var(--team-red))] opacity-100' 
+                      : 'text-[hsl(var(--team-red))] opacity-90'
+                  }`}
+                  animate={team2Wins >= gamesNeeded ? {
+                    textShadow: [
+                      '0 0 4px hsl(var(--team-red) / 0.7)',
+                      '0 0 8px hsl(var(--team-red) / 0.7)',
+                      '0 0 4px hsl(var(--team-red) / 0.7)'
+                    ]
+                  } : {}}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2
+                  }}
+                >
+                  {series.team2Name}
+                </motion.span>
+              </div>
             </div>
           </div>
         </div>

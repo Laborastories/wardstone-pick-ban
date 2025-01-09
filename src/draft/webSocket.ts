@@ -1,6 +1,7 @@
 import type { WebSocketDefinition, WaspSocketData } from 'wasp/server/webSocket'
 import { prisma } from 'wasp/server'
 import { type DraftAction } from 'wasp/entities'
+import { getChampions, type Champion } from '../draft/services/championService'
 
 export interface ServerToClientEvents {
   readyStateUpdate: (data: { gameId: string, readyStates: { blue?: boolean, red?: boolean } }) => void
@@ -48,30 +49,13 @@ export const webSocketFn: WebSocketFn = (io) => {
   io.on('connection', (socket) => {
     console.log('Client connected, socket id:', socket.id, 'auth:', socket.data?.token)
 
-    socket.on('joinGame', (gameId) => {
-      console.log('Client joining game:', gameId)
+    socket.on('joinGame', (gameId: string) => {
+      console.log(`[WS] Client joined game ${gameId.slice(0, 8)}...`)
       socket.join(gameId)
-      console.log('Client joined game:', gameId)
-      
-      // If there are existing ready states for this game, send them to the new client
-      if (gameReadyStates[gameId]) {
-        socket.emit('readyStateUpdate', {
-          gameId,
-          readyStates: gameReadyStates[gameId]
-        })
-      }
-
-      // If there's an active timer for this game, send it to the new client
-      if (gameTimers[gameId]) {
-        socket.emit('timerUpdate', {
-          gameId,
-          timeRemaining: gameTimers[gameId].timeRemaining
-        })
-      }
     })
 
     socket.on('readyState', async ({ gameId, side, isReady }) => {
-      console.log('Ready state update:', { gameId, side, isReady })
+      console.log(`[WS] Ready state: ${side} team ${isReady ? 'ready' : 'not ready'}`)
 
       // Initialize game ready state if not exists
       if (!gameReadyStates[gameId]) {
@@ -118,12 +102,10 @@ export const webSocketFn: WebSocketFn = (io) => {
     })
 
     socket.on('draftAction', async ({ gameId, type, phase, team, champion, position }) => {
-      console.log('\n=== Draft Action Received ===')
-      console.log('Details:', { gameId, type, phase, team, champion, position })
+      console.log(`[WS] Draft action: ${team} ${type} ${champion} (pos: ${position})`)
 
       try {
         // Get the game and its actions to validate the draft action
-        console.log('Fetching game data...')
         const game = await prisma.game.findUnique({
           where: { id: gameId },
           include: {
@@ -137,7 +119,7 @@ export const webSocketFn: WebSocketFn = (io) => {
         })
 
         if (!game) {
-          console.error('❌ Game not found')
+          console.log(`[WS] ❌ Game ${gameId.slice(0, 8)}... not found`)
           return
         }
         console.log('✓ Game found:', { 
@@ -148,46 +130,42 @@ export const webSocketFn: WebSocketFn = (io) => {
 
         // Validate game is in progress
         if (game.status !== 'IN_PROGRESS') {
-          console.error('❌ Game is not in progress, current status:', game.status)
+          console.log(`[WS] ❌ Game ${game.id.slice(0, 8)}... is not in progress`)
           return
         }
         console.log('✓ Game is in progress')
 
-        // Validate champion hasn't been picked or banned
-        console.log('Validating champion...')
-        const championUsed = game.actions.some(action => action.champion === champion)
-        if (championUsed) {
-          console.error('❌ Champion has already been picked or banned')
+        // Validate champion
+        const champions = await getChampions()
+        if (!champions.find((c: Champion) => c.id === champion)) {
+          console.log(`[WS] ❌ Invalid champion: ${champion}`)
           return
         }
         console.log('✓ Champion is available')
 
-        // If fearless draft is enabled, check if champion was used in previous games
-        if (game.series.fearlessDraft && position <= 10) { // Only check for picks, not bans
-          console.log('Checking fearless draft rules...')
-          const previousGames = await prisma.game.findMany({
-            where: {
-              seriesId: game.series.id,
-              gameNumber: { lt: game.gameNumber }
-            },
-            include: {
-              actions: true
+        // Check fearless draft rules
+        const series = await prisma.series.findUnique({
+          where: { id: game.seriesId },
+          include: {
+            games: {
+              include: { actions: true }
             }
-          })
+          }
+        })
 
-          const championUsedInSeries = previousGames.some(g => 
-            g.actions.some(a => a.champion === champion && a.type === 'PICK')
-          )
+        if (series?.fearlessDraft) {
+          const isChampionUsed = series.games
+            .filter(g => g.gameNumber < game.gameNumber)
+            .some(g => g.actions.some(a => a.type === 'PICK' && a.champion === champion))
 
-          if (championUsedInSeries) {
-            console.error('❌ Champion has already been picked in this series')
+          if (isChampionUsed) {
+            console.log(`[WS] ❌ Champion ${champion} already used in series (fearless draft)`)
             return
           }
-          console.log('✓ Champion is valid for fearless draft')
         }
+        console.log('✓ Champion is valid for fearless draft')
 
         // Create the draft action
-        console.log('Creating draft action...')
         const draftAction = await prisma.draftAction.create({
           data: {
             gameId,

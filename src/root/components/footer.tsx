@@ -37,7 +37,7 @@ const navigation = {
   social: [
     {
       name: 'GitHub',
-      href: 'https://github.com/wardbox',
+      href: 'https://github.com/Laborastories/wardstone-pick-ban',
       icon: 'GithubLogo',
     },
   ],
@@ -126,6 +126,7 @@ export function Footer() {
 
           {/* Social & Copyright */}
           <div className='flex items-center gap-6'>
+            <a href="https://www.buymeacoffee.com/wardbox" aria-label="Buy me a coffee"><img alt="Buy me a coffee" src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=wardbox&button_colour=474747&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00" /></a>
             <div className='flex gap-4'>
               {navigation.social.map(item => (
                 <a

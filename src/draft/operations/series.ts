@@ -1,6 +1,6 @@
 import { HttpError } from 'wasp/server'
-import { type Series } from 'wasp/entities'
-import { type GetSeries, type CreateSeries } from 'wasp/server/operations'
+import { type Series, type Game } from 'wasp/entities'
+import { type GetSeries, type CreateSeries, type GetGame } from 'wasp/server/operations'
 
 type SeriesArgs = {
   team1Name: string
@@ -11,14 +11,19 @@ type SeriesArgs = {
 }
 
 export const getSeries: GetSeries<{ seriesId: string }, Series> = async (args, context) => {
-  const { seriesId } = args
-
   const series = await context.entities.Series.findUnique({
-    where: { id: seriesId },
+    where: { id: args.seriesId },
     include: {
       games: {
         include: {
-          actions: true
+          actions: {
+            select: {
+              type: true,
+              champion: true,
+              team: true,
+              position: true
+            }
+          }
         }
       }
     }
@@ -28,7 +33,7 @@ export const getSeries: GetSeries<{ seriesId: string }, Series> = async (args, c
     throw new HttpError(404, 'Series not found')
   }
 
-  return series
+  return series as Series
 }
 
 export const createSeries: CreateSeries<SeriesArgs, Series> = async (args, context) => {
@@ -63,6 +68,71 @@ export const createSeries: CreateSeries<SeriesArgs, Series> = async (args, conte
     include: {
       games: true,
       creator: true
+    }
+  })
+
+  return series
+}
+
+export const getGame: GetGame<{ seriesId: string, gameNumber: string }, Game> = async ({ seriesId, gameNumber }, context) => {
+  const game = await context.entities.Game.findFirst({
+    where: { 
+      seriesId,
+      gameNumber: parseInt(gameNumber)
+    },
+    include: {
+      series: {
+        include: {
+          games: {
+            include: {
+              actions: {
+                select: {
+                  type: true,
+                  champion: true,
+                  team: true,
+                  position: true
+                }
+              }
+            }
+          }
+        }
+      },
+      actions: {
+        select: {
+          type: true,
+          champion: true,
+          team: true,
+          position: true
+        }
+      }
+    }
+  })
+
+  if (!game) {
+    throw new HttpError(404, 'Game not found')
+  }
+
+  return game as Game
+}
+
+export const getUserSeries = async (args: void, context: any) => {
+  if (!context.user) {
+    throw new HttpError(401)
+  }
+
+  const series = await context.entities.Series.findMany({
+    where: {
+      creatorId: context.user.id
+    },
+    orderBy: {
+      createdAt: 'desc'
+    },
+    include: {
+      games: {
+        orderBy: {
+          gameNumber: 'asc'
+        }
+      }
     }
   })
 

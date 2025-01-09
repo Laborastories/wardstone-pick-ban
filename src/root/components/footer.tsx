@@ -69,22 +69,17 @@ export function Footer() {
               ))}
             </nav>
           </div>
-
           <div className='flex items-center gap-4'>
-            <script
-              type='text/javascript'
-              aria-label='buy me a coffee'
-              src='https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js'
-              data-name='bmc-button'
-              data-slug='wardbox'
-              data-color='#FF5F5F'
-              data-emoji='☕'
-              data-font='Inter'
-              data-text='Buy me a coffee'
-              data-outline-color='#000000'
-              data-font-color='#ffffff'
-              data-coffee-color='#FFDD00'
-            ></script>
+            <a 
+              href="https://www.buymeacoffee.com/wardbox"
+              aria-label="Buy me a coffee"
+            >
+              <img 
+                src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wardbox&button_colour=404040&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00"
+                alt="Buy me a coffee"
+              />
+            </a>
+
             <div className='flex gap-4'>
               {navigation.social.map(item => (
                 <a

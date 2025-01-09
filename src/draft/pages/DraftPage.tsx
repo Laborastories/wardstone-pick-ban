@@ -399,7 +399,7 @@ export function DraftPage() {
             <div className='w-[20%] flex flex-col min-h-0'>
               <motion.h2 
                 className={cn(
-                  'text-sm font-bold text-center uppercase tracking-wider mb-1 flex-none',
+                  'text-2xl font-bold text-center uppercase tracking-wider mb-1 flex-none',
                   gameWithRelations.series.winner === gameWithRelations.blueSide 
                     ? 'text-blue-400' 
                     : 'text-blue-500'
@@ -544,7 +544,7 @@ export function DraftPage() {
             <div className='w-[20%] flex flex-col min-h-0'>
               <motion.h2 
                 className={cn(
-                  'text-sm font-bold text-center uppercase tracking-wider mb-1 flex-none',
+                  'text-2xl font-bold text-center uppercase tracking-wider mb-1 flex-none',
                   gameWithRelations.series.winner === gameWithRelations.redSide 
                     ? 'text-red-400' 
                     : 'text-red-500'

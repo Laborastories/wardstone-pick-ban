@@ -55,8 +55,7 @@ export function Footer() {
           <div className='flex items-center gap-4'>
             <Strategy size={16} weight='fill' />
             <span className='text-xs text-muted-foreground'>
-              &copy; {new Date().getFullYear()}{' '}
-              SCOUT AHEAD
+              &copy; {new Date().getFullYear()} SCOUT AHEAD
             </span>
             <nav className='flex gap-4' aria-label='Footer'>
               {navigation.main.map(item => (
@@ -72,7 +71,20 @@ export function Footer() {
           </div>
 
           <div className='flex items-center gap-4'>
-            <script type="text/javascript" aria-label='buy me a coffee' src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="wardbox" data-color="#FF5F5F" data-emoji="☕" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+            <script
+              type='text/javascript'
+              aria-label='buy me a coffee'
+              src='https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js'
+              data-name='bmc-button'
+              data-slug='wardbox'
+              data-color='#FF5F5F'
+              data-emoji='☕'
+              data-font='Inter'
+              data-text='Buy me a coffee'
+              data-outline-color='#000000'
+              data-font-color='#ffffff'
+              data-coffee-color='#FFDD00'
+            ></script>
             <div className='flex gap-4'>
               {navigation.social.map(item => (
                 <a

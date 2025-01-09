@@ -4,15 +4,9 @@ import { useLocation } from 'react-router-dom'
 import { cn, usePrefetch } from '../../lib/utils'
 import { Link } from 'wasp/client/router'
 import {
-  BookOpen,
   HouseSimple,
-  Layout,
   List,
-  Mountains,
-  PersonSimpleRun,
-  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-  Placeholder, // We do this so the create-page script can use a placeholder icon
-  Toolbox,
+  Strategy,
   User as UserIcon,
 } from '@phosphor-icons/react'
 import { ModeToggle } from '../../client/components/mode-toggle'
@@ -69,9 +63,9 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
             className='flex items-center space-x-2'
             onMouseEnter={() => prefetch('/', undefined, { assets: true })}
           >
-            <Mountains size={24} />
+            <Strategy size={24} />
             <span className='font-bold'>
-              {import.meta.env.REACT_APP_NAME || 'Roke'}
+              SCOUT AHEAD
             </span>
           </Link>
           <div className='hidden items-center space-x-4 text-muted-foreground md:flex lg:space-x-6'>
@@ -84,55 +78,6 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
               onMouseEnter={() => prefetch('/', undefined, { assets: true })}
             >
               <span>Home</span>
-            </Link>
-            <Link
-              to='/guide'
-              className={cn(
-                'text-md flex items-center space-x-2 font-medium transition-colors hover:text-primary',
-                location.pathname === '/guide' && 'text-primary',
-              )}
-              onMouseEnter={() =>
-                prefetch('/guide', undefined, { assets: true })
-              }
-            >
-              <span>Guide</span>
-            </Link>
-            <Link
-              to='/note-example'
-              className={cn(
-                'text-md flex items-center space-x-2 font-medium transition-colors hover:text-primary',
-                location.pathname === '/note-example' && 'text-primary',
-              )}
-              onMouseEnter={() =>
-                prefetch('/note-example', undefined, { assets: true })
-              }
-            >
-              <span>Notes</span>
-            </Link>
-            <Link
-              to='/motion'
-              className={cn(
-                'text-md flex items-center space-x-2 font-medium transition-colors hover:text-primary',
-                location.pathname === '/motion' && 'text-primary',
-              )}
-              onMouseEnter={() =>
-                prefetch('/motion', undefined, {
-                  assets: true,
-                  delay: 50,
-                })
-              }
-            >
-              <span>Motion</span>
-            </Link>
-            <Link
-              to='/utils'
-              className={cn(
-                'text-md flex items-center space-x-2 font-medium transition-colors hover:text-primary',
-                location.pathname === '/utils' && 'text-primary',
-              )}
-              onMouseEnter={() => prefetch('/utils')}
-            >
-              <span>Utils</span>
             </Link>
           </div>
         </div>
@@ -261,60 +206,6 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
                     <HouseSimple size={24} weight='fill' />
                   </Button>
                   <span className='text-3xl'>Home</span>
-                </Link>
-                <Link
-                  to='/guide'
-                  className={cn(
-                    'text-md flex items-center space-x-4 font-medium transition-colors hover:text-primary',
-                    location.pathname === '/guide' && 'text-primary',
-                  )}
-                  onClick={handleNavigation}
-                >
-                  <Button size='icon' className='rounded-full' iconSize='lg'>
-                    <BookOpen size={24} weight='fill' />
-                  </Button>
-                  <span className='text-3xl'>Guide</span>
-                </Link>
-                <Link
-                  to='/note-example'
-                  className={cn(
-                    'text-md flex items-center space-x-4 font-medium transition-colors hover:text-primary',
-                    location.pathname === '/note-example' && 'text-primary',
-                  )}
-                  onClick={handleNavigation}
-                >
-                  <Button size='icon' className='rounded-full' iconSize='lg'>
-                    <Layout size={24} weight='fill' />
-                  </Button>
-                  <span className='text-3xl'>Notes</span>
-                </Link>
-                <Link
-                  to='/motion'
-                  className={cn(
-                    'text-md flex items-center space-x-4 font-medium transition-colors hover:text-primary',
-                    location.pathname === '/motion' && 'text-primary',
-                  )}
-                  onClick={handleNavigation}
-                  onMouseEnter={() => prefetch('/motion')}
-                >
-                  <Button size='icon' className='rounded-full' iconSize='lg'>
-                    <PersonSimpleRun size={24} weight='fill' />
-                  </Button>
-                  <span className='text-3xl'>Motion</span>
-                </Link>
-                <Link
-                  to='/utils'
-                  className={cn(
-                    'text-md flex items-center space-x-4 font-medium transition-colors hover:text-primary',
-                    location.pathname === '/utils' && 'text-primary',
-                  )}
-                  onClick={handleNavigation}
-                  onMouseEnter={() => prefetch('/utils')}
-                >
-                  <Button size='icon' className='rounded-full' iconSize='lg'>
-                    <Toolbox size={24} weight='fill' />
-                  </Button>
-                  <span className='text-3xl'>Utils</span>
                 </Link>
                 {/* Mobile Auth Menu Items */}
                 {userLoading ? (

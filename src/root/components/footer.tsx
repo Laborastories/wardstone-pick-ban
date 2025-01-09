@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { fadeIn } from '../../motion/transitionPresets'
-import { Mountains, GithubLogo, TwitterLogo } from '@phosphor-icons/react'
+import { GithubLogo, GameController, Strategy } from '@phosphor-icons/react'
 import { usePrefetch } from '../../lib/utils'
 
 const ScrollToTopLink = ({
@@ -33,21 +33,12 @@ const ScrollToTopLink = ({
 const navigation = {
   main: [
     { name: 'Home', href: '/' },
-    { name: 'Guide', href: '/guide' },
-    { name: 'Notes', href: '/note-example' },
-    { name: 'Motion', href: '/motion' },
-    { name: 'Utils', href: '/utils' },
   ],
   social: [
     {
       name: 'GitHub',
-      href: 'https://github.com/wardbox/roke',
+      href: 'https://github.com/Laborastories/wardstone-pick-ban',
       icon: 'GithubLogo',
-    },
-    {
-      name: 'Twitter',
-      href: 'https://twitter.com/ward_box',
-      icon: 'TwitterLogo',
     },
   ],
 }
@@ -66,10 +57,10 @@ export function Footer() {
           {/* Logo & Social */}
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
-              <Mountains size={20} weight='fill' />
+              <Strategy size={20} weight='fill' />
               <span className='text-sm text-muted-foreground'>
                 &copy; {new Date().getFullYear()}{' '}
-                {import.meta.env.REACT_APP_NAME || 'Roke'}
+                {import.meta.env.REACT_APP_NAME || 'Wardstone'}
               </span>
             </div>
             <div className='flex gap-4'>
@@ -82,11 +73,7 @@ export function Footer() {
                   className='text-muted-foreground transition-colors hover:text-foreground'
                   aria-label={item.name}
                 >
-                  {item.icon === 'GithubLogo' ? (
-                    <GithubLogo size={20} weight='fill' />
-                  ) : (
-                    <TwitterLogo size={20} weight='fill' />
-                  )}
+                  <GithubLogo size={20} weight='fill' />
                 </a>
               ))}
             </div>
@@ -114,21 +101,12 @@ export function Footer() {
             {/* Logo & Title */}
             <div className='flex items-center space-x-3'>
               <h2 className='flex items-center gap-2 text-lg font-semibold'>
-                <Mountains size={20} weight='fill' />
-                {import.meta.env.REACT_APP_NAME || 'Roke'}
+                <GameController size={20} weight='fill' />
+                {import.meta.env.REACT_APP_NAME || 'Wardstone'}
               </h2>
               <span className='text-muted-foreground'>|</span>
               <p className='text-sm text-muted-foreground'>
-                A{' '}
-                <a
-                  href='https://wasp-lang.dev'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='text-foreground transition-colors hover:text-primary'
-                >
-                  Wasp
-                </a>{' '}
-                starter with sensible defaults
+                A pick/ban tool for competitive League of Legends
               </p>
             </div>
 
@@ -148,6 +126,7 @@ export function Footer() {
 
           {/* Social & Copyright */}
           <div className='flex items-center gap-6'>
+            <a href="https://www.buymeacoffee.com/wardbox" aria-label="Buy me a coffee"><img alt="Buy me a coffee" src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=wardbox&button_colour=474747&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00" /></a>
             <div className='flex gap-4'>
               {navigation.social.map(item => (
                 <a
@@ -158,17 +137,13 @@ export function Footer() {
                   className='text-muted-foreground transition-colors hover:text-foreground'
                   aria-label={item.name}
                 >
-                  {item.icon === 'GithubLogo' ? (
-                    <GithubLogo size={20} weight='fill' />
-                  ) : (
-                    <TwitterLogo size={20} weight='fill' />
-                  )}
+                  <GithubLogo size={20} weight='fill' />
                 </a>
               ))}
             </div>
             <p className='text-xs text-muted-foreground'>
               &copy; {new Date().getFullYear()}{' '}
-              {import.meta.env.REACT_APP_NAME || 'Roke'}
+              {import.meta.env.REACT_APP_NAME || 'Wardstone'}
             </p>
           </div>
         </div>

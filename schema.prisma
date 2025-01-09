@@ -8,21 +8,55 @@ generator client {
 }
 
 model User {
-  id         String      @id @default(uuid())
-  username   String      @unique
-  email      String      @unique
-  isAdmin    Boolean     @default(false)
-  notes      Note[]      
-  
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id         String   @id @default(uuid())
+  username   String   @unique
+  email      String   @unique
+  isAdmin    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  createdSeries Series[]
 }
 
-model Note {
+model Series {
+  id            String    @id @default(uuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  creator       User?     @relation(fields: [creatorId], references: [id])
+  creatorId     String?
+  team1Name     String
+  team2Name     String
+  matchName     String
+  team1AuthToken String    @unique
+  team2AuthToken String    @unique
+  format        String    // "BO1", "BO3", "BO5"
+  fearlessDraft Boolean   @default(false)
+  games         Game[]
+  status        String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  winner        String?   // "BLUE" or "RED"
+}
+
+model Game {
+  id          String       @id @default(uuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  series      Series       @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  seriesId    String
+  gameNumber  Int
+  blueSide    String      // Team name on blue side for this game
+  redSide     String      // Team name on red side for this game
+  status      String      @default("PENDING") // PENDING, IN_PROGRESS, DRAFT_COMPLETE, COMPLETED
+  winner      String?     // "BLUE" or "RED"
+  actions     DraftAction[]
+}
+
+model DraftAction {
   id        String   @id @default(uuid())
-  content   String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId    String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId    String
+  type      String   // "PICK" or "BAN"
+  phase     Int      // 1, 2, 3, 4
+  team      String   // "BLUE" or "RED"
+  champion  String
+  position  Int      // Action number in the draft (1-20)
 }

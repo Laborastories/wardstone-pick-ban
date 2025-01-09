@@ -1,6 +1,8 @@
 import { configureQueryClient } from 'wasp/client/operations'
+import { getChampions } from '../draft/services/championService'
 
 export async function setupClient(): Promise<void> {
+  // Configure query client
   configureQueryClient({
     defaultOptions: {
       queries: {
@@ -11,6 +13,13 @@ export async function setupClient(): Promise<void> {
       },
     },
   })
+
+  // Prefetch champions on app start
+  try {
+    await getChampions()
+  } catch (error) {
+    console.error('Failed to prefetch champions:', error)
+  }
 }
 
 export default setupClient

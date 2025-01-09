@@ -7,11 +7,10 @@ import { Footer } from './components/footer'
 import { Nav } from './components/nav'
 import { ScrollToTop } from './components/scroll-to-top'
 import { Toaster } from './components/toaster'
-import { TransitionPlayground } from './components/transition-playground'
 import { transitions } from '../motion/transitionPresets'
 import './Root.css'
-import '@fontsource-variable/grenze-gotisch'
-import '@fontsource-variable/public-sans'
+// Supports weights 100-900
+import '@fontsource-variable/inter';
 
 export default function Root() {
   const { data: user, isLoading } = useAuth()
@@ -36,7 +35,6 @@ export default function Root() {
                 <Footer />
               </div>
             </footer>
-            <TransitionPlayground />
           </div>
         </MotionProvider>
       </ThemeProvider>

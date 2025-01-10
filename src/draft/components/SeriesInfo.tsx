@@ -5,24 +5,21 @@ import { Copy } from '@phosphor-icons/react'
 import { useToast } from '../../hooks/use-toast'
 import { useSocket } from 'wasp/client/webSocket'
 import { Link } from 'wasp/client/router'
+import { motion, AnimatePresence } from 'motion/react'
 
-interface SeriesInfoProps {
+export interface SeriesInfoProps {
   series: Series & {
-    games: (Game & {
-      actions: {
-        type: string
-        champion: string
-        team: 'BLUE' | 'RED'
-        position: number
-      }[]
-    })[]
+    games: Game[]
   }
   currentGameNumber: number
   side?: 'team1' | 'team2'
-  gameStatus?: string
-  blueSide?: string
-  redSide?: string
-  gameId?: string
+  gameStatus: string
+  blueSide: string
+  redSide: string
+  gameId: string
+  timeRemaining?: number | null
+  nextAction?: { team: 'BLUE' | 'RED' }
+  isTimerReady?: boolean
 }
 
 export function SeriesInfo({ 
@@ -31,8 +28,10 @@ export function SeriesInfo({
   side,
   gameStatus,
   blueSide,
-  redSide,
-  gameId
+  gameId,
+  timeRemaining,
+  nextAction,
+  isTimerReady
 }: SeriesInfoProps) {
   const { toast } = useToast()
   const { socket } = useSocket()
@@ -80,23 +79,159 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
   }
 
   return (
-    <div className='flex flex-col gap-4'>
-      <div className='flex h-16 items-center justify-between rounded-lg bg-card px-6 shadow'>
-        <div className='flex-1' />
-        <div className='flex flex-col items-center gap-2'>
+    <div className='flex flex-col gap-4 p-4'>
+      <div className='flex h-16 items-center justify-between rounded-lg bg-card px-6 relative'>
+        {/* Left Timer Space */}
+        <div className='w-[120px] flex items-center justify-center'>
+          <AnimatePresence mode="wait">
+            {gameStatus === 'IN_PROGRESS' && timeRemaining !== null && nextAction && nextAction.team === 'BLUE' && (
+              <motion.div
+                key="blue-timer"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className={cn(
+                  'flex items-center justify-center rounded-md px-2 h-full',
+                  'bg-blue-500/10'
+                )}
+              >
+                {isTimerReady && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={cn(
+                      'text-4xl 2xl:text-6xl font-medium tabular-nums text-center p-2',
+                      typeof timeRemaining === 'number' && (
+                        timeRemaining <= 4
+                          ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                          : timeRemaining <= 9
+                            ? 'text-destructive'
+                            : 'text-blue-500'
+                      )
+                    )}
+                  >
+                    {timeRemaining}
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Center Content */}
+        <div className='flex flex-col items-center gap-4'>
+          {/* Game Navigation */}
+          <div className='flex gap-2'>
+            {Array.from({
+              length: series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1,
+            }).map((_, i) => {
+              const gameNum = i + 1
+              const isCurrentGame = gameNum === currentGameNumber
+              const isPreviousGame = gameNum < currentGameNumber
+              const game = series.games.find(g => g.gameNumber === gameNum)
+              const isNextGame = !isSeriesOver && gameNum === Math.max(...series.games.filter(g => g.status === 'COMPLETED').map(g => g.gameNumber)) + 1
+              const isDisabled = !isCurrentGame && !isNextGame && !game?.status && (isSeriesOver || (!isPreviousGame && !isCurrentGame))
+
+              return isNextGame ? (
+                <motion.div
+                  key={`${gameNum}-${gameId}`}
+                  animate={gameId && game?.id !== gameId ? {
+                    y: [0, -4, 0],
+                    scale: [1, 1.05, 1],
+                  } : {}}
+                  transition={{ 
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <Link
+                    to='/draft/:seriesId/:gameNumber/:team?/:auth?'
+                    params={{
+                      seriesId: series.id,
+                      gameNumber: gameNum.toString(),
+                      team: side || '',
+                      auth: side ? side === 'team1' ? series.team1AuthToken : series.team2AuthToken : '',
+                    }}
+                    className={cn(
+                      'relative block rounded px-3 py-1 text-sm transition-colors',
+                      side === 'team1'
+                        ? blueSide === series.team1Name
+                          ? 'bg-blue-500/20 text-blue-500'
+                          : 'bg-red-500/20 text-red-500'
+                        : blueSide === series.team2Name
+                          ? 'bg-blue-500/20 text-blue-500'
+                          : 'bg-red-500/20 text-red-500',
+                      game?.status === 'COMPLETED' && !isCurrentGame && 'ring-2 ring-accent'
+                    )}
+                  >
+                    <span>Game {gameNum}</span>
+                    {gameStatus === 'DRAFT_COMPLETE' && gameId && game?.id !== gameId && (
+                      <motion.div
+                        className={cn(
+                          'absolute inset-0 rounded',
+                          side === 'team1'
+                            ? blueSide === series.team1Name
+                              ? 'bg-blue-500'
+                              : 'bg-red-500'
+                            : blueSide === series.team2Name
+                              ? 'bg-blue-500'
+                              : 'bg-red-500'
+                        )}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: [0.2, 0.1, 0.2] }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    )}
+                  </Link>
+                </motion.div>
+              ) : (
+                <Link
+                  key={gameNum}
+                  to='/draft/:seriesId/:gameNumber/:team?/:auth?'
+                  params={{
+                    seriesId: series.id,
+                    gameNumber: gameNum.toString(),
+                    team: side || '',
+                    auth: side ? side === 'team1' ? series.team1AuthToken : series.team2AuthToken : '',
+                  }}
+                  className={cn(
+                    'relative rounded px-3 py-1 text-sm transition-colors',
+                    isCurrentGame ? 'bg-accent text-accent-foreground' : 
+                    isDisabled ? 'cursor-not-allowed text-muted-foreground opacity-50' :
+                    'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    game?.status === 'COMPLETED' && !isCurrentGame && 'ring-2 ring-accent'
+                  )}
+                  onClick={e => {
+                    if (isDisabled) {
+                      e.preventDefault()
+                    }
+                  }}
+                >
+                  <span>Game {gameNum}</span>
+                </Link>
+              )
+            })}
+          </div>
           <div className='flex items-center gap-8'>
             {/* Team 1 */}
             <div
               className={cn(
-                'text-lg font-semibold',
+                'w-40 text-right text-4xl font-semibold uppercase tracking-wider truncate',
                 side === 'team1' && 'text-primary',
               )}
+              title={series.team1Name}
             >
               {series.team1Name}
             </div>
 
             {/* Score */}
-            <div className='flex items-center gap-2 text-xl font-bold'>
+            <div className='flex items-center gap-2 text-2xl uppercase tracking-wider font-bold bg-muted rounded-sm p-2'>
               <span
                 className={cn(
                   'min-w-[1.5ch] text-center',
@@ -119,74 +254,63 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
             {/* Team 2 */}
             <div
               className={cn(
-                'text-lg font-semibold',
+                'w-40 text-left text-4xl font-semibold uppercase tracking-wider truncate',
                 side === 'team2' && 'text-primary',
               )}
+              title={series.team2Name}
             >
               {series.team2Name}
             </div>
           </div>
-
-          {/* Game Navigation */}
-          <div className='flex gap-2'>
-            {Array.from({
-              length: series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1,
-            }).map((_, i) => {
-              const gameNum = i + 1
-              const isCurrentGame = gameNum === currentGameNumber
-              const isPreviousGame = gameNum < currentGameNumber
-              const game = series.games.find(g => g.gameNumber === gameNum)
-              const isNextGame = !isSeriesOver && gameNum === Math.max(...series.games.filter(g => g.status === 'COMPLETED').map(g => g.gameNumber)) + 1
-              const isDisabled = !isCurrentGame && !isNextGame && !game?.status && (isSeriesOver || (!isPreviousGame && !isCurrentGame))
-
-              return (
-                <Link
-                  key={gameNum}
-                  to='/draft/:seriesId/:gameNumber/:team?/:auth?'
-                  params={{
-                    seriesId: series.id,
-                    gameNumber: gameNum.toString(),
-                    team: side || '',
-                    auth: side ? side === 'team1' ? series.team1AuthToken : series.team2AuthToken : '',
-                  }}
-                  className={cn(
-                    'rounded px-3 py-1 text-sm transition-colors',
-                    isCurrentGame ? 'bg-accent text-accent-foreground' : 
-                    isNextGame ? 'animate-pulse bg-accent text-accent-foreground' :
-                    isDisabled ? 'cursor-not-allowed text-muted-foreground opacity-50' :
-                    'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                    game?.status === 'COMPLETED' && !isCurrentGame && 'ring-2 ring-accent'
-                  )}
-                  onClick={e => {
-                    if (isDisabled) {
-                      e.preventDefault()
-                    }
-                  }}
-                >
-                  Game {gameNum}
-                  {game?.status === 'COMPLETED' && (
-                    <div className='mt-0.5 text-xs opacity-75'>
-                      {game.winner === 'BLUE' ? game.blueSide : game.redSide}
-                    </div>
-                  )}
-                </Link>
-              )
-            })}
-          </div>
         </div>
 
-        <div className='flex flex-1 items-center justify-end gap-4'>
-          {/* Copy URL Button */}
-          <Button
-            variant='ghost'
-            size='icon'
-            onClick={handleCopyUrl}
-            className='h-8 w-8'
-            title='Copy all draft URLs'
-          >
-            <Copy className='h-4 w-4' />
-          </Button>
+        {/* Right Timer Space */}
+        <div className='w-[120px] flex items-center justify-center'>
+          <AnimatePresence mode="wait">
+            {gameStatus === 'IN_PROGRESS' && timeRemaining !== null && nextAction && nextAction.team === 'RED' && (
+              <motion.div
+                key="red-timer"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className={cn(
+                  'flex items-center justify-center rounded-md px-2 h-full',
+                  'bg-red-500/10'
+                )}
+              >
+                {isTimerReady && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={cn(
+                      'text-4xl 2xl:text-6xl font-medium tabular-nums text-center p-2',
+                      typeof timeRemaining === 'number' && (
+                        timeRemaining <= 4
+                          ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                          : timeRemaining <= 9
+                            ? 'text-destructive'
+                            : 'text-red-500'
+                      )
+                    )}
+                  >
+                    {timeRemaining}
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+        {/* Copy URL Button */}
+        <Button
+          variant='ghost'
+          size='icon'
+          onClick={handleCopyUrl}
+          className='h-8 w-8 absolute right-6'
+          title='Copy all draft URLs'
+        >
+          <Copy className='h-4 w-4' />
+        </Button>
       </div>
 
       {/* Winner Selection */}
@@ -201,15 +325,15 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               className='rounded-lg bg-[hsl(var(--team-blue))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
             >
               <div className='font-medium text-[hsl(var(--team-blue-foreground))]'>
-                {blueSide} Wins
+                Blue Wins
               </div>
             </button>
             <button
               onClick={() => handleSetWinner('RED')}
               className='rounded-lg bg-[hsl(var(--team-red))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
             >
-              <div className='font-medium text-[hsl(var(--team-red-foreground))]'>
-                {redSide} Wins
+              <div className='font-medium text-[hsl(var(--team-red-foreground))] truncate max-w-[120px]'>
+                Red Wins
               </div>
             </button>
           </div>

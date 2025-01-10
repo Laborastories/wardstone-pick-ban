@@ -356,10 +356,16 @@ export async function getChampions(): Promise<Champion[]> {
     return []
   }
 }
+
 export function getChampionImageUrl(
   champion: Champion | string,
   type: 'icon' | 'splash' = 'icon',
 ): string {
+  if (!DDRAGON_VERSION) {
+    console.error('DDragon version not initialized')
+    return ''
+  }
+
   if (typeof champion === 'string') {
     // If splash art is requested
     if (type === 'splash') {
@@ -367,23 +373,23 @@ export function getChampionImageUrl(
       if (path) {
         return `${COMMUNITY_DRAGON_URL}/${path}`
       }
-      // Fallback to icon if splash not found
+      // Fallback to Data Dragon loading screen if Community Dragon is down
+      return `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champion}_0.jpg`
     }
 
-    // If just the champion ID is provided, find the champion in cache to get numeric key
-    const championData = championsCache?.find(c => c.id === champion)
-    if (championData) {
-      return `${COMMUNITY_DRAGON_URL}/v1/champion-icons/${championData.key}.png`
-    }
-    // Fallback to using the champion name directly
-    return `${COMMUNITY_DRAGON_URL}/v1/champion-icons/${champion}.png`
+    // For icons, use the square assets
+    return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${champion}.png`
   }
 
   // If full champion object is provided
   if (type === 'splash' && champion.splashPath) {
     return `${COMMUNITY_DRAGON_URL}/${champion.splashPath}`
   }
-  return `${COMMUNITY_DRAGON_URL}/v1/champion-icons/${champion.key}.png`
+  // Fallback to Data Dragon loading screen if Community Dragon is down
+  if (type === 'splash') {
+    return `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champion.id}_0.jpg`
+  }
+  return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${champion.id}.png`
 }
 
 // Filter champions by search term (name or tag)

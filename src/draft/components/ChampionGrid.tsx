@@ -91,9 +91,9 @@ export function ChampionGrid({
   }, [search, champions, selectedRole])
 
   return (
-    <div className='flex h-full flex-col space-y-2'>
+    <div className='flex h-full flex-col space-y-2 bg-muted p-4'>
       {/* Search and Filters */}
-      <div className='flex-none space-y-2'>
+      <div className='flex items-center gap-4'>
         {/* Search */}
         <div className='relative'>
           <MagnifyingGlass
@@ -105,7 +105,7 @@ export function ChampionGrid({
             placeholder='Search champions...'
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className='h-8 pl-9 text-sm'
+            className='pl-9'
           />
         </div>
 
@@ -138,7 +138,7 @@ export function ChampionGrid({
       </div>
 
       {/* Grid */}
-      <div className='grid min-h-0 auto-rows-[5rem] grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-1 overflow-y-auto p-6'>
+      <div className='grid min-h-0 auto-rows-[5rem] grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-2 overflow-y-auto p-6'>
         {filteredChampions.map(champion => {
           const isUsed = usedChampions.includes(champion.id)
           const isBanned = bannedChampions.includes(champion.id)

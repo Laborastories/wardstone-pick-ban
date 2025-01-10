@@ -22,6 +22,7 @@ import { useParams } from 'react-router-dom'
 import { SideSelection } from '../components/SideSelection'
 import { cn } from '../../lib/utils'
 
+
 type GameWithRelations = Game & {
   series: Series & {
     games: (Game & {
@@ -61,6 +62,8 @@ export function DraftPage() {
     blue?: boolean
     red?: boolean
   }>({})
+  const [isTimerReady, setIsTimerReady] = useState(false)
+  const [lastTeam, setLastTeam] = useState<'BLUE' | 'RED' | null>(null)
 
   // Set auth token when socket connects
   useEffect(() => {
@@ -96,13 +99,34 @@ export function DraftPage() {
   )
 
   useSocketListener('draftActionUpdate', () => {
+    setLastTeam(null)
+    setIsTimerReady(false)
     refetch()
   })
 
   useSocketListener(
     'timerUpdate',
     (data: ServerToClientPayload<'timerUpdate'>) => {
+      if (!nextAction) return
+
+      console.log('Timer update:', {
+        timeRemaining: data.timeRemaining,
+        lastTeam: lastTeam,
+        nextTeam: nextAction.team,
+        isNewTurn: lastTeam !== nextAction.team
+      })
+
+      // If this is a new team's turn
+      if (lastTeam !== nextAction.team) {
+        setLastTeam(nextAction.team)
+        setTimeRemaining(data.timeRemaining)
+        setIsTimerReady(true)
+        return
+      }
+
+      // Just update the time without resetting the animation
       setTimeRemaining(data.timeRemaining)
+      setIsTimerReady(true)
     },
   )
 
@@ -275,26 +299,29 @@ export function DraftPage() {
       >
         <div
           className={cn(
-            'relative overflow-hidden rounded-sm border',
+            'relative overflow-hidden transition-all duration-200',
             type === 'PICK' ? 'h-full' : 'aspect-square w-24',
-            isActive && 'ring-2 ring-primary',
-            (isPending || isPreviewed) && 'ring-2 ring-primary',
-            !isActive && !isPending && !isPreviewed && 'border-border',
+            isActive && 'after:absolute after:inset-0 after:border-2 after:border-primary after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
+            (isPending || isPreviewed) && 'after:absolute after:inset-0 after:border-2 after:border-primary/50 after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
+            !isActive && !isPending && !isPreviewed && 'border border-border hover:border-primary/20',
+            'bg-card shadow-sm hover:shadow-md',
+            type === 'BAN' && 'rounded-md',
+            type === 'PICK' && 'rounded-lg',
           )}
         >
           {isActive && (
-            <div className='absolute inset-0 animate-glow bg-primary/40' />
+            <div className='absolute inset-0 animate-glow bg-primary/20' />
           )}
           <AnimatePresence mode='wait'>
             {action ? (
               <motion.div
                 key='locked'
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
                 className={cn(
                   'absolute inset-0',
-                  type === 'BAN' && action && 'opacity-75 grayscale',
+                  type === 'BAN' && action && 'opacity-90 grayscale',
                 )}
               >
                 <motion.div
@@ -304,8 +331,8 @@ export function DraftPage() {
                   className='absolute inset-0 bg-primary/20'
                 />
                 <motion.img
-                  initial={{ filter: 'brightness(2)' }}
-                  animate={{ filter: 'brightness(1)' }}
+                  initial={{ filter: 'brightness(2)', scale: 1.1 }}
+                  animate={{ filter: 'brightness(1)', scale: 1 }}
                   transition={{ duration: 0.4, ease: 'easeOut' }}
                   src={getChampionImageUrl(
                     action.champion,
@@ -313,21 +340,38 @@ export function DraftPage() {
                   )}
                   alt={action.champion}
                   className={cn(
-                    'absolute inset-0 w-full',
+                    'absolute inset-0 w-full object-cover transition-transform duration-200 group-hover:scale-105',
                     type === 'PICK'
-                      ? '-top-[12%] h-[200%] object-cover'
-                      : 'h-full scale-[1.15] object-cover',
+                      ? '-top-[12%] h-[200%]'
+                      : 'h-full',
                   )}
                   loading='lazy'
                 />
                 {type === 'BAN' && (
                   <motion.div
-                    initial={{ opacity: 0, filter: 'brightness(2)' }}
-                    animate={{ opacity: 1, filter: 'brightness(1)' }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                    className='absolute inset-0 flex items-center justify-center bg-black/50'
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className='absolute inset-0 flex items-center justify-center'
+                    style={{
+                      background: 'linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)',
+                    }}
                   >
-                    <X size={24} weight='bold' className='text-white' />
+                    <div className='relative'>
+                      <X 
+                        size={32} 
+                        weight='bold' 
+                        className={cn(
+                          'drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
+                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400'
+                        )} 
+                      />
+                      <X 
+                        size={32} 
+                        weight='regular' 
+                        className='absolute inset-0 text-white/90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]' 
+                      />
+                    </div>
                   </motion.div>
                 )}
               </motion.div>
@@ -346,16 +390,35 @@ export function DraftPage() {
                   )}
                   alt={pendingAction.champion}
                   className={cn(
-                    'absolute inset-0 w-full',
+                    'absolute inset-0 w-full transition-transform duration-200 group-hover:scale-105',
                     type === 'PICK'
                       ? '-top-[12%] h-[200%] object-cover saturate-50'
-                      : 'h-full scale-[1.15] object-cover',
+                      : 'h-full object-cover',
                   )}
                   loading='lazy'
                 />
                 {type === 'BAN' && (
-                  <motion.div className='absolute inset-0 flex items-center justify-center bg-black/25'>
-                    <X size={24} weight='bold' className='text-white' />
+                  <motion.div 
+                    className='absolute inset-0 flex items-center justify-center'
+                    style={{
+                      background: 'linear-gradient(45deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%)',
+                    }}
+                  >
+                    <div className='relative'>
+                      <X 
+                        size={32} 
+                        weight='bold' 
+                        className={cn(
+                          'opacity-75 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
+                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400'
+                        )} 
+                      />
+                      <X 
+                        size={32} 
+                        weight='regular' 
+                        className='absolute inset-0 text-white/75 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]' 
+                      />
+                    </div>
                   </motion.div>
                 )}
               </motion.div>
@@ -374,16 +437,35 @@ export function DraftPage() {
                   )}
                   alt={previewedChampions[position]}
                   className={cn(
-                    'absolute inset-0 w-full',
+                    'absolute inset-0 w-full transition-transform duration-200 group-hover:scale-105',
                     type === 'PICK'
                       ? '-top-[12%] h-[200%] object-cover saturate-50'
-                      : 'h-full scale-[1.15] object-cover',
+                      : 'h-full object-cover',
                   )}
                   loading='lazy'
                 />
                 {type === 'BAN' && (
-                  <motion.div className='absolute inset-0 flex items-center justify-center bg-black/25'>
-                    <X size={24} weight='bold' className='text-white' />
+                  <motion.div 
+                    className='absolute inset-0 flex items-center justify-center'
+                    style={{
+                      background: 'linear-gradient(45deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%)',
+                    }}
+                  >
+                    <div className='relative'>
+                      <X 
+                        size={32} 
+                        weight='bold' 
+                        className={cn(
+                          'opacity-50 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
+                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400'
+                        )} 
+                      />
+                      <X 
+                        size={32} 
+                        weight='regular' 
+                        className='absolute inset-0 text-white/50 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]' 
+                      />
+                    </div>
                   </motion.div>
                 )}
               </motion.div>
@@ -393,7 +475,7 @@ export function DraftPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className='absolute inset-0 flex items-center justify-center text-2xl text-muted-foreground'
+                className='absolute inset-0 flex items-center justify-center bg-muted/50 text-2xl font-medium text-muted-foreground'
               >
                 {type === 'PICK'
                   ? `${team[0]}${index + 1}`
@@ -437,21 +519,17 @@ export function DraftPage() {
   const isCurrentTeam = gameSide?.toUpperCase() === nextAction?.team
 
   return (
-    <div className='h-screen overflow-hidden bg-background p-4'>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className='flex h-full flex-col p-2'
-      >
+    <div className='h-screen overflow-hidden bg-background'>
+      <div className='flex h-full flex-col rounded-lg p-4 shadow-lg backdrop-blur-sm'>
         {/* Main Draft UI */}
-        <div className='flex h-full flex-col gap-4'>
+        <div className='flex h-full flex-col gap-6'>
           {/* Top Section: Picks and Series Info */}
-          <div className='flex min-h-0 flex-1 gap-4 pb-2'>
+          <div className='flex min-h-0 flex-1 gap-6'>
             {/* Blue Side - Vertical */}
-            <div className='flex min-h-0 w-[20%] min-w-[16rem] flex-col rounded-sm bg-gradient-to-b from-blue-400/30 to-transparent p-6'>
+            <div className='flex min-h-0 w-[20%] min-w-[16rem] flex-col rounded-sm border bg-muted p-6 shadow-md backdrop-blur-sm'>
               <motion.h2
                 className={cn(
-                  'mb-1 flex-none text-center text-2xl font-bold uppercase tracking-wider',
+                  'mb-4 flex-none text-center text-2xl font-bold uppercase tracking-wider',
                   gameWithRelations.series.winner === gameWithRelations.blueSide
                     ? 'text-blue-400'
                     : 'text-blue-500',
@@ -486,22 +564,27 @@ export function DraftPage() {
             {/* Center Content */}
             <div className='flex min-w-min flex-1 flex-col gap-4'>
               {/* Series Info */}
-              <div className='flex-none'>
+              <div>
                 {(game as GameWithRelations)?.series && (
-                  <SeriesInfo
-                    series={(game as GameWithRelations).series}
-                    currentGameNumber={parseInt(gameNumber)}
-                    side={team}
-                    gameStatus={gameWithRelations.status}
-                    blueSide={gameWithRelations.blueSide}
-                    redSide={gameWithRelations.redSide}
-                    gameId={gameWithRelations.id}
-                  />
+                  <div className=''>
+                    <SeriesInfo
+                      series={(game as GameWithRelations).series}
+                      currentGameNumber={parseInt(gameNumber)}
+                      side={team}
+                      gameStatus={gameWithRelations.status}
+                      blueSide={gameWithRelations.blueSide}
+                      redSide={gameWithRelations.redSide}
+                      gameId={gameWithRelations.id}
+                      timeRemaining={timeRemaining}
+                      nextAction={nextAction}
+                      isTimerReady={isTimerReady}
+                    />
+                  </div>
                 )}
               </div>
 
               {/* Side Selection or Draft Content */}
-              <div className='flex min-h-0 flex-1 flex-col'>
+              <div className='flex min-h-0 flex-1 flex-col gap-2'>
                 {gameWithRelations.status === 'PENDING' &&
                 (!gameWithRelations.blueSide || !gameWithRelations.redSide) ? (
                   <div className='flex min-h-0 flex-1 items-center justify-center'>
@@ -513,44 +596,11 @@ export function DraftPage() {
                   </div>
                 ) : (
                   <>
-                    {/* Timer and Phase */}
-                    <div className='mb-2 flex h-[72px] flex-none flex-col justify-center space-y-1 text-center'>
-                      {gameWithRelations.status === 'IN_PROGRESS' ? (
-                        <>
-                          {timeRemaining !== null && (
-                            <div
-                              className={cn(
-                                'text-4xl font-bold tracking-tight',
-                                timeRemaining <= 5
-                                  ? 'animate-pulse text-destructive'
-                                  : timeRemaining <= 10
-                                    ? 'text-destructive'
-                                    : 'text-foreground',
-                              )}
-                            >
-                              {timeRemaining}
-                            </div>
-                          )}
-                          <div className='text-sm font-medium'>
-                            {nextAction ? (
-                              <span
-                                className={
-                                  nextAction.team === 'BLUE'
-                                    ? 'text-blue-500'
-                                    : 'text-red-500'
-                                }
-                              >
-                                {nextAction.team === 'BLUE'
-                                  ? gameWithRelations.blueSide
-                                  : gameWithRelations.redSide}
-                                &apos;s turn to {nextAction.type.toLowerCase()}
-                              </span>
-                            ) : null}
-                          </div>
-                        </>
-                      ) : gameWithRelations.status === 'PENDING' &&
-                        gameWithRelations.blueSide &&
-                        gameWithRelations.redSide ? (
+                    {/* Ready State */}
+                    {gameWithRelations.status === 'PENDING' &&
+                    gameWithRelations.blueSide &&
+                    gameWithRelations.redSide ? (
+                      <div className='flex h-[72px] items-center justify-center'>
                         <div className='flex flex-col items-center gap-2'>
                           <div className='text-sm font-medium text-muted-foreground'>
                             {gameSide
@@ -573,48 +623,46 @@ export function DraftPage() {
                             </Button>
                           )}
                         </div>
-                      ) : (
-                        <div className='text-sm font-medium text-muted-foreground'>
-                          Waiting for draft to start...
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : null}
 
                     {/* Champion Grid */}
-                    <div className='flex min-h-0 flex-1 justify-center'>
-                      <div className='w-full min-w-[calc(8*5rem)]'>
-                        <ChampionGrid
-                          onSelect={handleChampionSelect}
-                          disabled={
-                            gameWithRelations.status !== 'IN_PROGRESS' ||
-                            !gameSide ||
-                            !isTeamTurn(
-                              gameSide.toUpperCase() as 'BLUE' | 'RED',
-                              currentTurn,
-                            )
-                          }
-                          bannedChampions={gameWithRelations.actions
-                            .filter(a => a.type === 'BAN')
-                            .map(a => a.champion)}
-                          usedChampions={[
-                            // Current game picks
-                            ...gameWithRelations.actions
-                              .filter(a => a.type === 'PICK')
-                              .map(a => a.champion),
-                            // If fearless draft, add all picks from previous games
-                            ...(gameWithRelations.series.fearlessDraft
-                              ? gameWithRelations.series.games
-                                  .filter(
-                                    g =>
-                                      g.gameNumber <
-                                      gameWithRelations.gameNumber,
-                                  )
-                                  .flatMap(g => g.actions)
-                                  .filter(a => a.type === 'PICK')
-                                  .map(a => a.champion)
-                              : []),
-                          ]}
-                        />
+                    <div className='flex min-h-0 flex-1 flex-col gap-2'>
+                      <div className='flex min-h-0 flex-1 justify-center'>
+                        <div className='w-full min-w-[calc(6*5rem)]'>
+                          <ChampionGrid
+                            onSelect={handleChampionSelect}
+                            disabled={
+                              gameWithRelations.status !== 'IN_PROGRESS' ||
+                              !gameSide ||
+                              !isTeamTurn(
+                                gameSide.toUpperCase() as 'BLUE' | 'RED',
+                                currentTurn,
+                              )
+                            }
+                            bannedChampions={gameWithRelations.actions
+                              .filter(a => a.type === 'BAN')
+                              .map(a => a.champion)}
+                            usedChampions={[
+                              // Current game picks
+                              ...gameWithRelations.actions
+                                .filter(a => a.type === 'PICK')
+                                .map(a => a.champion),
+                              // If fearless draft, add all picks from previous games
+                              ...(gameWithRelations.series.fearlessDraft
+                                ? gameWithRelations.series.games
+                                    .filter(
+                                      g =>
+                                        g.gameNumber <
+                                        gameWithRelations.gameNumber,
+                                    )
+                                    .flatMap(g => g.actions)
+                                    .filter(a => a.type === 'PICK')
+                                    .map(a => a.champion)
+                                : []),
+                            ]}
+                          />
+                        </div>
                       </div>
                     </div>
                   </>
@@ -623,10 +671,10 @@ export function DraftPage() {
             </div>
 
             {/* Red Side - Vertical */}
-            <div className='flex min-h-0 w-[20%] min-w-[16rem] flex-col rounded-lg bg-gradient-to-b from-red-400/40 to-transparent p-6'>
+            <div className='flex min-h-0 w-[20%] min-w-[16rem] flex-col bg-muted rounded-sm p-6 shadow-md backdrop-blur-sm'>
               <motion.h2
                 className={cn(
-                  'mb-1 flex-none text-center text-2xl font-bold uppercase tracking-wider',
+                  'mb-4 flex-none text-center text-2xl font-bold uppercase tracking-wider',
                   gameWithRelations.series.winner === gameWithRelations.redSide
                     ? 'text-red-400'
                     : 'text-red-500',
@@ -660,7 +708,7 @@ export function DraftPage() {
           </div>
 
           {/* Bottom Section: Bans and Actions */}
-          <div className='mt-0 flex flex-none items-center justify-between gap-4'>
+          <div className='mt-0 flex flex-none items-center justify-between gap-4 rounded-lg bg-muted p-4 shadow-md backdrop-blur-sm min-w-min'>
             {/* Blue Bans */}
             <div className='flex justify-center gap-2'>
               {[0, 2, 4, 13, 15].map((i, index) => {
@@ -678,7 +726,7 @@ export function DraftPage() {
             {/* Center Actions */}
             <div className='flex h-[48px] w-[200px] flex-none items-center justify-center'>
               {/* Confirmation Button */}
-              {pendingAction && isCurrentTeam ? (
+              {pendingAction && isCurrentTeam && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -687,34 +735,12 @@ export function DraftPage() {
                   <Button
                     size='lg'
                     onClick={handleConfirmAction}
-                    className='w-full font-medium'
+                    className='w-full font-medium shadow-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]'
                   >
                     Lock In
                   </Button>
                 </motion.div>
-              ) : gameWithRelations.status === 'COMPLETE' ||
-                gameWithRelations.status === 'DRAFT_COMPLETE' ||
-                gameWithRelations.series.winner ||
-                gameWithRelations.actions.length >= 20 ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className='text-2xl font-bold text-primary'
-                >
-                  Draft Complete!
-                </motion.div>
-              ) : nextAction && !isCurrentTeam ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className='text-sm font-medium text-muted-foreground'
-                >
-                  Waiting for{' '}
-                  {nextAction.team === 'BLUE'
-                    ? gameWithRelations.blueSide
-                    : gameWithRelations.redSide}
-                </motion.div>
-              ) : null}
+              )}
             </div>
 
             {/* Red Bans */}
@@ -732,7 +758,7 @@ export function DraftPage() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }

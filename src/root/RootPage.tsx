@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import { useAuth } from 'wasp/client/auth'
 import { MotionConfig } from 'motion/react'
 import { MotionProvider } from '../motion/motion-provider'
 import { ThemeProvider } from './components/theme-provider'
@@ -11,6 +12,8 @@ import './Root.css'
 import '@fontsource-variable/inter'
 
 export default function Root() {
+  const { data: user, isLoading } = useAuth()
+
   return (
     <MotionConfig reducedMotion='user' transition={transitions.snappy}>
       <ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
@@ -23,7 +26,7 @@ export default function Root() {
             <ScrollToTop />
             <footer className='border-t border-input bg-background'>
               <div className='mx-auto max-w-7xl'>
-                <Footer />
+                <Footer user={user} userLoading={isLoading} />
               </div>
             </footer>
           </div>

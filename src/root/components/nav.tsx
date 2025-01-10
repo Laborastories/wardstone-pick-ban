@@ -1,24 +1,12 @@
 import * as React from 'react'
-import { useState } from 'react'
 import { cn } from '../../lib/utils'
 import { Link } from 'wasp/client/router'
-import { Strategy, User as UserIcon, Copy } from '@phosphor-icons/react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../../client/components/ui/dropdown-menu'
+import { Strategy, Copy } from '@phosphor-icons/react'
 import { Button } from '../../client/components/ui/button'
-import { logout } from 'wasp/client/auth'
-import { type User, type Series, type Game } from 'wasp/entities'
-import { Skeleton } from '../../client/components/ui/skeleton'
+import { type Series, type Game } from 'wasp/entities'
 import { useToast } from '../../hooks/use-toast'
 
 interface NavProps extends React.HTMLAttributes<HTMLElement> {
-  user?: User | null
-  userLoading?: boolean
   series?: Series & {
     games: (Game & {
       actions: {
@@ -34,8 +22,7 @@ interface NavProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 const Nav = React.forwardRef<HTMLElement, NavProps>(
-  ({ user, userLoading, series, currentGameNumber, ...props }, ref) => {
-    const [dropdownOpen, setDropdownOpen] = useState(false)
+  ({ series, currentGameNumber, ...props }, ref) => {
     const { toast } = useToast()
 
     const handleCopyUrls = () => {
@@ -152,80 +139,8 @@ ${baseUrl}/draft/${series.id}/1`
           </div>
         )}
 
-        {/* User Menu */}
-        <div className='flex items-center'>
-          {userLoading ? (
-            <div className='flex items-center'>
-              <Skeleton className='h-10 w-10' />
-            </div>
-          ) : (
-            <div className='flex items-center animate-in fade-in'>
-              {user ? (
-                <DropdownMenu
-                  open={dropdownOpen}
-                  onOpenChange={setDropdownOpen}
-                  modal={false}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='outline' size='icon' aria-label='User menu'>
-                      <UserIcon size={24} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <Link
-                      to='/profile/:id'
-                      params={{ id: user.id }}
-                      onClick={() => setDropdownOpen(false)}
-                      className='cursor-pointer'
-                    >
-                      <DropdownMenuItem>Profile</DropdownMenuItem>
-                    </Link>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className='cursor-pointer text-red-600'
-                      onClick={() => {
-                        setDropdownOpen(false)
-                        logout()
-                      }}
-                    >
-                      Log out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <DropdownMenu
-                  open={dropdownOpen}
-                  onOpenChange={setDropdownOpen}
-                  modal={false}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='outline' size='icon'>
-                      <UserIcon size={24} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <Link to='/login'>
-                      <DropdownMenuItem
-                        onClick={() => setDropdownOpen(false)}
-                        className='cursor-pointer'
-                      >
-                        Log in
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link to='/signup'>
-                      <DropdownMenuItem
-                        onClick={() => setDropdownOpen(false)}
-                        className='cursor-pointer'
-                      >
-                        Sign up
-                      </DropdownMenuItem>
-                    </Link>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Empty div to maintain spacing */}
+        <div className='w-[40px]' />
       </nav>
     )
   },

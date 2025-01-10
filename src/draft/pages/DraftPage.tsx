@@ -437,7 +437,7 @@ export function DraftPage() {
   const isCurrentTeam = gameSide?.toUpperCase() === nextAction?.team
 
   return (
-    <div className='h-screen overflow-hidden bg-background p-12'>
+    <div className='h-screen overflow-hidden bg-background p-4'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -492,6 +492,10 @@ export function DraftPage() {
                     series={(game as GameWithRelations).series}
                     currentGameNumber={parseInt(gameNumber)}
                     side={team}
+                    gameStatus={gameWithRelations.status}
+                    blueSide={gameWithRelations.blueSide}
+                    redSide={gameWithRelations.redSide}
+                    gameId={gameWithRelations.id}
                   />
                 )}
               </div>
@@ -541,18 +545,9 @@ export function DraftPage() {
                                   : gameWithRelations.redSide}
                                 &apos;s turn to {nextAction.type.toLowerCase()}
                               </span>
-                            ) : (
-                              'Draft Complete'
-                            )}
+                            ) : null}
                           </div>
                         </>
-                      ) : gameWithRelations.status === 'COMPLETE' ||
-                        gameWithRelations.status === 'DRAFT_COMPLETE' ||
-                        gameWithRelations.series.winner ||
-                        gameWithRelations.actions.length >= 20 ? (
-                        <div className='text-2xl font-bold text-primary'>
-                          Draft Complete!
-                        </div>
                       ) : gameWithRelations.status === 'PENDING' &&
                         gameWithRelations.blueSide &&
                         gameWithRelations.redSide ? (
@@ -587,7 +582,7 @@ export function DraftPage() {
 
                     {/* Champion Grid */}
                     <div className='flex min-h-0 flex-1 justify-center'>
-                      <div className='min-w-[800px]'>
+                      <div className='w-full min-w-[calc(8*5rem)]'>
                         <ChampionGrid
                           onSelect={handleChampionSelect}
                           disabled={
@@ -667,7 +662,7 @@ export function DraftPage() {
           {/* Bottom Section: Bans and Actions */}
           <div className='mt-0 flex flex-none items-center justify-between gap-4'>
             {/* Blue Bans */}
-            <div className='flex justify-center gap-0.5'>
+            <div className='flex justify-center gap-2'>
               {[0, 2, 4, 13, 15].map((i, index) => {
                 const action = gameWithRelations.actions.find(
                   a => a.type === 'BAN' && a.position === i,
@@ -697,25 +692,33 @@ export function DraftPage() {
                     Lock In
                   </Button>
                 </motion.div>
-              ) : (
-                nextAction &&
-                !isCurrentTeam && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className='text-sm font-medium text-muted-foreground'
-                  >
-                    Waiting for{' '}
-                    {nextAction.team === 'BLUE'
-                      ? gameWithRelations.blueSide
-                      : gameWithRelations.redSide}
-                  </motion.div>
-                )
-              )}
+              ) : gameWithRelations.status === 'COMPLETE' ||
+                gameWithRelations.status === 'DRAFT_COMPLETE' ||
+                gameWithRelations.series.winner ||
+                gameWithRelations.actions.length >= 20 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className='text-2xl font-bold text-primary'
+                >
+                  Draft Complete!
+                </motion.div>
+              ) : nextAction && !isCurrentTeam ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className='text-sm font-medium text-muted-foreground'
+                >
+                  Waiting for{' '}
+                  {nextAction.team === 'BLUE'
+                    ? gameWithRelations.blueSide
+                    : gameWithRelations.redSide}
+                </motion.div>
+              ) : null}
             </div>
 
             {/* Red Bans */}
-            <div className='flex justify-center gap-0.5'>
+            <div className='flex justify-center gap-2'>
               {[1, 3, 5, 12, 14].map((i, index) => {
                 const action = gameWithRelations.actions.find(
                   a => a.type === 'BAN' && a.position === i,

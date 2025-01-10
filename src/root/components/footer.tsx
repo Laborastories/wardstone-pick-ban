@@ -50,49 +50,67 @@ export function Footer() {
       className='relative z-50 mx-auto max-w-7xl'
     >
       <div className='px-4 py-2'>
-        {/* Single row layout */}
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Strategy size={16} weight='fill' />
+        <div className='flex flex-col gap-2'>
+          {/* Work in Progress Banner */}
+          <div className='flex items-center justify-center gap-2 rounded-md bg-muted px-3 py-1'>
             <span className='text-xs text-muted-foreground'>
-              &copy; {new Date().getFullYear()} SCOUT AHEAD
+              🚧 Scout Ahead is a work in progress. Please submit feedback via our{' '}
+              <a
+                href='https://github.com/Laborastories/wardstone-pick-ban'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='font-medium text-foreground hover:underline'
+              >
+                GitHub repository
+              </a>
+              .
             </span>
-            <nav className='flex gap-4' aria-label='Footer'>
-              {navigation.main.map(item => (
-                <ScrollToTopLink
-                  key={item.name}
-                  to={item.href}
-                  className='text-xs text-muted-foreground transition-colors hover:text-foreground'
-                >
-                  {item.name}
-                </ScrollToTopLink>
-              ))}
-            </nav>
           </div>
-          <div className='flex items-center gap-4'>
-            <a
-              href='https://www.buymeacoffee.com/wardbox'
-              aria-label='Buy me a coffee'
-            >
-              <img
-                src='https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wardbox&button_colour=404040&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00'
-                alt='Buy me a coffee'
-              />
-            </a>
 
-            <div className='flex gap-4'>
-              {navigation.social.map(item => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='text-muted-foreground transition-colors hover:text-foreground'
-                  aria-label={item.name}
-                >
-                  <GithubLogo size={16} weight='fill' />
-                </a>
-              ))}
+          {/* Single row layout */}
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
+              <Strategy size={16} weight='fill' />
+              <span className='text-xs text-muted-foreground'>
+                &copy; {new Date().getFullYear()} SCOUT AHEAD
+              </span>
+              <nav className='flex gap-4' aria-label='Footer'>
+                {navigation.main.map(item => (
+                  <ScrollToTopLink
+                    key={item.name}
+                    to={item.href}
+                    className='text-xs text-muted-foreground transition-colors hover:text-foreground'
+                  >
+                    {item.name}
+                  </ScrollToTopLink>
+                ))}
+              </nav>
+            </div>
+            <div className='flex items-center gap-4'>
+              <a
+                href='https://www.buymeacoffee.com/wardbox'
+                aria-label='Buy me a coffee'
+              >
+                <img
+                  src='https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wardbox&button_colour=404040&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00'
+                  alt='Buy me a coffee'
+                />
+              </a>
+
+              <div className='flex gap-4'>
+                {navigation.social.map(item => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='text-muted-foreground transition-colors hover:text-foreground'
+                    aria-label={item.name}
+                  >
+                    <GithubLogo size={16} weight='fill' />
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </div>

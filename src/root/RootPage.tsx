@@ -10,6 +10,8 @@ import { transitions } from '../motion/transitionPresets'
 import './Root.css'
 // Supports weights 100-900
 import '@fontsource-variable/inter'
+// Supports weights 100-800
+import '@fontsource-variable/jetbrains-mono';
 
 export default function Root() {
   const { data: user, isLoading } = useAuth()

@@ -300,7 +300,7 @@ export function DraftPage() {
         <div
           className={cn(
             'relative overflow-hidden transition-all duration-200',
-            type === 'PICK' ? 'h-full' : 'aspect-square w-24',
+            type === 'PICK' ? 'h-full' : 'aspect-square w-20',
             isActive && 'after:absolute after:inset-0 after:border-2 after:border-primary after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
             (isPending || isPreviewed) && 'after:absolute after:inset-0 after:border-2 after:border-primary/50 after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
             !isActive && !isPending && !isPreviewed && 'border border-border hover:border-primary/20',
@@ -475,7 +475,10 @@ export function DraftPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className='absolute inset-0 flex items-center justify-center bg-muted/50 text-2xl font-medium text-muted-foreground'
+                className={cn(
+                  'absolute inset-0 flex items-center justify-center bg-muted/50 font-light text-muted-foreground',
+                  type === 'PICK' ? 'text-4xl font-thin' : 'text-lg'
+                )}
               >
                 {type === 'PICK'
                   ? `${team[0]}${index + 1}`
@@ -520,16 +523,16 @@ export function DraftPage() {
 
   return (
     <div className='h-screen overflow-hidden bg-background'>
-      <div className='flex h-full flex-col rounded-lg p-4 shadow-lg backdrop-blur-sm'>
+      <div className='flex h-full flex-col rounded-lg p-4 shadow-lg backdrop-blur-sm min-w-[1280px]'>
         {/* Main Draft UI */}
         <div className='flex h-full flex-col gap-6'>
           {/* Top Section: Picks and Series Info */}
           <div className='flex min-h-0 flex-1 gap-6'>
             {/* Blue Side - Vertical */}
-            <div className='flex min-h-0 w-[20%] min-w-[16rem] flex-col rounded-sm border bg-muted p-6 shadow-md backdrop-blur-sm'>
+            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col rounded-sm border bg-muted p-6 shadow-md backdrop-blur-sm'>
               <motion.h2
                 className={cn(
-                  'mb-4 flex-none text-center text-2xl font-bold uppercase tracking-wider',
+                  'mb-4 flex-none truncate text-center text-4xl font-bold uppercase tracking-wider',
                   gameWithRelations.series.winner === gameWithRelations.blueSide
                     ? 'text-blue-400'
                     : 'text-blue-500',
@@ -546,6 +549,7 @@ export function DraftPage() {
                     : {}
                 }
                 transition={{ repeat: Infinity, duration: 2 }}
+                title={gameWithRelations.blueSide || 'Blue Side'} // Show full text on hover
               >
                 {gameWithRelations.blueSide || 'Blue Side'}
               </motion.h2>
@@ -562,7 +566,7 @@ export function DraftPage() {
             </div>
 
             {/* Center Content */}
-            <div className='flex min-w-min flex-1 flex-col gap-4'>
+            <div className='flex min-w-[640px] flex-1 flex-col gap-4'>
               {/* Series Info */}
               <div>
                 {(game as GameWithRelations)?.series && (
@@ -671,10 +675,10 @@ export function DraftPage() {
             </div>
 
             {/* Red Side - Vertical */}
-            <div className='flex min-h-0 w-[20%] min-w-[16rem] flex-col bg-muted rounded-sm p-6 shadow-md backdrop-blur-sm'>
+            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col bg-muted rounded-sm p-6 shadow-md backdrop-blur-sm'>
               <motion.h2
                 className={cn(
-                  'mb-4 flex-none text-center text-2xl font-bold uppercase tracking-wider',
+                  'mb-4 flex-none truncate text-center text-4xl font-bold uppercase tracking-wider',
                   gameWithRelations.series.winner === gameWithRelations.redSide
                     ? 'text-red-400'
                     : 'text-red-500',

@@ -165,15 +165,16 @@ export function ChampionGrid({
                 <div
                   className={`absolute inset-0 bg-black/50 ${isUsed || isBanned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} flex items-center justify-center rounded p-1 transition-opacity`}
                 >
-                  <span className='text-center text-[10px] font-medium leading-tight text-white'>
-                    {champion.name}
+                  <span>
                     {isUsed && (
-                      <div className='text-[9px] text-red-400'>
+                      <div className='champion-name text-[0.8rem] font-bold text-red-400'>
                         Already Picked
                       </div>
                     )}
                     {isBanned && (
-                      <div className='text-[9px] text-yellow-400'>Banned</div>
+                      <div className='champion-name text-[0.8rem] font-bold text-yellow-400'>
+                        Banned
+                      </div>
                     )}
                   </span>
                 </div>

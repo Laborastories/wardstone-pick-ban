@@ -1,52 +1,72 @@
 import * as React from 'react'
-import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { cn, usePrefetch } from '../../lib/utils'
+import { cn } from '../../lib/utils'
 import { Link } from 'wasp/client/router'
-import {
-  HouseSimple,
-  List,
-  Strategy,
-  User as UserIcon,
-} from '@phosphor-icons/react'
-import { ModeToggle } from '../../client/components/mode-toggle'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '../../client/components/ui/sheet'
+import { Strategy, Copy } from '@phosphor-icons/react'
 import { Button } from '../../client/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../../client/components/ui/dropdown-menu'
-import { logout } from 'wasp/client/auth'
-import { type User } from 'wasp/entities'
-import { Skeleton } from '../../client/components/ui/skeleton'
-import { motion } from 'motion/react'
-import { fadeIn } from '../../motion/transitionPresets'
+import { type Series, type Game } from 'wasp/entities'
+import { useToast } from '../../hooks/use-toast'
 
 interface NavProps extends React.HTMLAttributes<HTMLElement> {
-  user?: User | null
-  userLoading?: boolean
+  series?: Series & {
+    games: (Game & {
+      actions: {
+        type: string
+        champion: string
+        team: 'BLUE' | 'RED'
+        position: number
+      }[]
+    })[]
+  }
+  currentGameNumber?: number
+  side?: 'team1' | 'team2'
 }
 
 const Nav = React.forwardRef<HTMLElement, NavProps>(
-  ({ user, userLoading, ...props }, ref) => {
-    const [open, setOpen] = useState(false)
-    const [dropdownOpen, setDropdownOpen] = useState(false)
-    const location = useLocation()
-    const prefetch = usePrefetch()
+  ({ series, currentGameNumber, ...props }, ref) => {
+    const { toast } = useToast()
 
-    const handleNavigation = () => {
-      setOpen(false)
+    const handleCopyUrls = () => {
+      if (!series) return
+      const baseUrl = window.location.origin
+      const urls = `${series.team1Name}:
+${baseUrl}/draft/${series.id}/1/team1/${series.team1AuthToken}
+
+${series.team2Name}:
+${baseUrl}/draft/${series.id}/1/team2/${series.team2AuthToken}
+
+Spectator URL:
+${baseUrl}/draft/${series.id}/1`
+
+      navigator.clipboard.writeText(urls).then(() => {
+        toast({
+          title: 'URLs Copied',
+          description: 'All draft URLs have been copied to your clipboard.',
+        })
+      })
     }
+
+    // Calculate series info
+    const team1Wins =
+      series?.games.filter(
+        g =>
+          (g.status === 'COMPLETED' &&
+            g.winner === 'BLUE' &&
+            g.blueSide === series.team1Name) ||
+          (g.status === 'COMPLETED' &&
+            g.winner === 'RED' &&
+            g.redSide === series.team1Name),
+      ).length || 0
+
+    const team2Wins =
+      series?.games.filter(
+        g =>
+          (g.status === 'COMPLETED' &&
+            g.winner === 'BLUE' &&
+            g.blueSide === series.team2Name) ||
+          (g.status === 'COMPLETED' &&
+            g.winner === 'RED' &&
+            g.redSide === series.team2Name),
+      ).length || 0
 
     return (
       <nav
@@ -58,232 +78,76 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
         {...props}
       >
         <div className='flex items-center space-x-4 lg:space-x-8'>
-          <Link
-            to='/'
-            className='flex items-center space-x-2'
-            onMouseEnter={() => prefetch('/', undefined, { assets: true })}
-          >
+          <Link to='/' className='flex items-center space-x-2'>
             <Strategy size={24} />
             <span className='font-bold'>SCOUT AHEAD</span>
           </Link>
-          <div className='hidden items-center space-x-4 text-muted-foreground md:flex lg:space-x-6'>
-            <Link
-              to='/'
-              className={cn(
-                'text-md flex items-center space-x-2 font-medium transition-colors hover:text-primary',
-                location.pathname === '/' && 'text-primary',
-              )}
-              onMouseEnter={() => prefetch('/', undefined, { assets: true })}
-            >
-              <span>Home</span>
-            </Link>
-          </div>
         </div>
 
-        <div className='flex items-center gap-4'>
-          <ModeToggle iconSize='md' />
-          {/* Desktop Menu */}
-          <div className='hidden items-center space-x-4 md:flex'>
-            {userLoading ? (
-              <div className='flex items-center'>
-                <Skeleton className='h-10 w-10' />
-              </div>
-            ) : (
-              <div className='flex items-center animate-in fade-in'>
-                {user ? (
-                  <DropdownMenu
-                    open={dropdownOpen}
-                    onOpenChange={setDropdownOpen}
-                    modal={false}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        aria-label='User menu'
-                      >
-                        <UserIcon size={24} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <Link
-                        to='/profile/:id'
-                        params={{ id: user.id }}
-                        onMouseEnter={() =>
-                          prefetch('/profile/:id', { id: user.id })
-                        }
-                        onClick={() => setDropdownOpen(false)}
-                        className='cursor-pointer'
-                      >
-                        <DropdownMenuItem>Profile</DropdownMenuItem>
-                      </Link>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className='cursor-pointer text-red-600'
-                        onClick={() => {
-                          setDropdownOpen(false)
-                          logout()
-                        }}
-                      >
-                        Log out
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <DropdownMenu
-                    open={dropdownOpen}
-                    onOpenChange={setDropdownOpen}
-                    modal={false}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button variant='outline' size='icon'>
-                        <UserIcon size={24} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <Link
-                        to='/login'
-                        onMouseEnter={() =>
-                          prefetch('/login', undefined, {
-                            assets: true,
-                          })
-                        }
-                      >
-                        <DropdownMenuItem
-                          onClick={() => setDropdownOpen(false)}
-                          className='cursor-pointer'
-                        >
-                          Log in
-                        </DropdownMenuItem>
-                      </Link>
-                      <Link
-                        to='/signup'
-                        onMouseEnter={() =>
-                          prefetch('/signup', undefined, {
-                            assets: true,
-                          })
-                        }
-                      >
-                        <DropdownMenuItem
-                          onClick={() => setDropdownOpen(false)}
-                          className='cursor-pointer'
-                        >
-                          Sign up
-                        </DropdownMenuItem>
-                      </Link>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Menu */}
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger className='md:hidden'>
-              <List size={24} />
-            </SheetTrigger>
-            <SheetContent side='right'>
-              <SheetHeader>
-                <SheetTitle hidden>Navigation</SheetTitle>
-                <SheetDescription hidden>
-                  Navigate to the pages you want.
-                </SheetDescription>
-              </SheetHeader>
-              <div className='flex flex-col gap-3 space-y-4'>
-                <Link
-                  to='/'
-                  className={cn(
-                    'text-md flex items-center space-x-4 font-medium transition-colors hover:text-primary',
-                    location.pathname === '/' && 'text-primary',
-                  )}
-                  onClick={handleNavigation}
-                  aria-label='Home'
+        {/* Series Info */}
+        {series && currentGameNumber && (
+          <div className='flex-1'>
+            <div className='relative mx-auto max-w-2xl'>
+              <div className='absolute right-0 top-0'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  onClick={handleCopyUrls}
+                  className='h-8 w-8'
                 >
-                  <Button size='icon' className='rounded-full' iconSize='lg'>
-                    <HouseSimple size={24} weight='fill' />
-                  </Button>
-                  <span className='text-3xl'>Home</span>
-                </Link>
-                {/* Mobile Auth Menu Items */}
-                {userLoading ? (
-                  <>
-                    <DropdownMenuSeparator />
-                    <Skeleton className='h-10 w-10' />
-                  </>
-                ) : (
-                  <motion.div
-                    variants={fadeIn}
-                    initial='initial'
-                    animate='animate'
-                    className='col-span-2 mx-auto flex w-full gap-2'
-                  >
-                    {user ? (
-                      <div className='col-span-2 mx-auto flex w-full flex-col justify-center gap-8'>
-                        <DropdownMenuSeparator />
-                        <Link
-                          to='/profile/:id'
-                          params={{ id: user.id }}
-                          className={cn(
-                            'text-md flex items-center space-x-4 font-medium transition-colors hover:text-primary',
-                            location.pathname.startsWith('/profile') &&
-                              'text-primary',
-                          )}
-                          onClick={handleNavigation}
-                          onMouseEnter={() =>
-                            prefetch('/profile/:id', { id: user.id })
-                          }
-                        >
-                          <Button
-                            size='icon'
-                            className='rounded-full'
-                            iconSize='lg'
-                          >
-                            <UserIcon size={24} weight='fill' />
-                          </Button>
-                          <span className='text-3xl'>Profile</span>
-                        </Link>
-                        <Button
-                          onClick={() => {
-                            logout()
-                            handleNavigation()
-                          }}
-                          variant='destructive'
-                        >
-                          <span className='text-lg'>Log out</span>
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className='col-span-2 mx-auto flex w-full justify-center gap-4 pt-8'>
-                        <DropdownMenuSeparator />
-                        <Link
-                          to='/login'
-                          className='text-md flex cursor-pointer items-center space-x-4 font-medium transition-all'
-                          onClick={handleNavigation}
-                          onMouseEnter={() => prefetch('/login')}
-                        >
-                          <Button>
-                            <span className='text-lg'>Log in</span>
-                          </Button>
-                        </Link>
-                        <Link
-                          to='/signup'
-                          className='text-md flex items-center space-x-4 font-medium'
-                          onClick={handleNavigation}
-                          onMouseEnter={() => prefetch('/signup')}
-                        >
-                          <Button>
-                            <span className='text-lg'>Sign up</span>
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
+                  <Copy size={14} />
+                </Button>
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+              <div className='flex flex-col items-center justify-center gap-2'>
+                {/* Score and Team Names */}
+                <div className='flex items-center justify-center gap-4 text-xl'>
+                  <div className='w-[120px] text-right font-bold text-[hsl(var(--team-blue))]'>
+                    {series.team1Name}
+                  </div>
+                  <div className='flex min-w-[80px] items-center justify-center gap-2 font-bold'>
+                    <span>{team1Wins}</span>
+                    <span className='text-muted-foreground'>-</span>
+                    <span>{team2Wins}</span>
+                  </div>
+                  <div className='w-[120px] text-left font-bold text-[hsl(var(--team-red))]'>
+                    {series.team2Name}
+                  </div>
+                </div>
+
+                {/* Game Numbers */}
+                <div className='flex gap-2'>
+                  {Array.from({
+                    length:
+                      series.format === 'BO5'
+                        ? 5
+                        : series.format === 'BO3'
+                          ? 3
+                          : 1,
+                  }).map((_, i) => {
+                    const gameNum = i + 1
+                    const isCurrentGame = gameNum === currentGameNumber
+                    return (
+                      <div
+                        key={gameNum}
+                        className={cn(
+                          'rounded px-3 py-1 text-sm',
+                          isCurrentGame
+                            ? 'bg-accent text-accent-foreground'
+                            : 'text-muted-foreground',
+                        )}
+                      >
+                        Game {gameNum}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Empty div to maintain spacing */}
+        <div className='w-[40px]' />
       </nav>
     )
   },

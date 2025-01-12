@@ -80,7 +80,7 @@ html {
   }
 
   body {
-    font-family: 'Inter Variable', sans-serif;
+    font-family: 'JetBrains Mono Variable', monospace;
     @apply bg-background text-foreground;
   }
 
@@ -90,5 +90,9 @@ html {
 
   code:not(pre code) {
     @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold;
+  }
+
+  .champion-name {
+    font-family: 'Inter Variable', sans-serif;
   }
 }

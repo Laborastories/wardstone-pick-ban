@@ -78,11 +78,11 @@ export function CreateSeriesPage() {
   }
 
   return (
-    <div className='bg-background px-4 py-12 text-foreground sm:px-6 lg:px-8'>
+    <div className='flex min-h-screen items-center justify-center bg-background'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='mx-auto max-w-md'
+        className='w-full max-w-md px-4'
       >
         <h1 className='mb-8 text-center text-3xl font-bold'>
           Create Draft Series

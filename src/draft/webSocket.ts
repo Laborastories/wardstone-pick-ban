@@ -85,7 +85,7 @@ const gameTimers: Record<
   }
 > = {}
 
-const PHASE_TIME_LIMIT = 30 // 30 seconds per pick/ban
+const PHASE_TIME_LIMIT = 31 // 30 seconds per pick/ban
 
 export const webSocketFn: WebSocketFn = io => {
   console.log('WebSocket server initialized')

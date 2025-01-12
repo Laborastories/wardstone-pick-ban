@@ -88,22 +88,22 @@ let splashPathCache: Record<string, string> = {}
 const championRoles: Record<string, ChampionRole[]> = {
   Aatrox: ['top'],
   Ahri: ['mid'],
-  Akali: ['top', 'mid'],
+  Akali: ['mid'],
   Akshan: ['top', 'mid'],
   Alistar: ['support'],
   Ambessa: ['top', 'jungle'],
-  Amumu: ['jungle'],
-  Anivia: ['mid', 'bot'],
+  Amumu: ['jungle', 'support'],
+  Anivia: ['mid', 'support'],
   Annie: ['mid'],
   Aphelios: ['bot'],
-  Ashe: ['bot', 'support'],
+  Ashe: ['bot'],
   AurelionSol: ['mid'],
-  Aurora: ['top', 'mid'],
+  Aurora: ['mid'],
   Azir: ['mid'],
   Bard: ['support'],
   Belveth: ['jungle'],
   Blitzcrank: ['support'],
-  Brand: ['mid', 'bot', 'support'],
+  Brand: ['jungle', 'support'],
   Braum: ['support'],
   Briar: ['jungle'],
   Caitlyn: ['bot'],
@@ -111,27 +111,27 @@ const championRoles: Record<string, ChampionRole[]> = {
   Cassiopeia: ['top', 'mid'],
   Chogath: ['top'],
   Corki: ['mid', 'bot'],
-  Darius: ['top', 'jungle'],
+  Darius: ['top'],
   Diana: ['jungle'],
   DrMundo: ['top', 'jungle'],
   Draven: ['bot'],
-  Ekko: ['jungle', 'mid'],
-  Elise: ['jungle'],
+  Ekko: ['jungle'],
+  Elise: ['jungle', 'support'],
   Evelynn: ['jungle'],
   Ezreal: ['bot'],
   Fiddlesticks: ['jungle', 'support'],
   Fiora: ['top'],
   Fizz: ['mid'],
-  Galio: ['mid'],
+  Galio: ['top', 'mid', 'support'],
   Gangplank: ['top'],
   Garen: ['top', 'mid'],
   Gnar: ['top'],
   Gragas: ['top', 'jungle'],
   Graves: ['jungle'],
-  Gwen: ['top'],
+  Gwen: ['top', 'jungle'],
   Hecarim: ['jungle'],
-  Heimerdinger: ['mid'],
-  Hwei: ['mid'],
+  Heimerdinger: ['top', 'support'],
+  Hwei: ['mid', 'bot'],
   Illaoi: ['top'],
   Irelia: ['top', 'mid'],
   Ivern: ['jungle'],
@@ -155,14 +155,14 @@ const championRoles: Record<string, ChampionRole[]> = {
   Kindred: ['jungle'],
   Kled: ['top'],
   KogMaw: ['bot'],
-  Leblanc: ['mid'],
+  Leblanc: ['mid', 'support'],
   LeeSin: ['jungle'],
   Leona: ['support'],
   Lillia: ['jungle'],
   Lissandra: ['mid'],
   Lucian: ['bot'],
   Lulu: ['support'],
-  Lux: ['support', 'mid'],
+  Lux: ['support', 'mid', 'bot'],
   Malphite: ['top'],
   Malzahar: ['mid'],
   Maokai: ['top', 'jungle', 'support'],
@@ -175,16 +175,16 @@ const championRoles: Record<string, ChampionRole[]> = {
   Nami: ['support'],
   Nasus: ['top'],
   Nautilus: ['support'],
-  Neeko: ['mid'],
+  Neeko: ['mid', 'support'],
   Nidalee: ['jungle'],
   Nilah: ['bot'],
   Nocturne: ['jungle'],
-  Nunu: ['jungle'],
+  Nunu: ['jungle', 'mid'],
   Olaf: ['top'],
   Orianna: ['mid'],
   Ornn: ['top'],
-  Pantheon: ['support'],
-  Poppy: ['top'],
+  Pantheon: ['top', 'mid', 'support'],
+  Poppy: ['top', 'support'],
   Pyke: ['support'],
   Qiyana: ['mid'],
   Quinn: ['top'],
@@ -203,58 +203,58 @@ const championRoles: Record<string, ChampionRole[]> = {
   Senna: ['support'],
   Seraphine: ['support'],
   Sett: ['top'],
-  Shaco: ['jungle'],
-  Shen: ['top'],
+  Shaco: ['jungle', 'support'],
+  Shen: ['top', 'support'],
   Shyvana: ['jungle'],
   Singed: ['top'],
   Sion: ['top'],
   Sivir: ['bot'],
   Skarner: ['jungle'],
-  Smolder: ['bot'],
+  Smolder: ['bot', 'mid'],
   Sona: ['support'],
   Soraka: ['support'],
-  Swain: ['mid'],
-  Sylas: ['mid'],
+  Swain: ['top', 'support'],
+  Sylas: ['mid', 'support', 'top', 'jungle'],
   Syndra: ['mid'],
-  TahmKench: ['support'],
-  Taliyah: ['jungle'],
+  TahmKench: ['support', 'top'],
+  Taliyah: ['jungle', 'mid'],
   Talon: ['mid'],
   Taric: ['support'],
-  Teemo: ['top'],
+  Teemo: ['top', 'support'],
   Thresh: ['support'],
   Tristana: ['bot'],
   Trundle: ['top'],
   Tryndamere: ['top'],
   TwistedFate: ['mid'],
-  Twitch: ['bot'],
-  Udyr: ['jungle'],
+  Twitch: ['bot', 'support'],
+  Udyr: ['jungle', 'top'],
   Urgot: ['top'],
   Varus: ['bot'],
-  Vayne: ['bot'],
-  Veigar: ['mid'],
-  Velkoz: ['support'],
+  Vayne: ['bot', 'top'],
+  Veigar: ['mid', 'bot'],
+  Velkoz: ['support', 'mid'],
   Vex: ['mid'],
   Vi: ['jungle'],
   Viego: ['jungle'],
-  Viktor: ['mid'],
+  Viktor: ['mid', 'bot'],
   Vladimir: ['mid'],
   Volibear: ['top', 'jungle'],
   Warwick: ['top', 'jungle'],
   MonkeyKing: ['jungle'],
   Xayah: ['bot'],
-  Xerath: ['support'],
+  Xerath: ['support', 'mid'],
   XinZhao: ['jungle'],
-  Yasuo: ['mid'],
-  Yone: ['mid'],
-  Yorick: ['top'],
+  Yasuo: ['mid', 'top'],
+  Yone: ['mid', 'top'],
+  Yorick: ['top', 'jungle'],
   Yuumi: ['support'],
-  Zac: ['jungle'],
-  Zed: ['mid'],
+  Zac: ['jungle', 'top'],
+  Zed: ['mid', 'jungle'],
   Zeri: ['bot'],
-  Ziggs: ['mid'],
+  Ziggs: ['bot'],
   Zilean: ['support'],
-  Zoe: ['mid'],
-  Zyra: ['support'],
+  Zoe: ['mid', 'support'],
+  Zyra: ['support', 'jungle'],
 }
 
 // Fallback role mapping from DDragon tags to our roles
@@ -356,10 +356,16 @@ export async function getChampions(): Promise<Champion[]> {
     return []
   }
 }
+
 export function getChampionImageUrl(
   champion: Champion | string,
   type: 'icon' | 'splash' = 'icon',
 ): string {
+  if (!DDRAGON_VERSION) {
+    console.error('DDragon version not initialized')
+    return ''
+  }
+
   if (typeof champion === 'string') {
     // If splash art is requested
     if (type === 'splash') {
@@ -367,23 +373,23 @@ export function getChampionImageUrl(
       if (path) {
         return `${COMMUNITY_DRAGON_URL}/${path}`
       }
-      // Fallback to icon if splash not found
+      // Fallback to Data Dragon loading screen if Community Dragon is down
+      return `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champion}_0.jpg`
     }
 
-    // If just the champion ID is provided, find the champion in cache to get numeric key
-    const championData = championsCache?.find(c => c.id === champion)
-    if (championData) {
-      return `${COMMUNITY_DRAGON_URL}/v1/champion-icons/${championData.key}.png`
-    }
-    // Fallback to using the champion name directly
-    return `${COMMUNITY_DRAGON_URL}/v1/champion-icons/${champion}.png`
+    // For icons, use the square assets
+    return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${champion}.png`
   }
 
   // If full champion object is provided
   if (type === 'splash' && champion.splashPath) {
     return `${COMMUNITY_DRAGON_URL}/${champion.splashPath}`
   }
-  return `${COMMUNITY_DRAGON_URL}/v1/champion-icons/${champion.key}.png`
+  // Fallback to Data Dragon loading screen if Community Dragon is down
+  if (type === 'splash') {
+    return `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champion.id}_0.jpg`
+  }
+  return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${champion.id}.png`
 }
 
 // Filter champions by search term (name or tag)

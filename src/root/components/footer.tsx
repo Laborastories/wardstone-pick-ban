@@ -1,15 +1,32 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'wasp/client/router'
 import { motion } from 'motion/react'
 import { fadeIn } from '../../motion/transitionPresets'
-import { GithubLogo, Strategy } from '@phosphor-icons/react'
+import { Strategy, User as UserIcon } from '@phosphor-icons/react'
 import { usePrefetch } from '../../lib/utils'
+import { Button } from '../../client/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../client/components/ui/dropdown-menu'
+import { Skeleton } from '../../client/components/ui/skeleton'
+import { logout } from 'wasp/client/auth'
+import { type User } from 'wasp/entities'
+import { useState } from 'react'
+
+interface FooterProps {
+  user?: User | null
+  userLoading?: boolean
+}
 
 const ScrollToTopLink = ({
   to,
   children,
   className,
 }: {
-  to: string
+  to: '/'
   children: React.ReactNode
   className?: string
 }) => {
@@ -31,7 +48,7 @@ const ScrollToTopLink = ({
 }
 
 const navigation = {
-  main: [{ name: 'Home', href: '/' }],
+  main: [{ name: 'Home', href: '/' as const }],
   social: [
     {
       name: 'GitHub',
@@ -41,7 +58,9 @@ const navigation = {
   ],
 }
 
-export function Footer() {
+export function Footer({ user, userLoading }: FooterProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
   return (
     <motion.div
       variants={fadeIn}
@@ -50,49 +69,129 @@ export function Footer() {
       className='relative z-50 mx-auto max-w-7xl'
     >
       <div className='px-4 py-2'>
-        {/* Single row layout */}
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Strategy size={16} weight='fill' />
-            <span className='text-xs text-muted-foreground'>
-              &copy; {new Date().getFullYear()} SCOUT AHEAD
-            </span>
-            <nav className='flex gap-4' aria-label='Footer'>
-              {navigation.main.map(item => (
-                <ScrollToTopLink
-                  key={item.name}
-                  to={item.href}
-                  className='text-xs text-muted-foreground transition-colors hover:text-foreground'
-                >
-                  {item.name}
-                </ScrollToTopLink>
-              ))}
-            </nav>
-          </div>
-          <div className='flex items-center gap-4'>
-            <a
-              href='https://www.buymeacoffee.com/wardbox'
-              aria-label='Buy me a coffee'
-            >
-              <img
-                src='https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wardbox&button_colour=404040&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00'
-                alt='Buy me a coffee'
-              />
-            </a>
-
-            <div className='flex gap-4'>
-              {navigation.social.map(item => (
+        <div className='flex flex-col gap-2'>
+          {/* Single row layout */}
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
+              <Strategy size={16} weight='fill' />
+              <span className='text-xs text-muted-foreground'>
+                &copy; {new Date().getFullYear()} SCOUT AHEAD
+              </span>
+              <nav className='flex gap-4' aria-label='Footer'>
+                {navigation.main.map(item => (
+                  <ScrollToTopLink
+                    key={item.name}
+                    to={item.href}
+                    className='text-xs text-muted-foreground transition-colors hover:text-foreground'
+                  >
+                    {item.name}
+                  </ScrollToTopLink>
+                ))}
+              </nav>
+            </div>
+            {/* Work in Progress Banner */}
+            <div className='flex items-center justify-center gap-2 rounded-md bg-muted/50 px-3 py-1'>
+              <span className='text-xs text-muted-foreground'>
+                🚧 Scout Ahead is a work in progress. Please submit feedback via
+                our{' '}
                 <a
-                  key={item.name}
-                  href={item.href}
+                  href='https://github.com/Laborastories/wardstone-pick-ban/issues'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='text-muted-foreground transition-colors hover:text-foreground'
-                  aria-label={item.name}
+                  className='font-medium text-foreground hover:underline'
                 >
-                  <GithubLogo size={16} weight='fill' />
+                  GitHub repository
                 </a>
-              ))}
+                .
+              </span>
+            </div>
+            <div className='flex items-center gap-4'>
+              <a
+                href='https://www.buymeacoffee.com/wardbox'
+                aria-label='Buy me a coffee'
+              >
+                <img
+                  src='https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wardbox&button_colour=404040&font_colour=ffffff&font_family=Inter&outline_colour=ffffff&coffee_colour=FFDD00'
+                  alt='Buy me a coffee'
+                />
+              </a>
+
+              {/* User Menu */}
+              {userLoading ? (
+                <div className='flex items-center'>
+                  <Skeleton className='h-8 w-8' />
+                </div>
+              ) : (
+                <div className='flex items-center animate-in fade-in'>
+                  {user ? (
+                    <DropdownMenu
+                      open={dropdownOpen}
+                      onOpenChange={setDropdownOpen}
+                      modal={false}
+                    >
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          aria-label='User menu'
+                        >
+                          <UserIcon size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <Link
+                          to='/profile/:id'
+                          params={{ id: user.id }}
+                          onClick={() => setDropdownOpen(false)}
+                          className='cursor-pointer'
+                        >
+                          <DropdownMenuItem>Profile</DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className='cursor-pointer text-red-600'
+                          onClick={() => {
+                            setDropdownOpen(false)
+                            logout()
+                          }}
+                        >
+                          Log out
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <DropdownMenu
+                      open={dropdownOpen}
+                      onOpenChange={setDropdownOpen}
+                      modal={false}
+                    >
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='outline' size='icon'>
+                          <UserIcon size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <Link to='/login'>
+                          <DropdownMenuItem
+                            onClick={() => setDropdownOpen(false)}
+                            className='cursor-pointer'
+                          >
+                            Log in
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link to='/signup'>
+                          <DropdownMenuItem
+                            onClick={() => setDropdownOpen(false)}
+                            className='cursor-pointer'
+                          >
+                            Sign up
+                          </DropdownMenuItem>
+                        </Link>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

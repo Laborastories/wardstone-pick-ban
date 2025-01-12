@@ -138,7 +138,7 @@ export function ChampionGrid({
       </div>
 
       {/* Grid */}
-      <div className='grid min-h-0 auto-rows-[4rem] grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-1 overflow-y-auto p-4 xl:auto-rows-[5rem] xl:grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] xl:gap-2 xl:p-6'>
+      <div className='grid min-h-0 auto-rows-[4rem] grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-1 overflow-y-auto p-4 lg:auto-rows-[5rem] 2xl:grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] lg:gap-2 lg:p-6'>
         {filteredChampions.map(champion => {
           const isUsed = usedChampions.includes(champion.id)
           const isBanned = bannedChampions.includes(champion.id)
@@ -152,7 +152,7 @@ export function ChampionGrid({
                 prefetchImage(getChampionImageUrl(champion.id, 'splash'))
               }}
               disabled={isDisabled}
-              className={`group relative flex aspect-square w-16 flex-col items-center justify-center rounded transition-colors hover:bg-accent xl:w-20 ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
+              className={`group relative flex aspect-square w-16 flex-col items-center justify-center rounded transition-colors hover:bg-accent 2xl:w-20 ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
               title={`${champion.name}${isUsed ? ' (Already picked in this series)' : isBanned ? ' (Banned this game)' : ''}`}
             >
               <div className='relative aspect-square h-full w-full overflow-hidden rounded'>

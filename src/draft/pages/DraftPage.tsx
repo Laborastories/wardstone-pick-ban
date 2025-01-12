@@ -300,7 +300,7 @@ export function DraftPage() {
         <div
           className={cn(
             'relative overflow-hidden transition-all duration-200',
-            type === 'PICK' ? 'h-full' : 'aspect-square w-16 xl:w-20',
+            type === 'PICK' ? 'h-full' : 'aspect-square w-16 2xl:w-20',
             isActive && 'after:absolute after:inset-0 after:border-2 after:border-primary after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
             (isPending || isPreviewed) && 'after:absolute after:inset-0 after:border-2 after:border-primary/50 after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
             !isActive && !isPending && !isPreviewed && 'border border-border hover:border-primary/20',

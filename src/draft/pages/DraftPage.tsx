@@ -523,11 +523,11 @@ export function DraftPage() {
 
   return (
     <div className='h-screen overflow-hidden bg-background'>
-      <div className='flex h-full flex-col rounded-lg p-4 shadow-lg backdrop-blur-sm min-w-[1280px]'>
+      <div className='flex h-full flex-col rounded-lg p-3 shadow-lg backdrop-blur-sm min-w-[1280px]'>
         {/* Main Draft UI */}
-        <div className='flex h-full flex-col gap-6'>
+        <div className='flex h-full flex-col gap-4'>
           {/* Top Section: Picks and Series Info */}
-          <div className='flex min-h-0 flex-1 gap-6'>
+          <div className='flex min-h-0 flex-1 gap-4'>
             {/* Blue Side - Vertical */}
             <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col rounded-sm border bg-muted p-6 shadow-md backdrop-blur-sm'>
               <motion.h2

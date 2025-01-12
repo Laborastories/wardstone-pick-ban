@@ -79,7 +79,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
   }
 
   return (
-    <div className='flex flex-col gap-4 p-4'>
+    <div className='flex flex-col gap-2 p-2'>
       <div className='flex flex-col gap-2'>
         {/* Copy URL Button */}
         <div className='flex justify-end'>

@@ -22,33 +22,38 @@ export interface SeriesInfoProps {
   isTimerReady?: boolean
 }
 
-export function SeriesInfo({ 
-  series, 
-  currentGameNumber, 
+export function SeriesInfo({
+  series,
+  currentGameNumber,
   side,
   gameStatus,
   blueSide,
   gameId,
   timeRemaining,
   nextAction,
-  isTimerReady
+  isTimerReady,
 }: SeriesInfoProps) {
   const { toast } = useToast()
   const { socket } = useSocket()
-  
+
   const team1Wins = series.games.filter(game => {
     if (game.status !== 'COMPLETED') return false
-    return (game.winner === 'BLUE' && game.blueSide === series.team1Name) ||
-           (game.winner === 'RED' && game.redSide === series.team1Name)
+    return (
+      (game.winner === 'BLUE' && game.blueSide === series.team1Name) ||
+      (game.winner === 'RED' && game.redSide === series.team1Name)
+    )
   }).length
 
   const team2Wins = series.games.filter(game => {
     if (game.status !== 'COMPLETED') return false
-    return (game.winner === 'BLUE' && game.blueSide === series.team2Name) ||
-           (game.winner === 'RED' && game.redSide === series.team2Name)
+    return (
+      (game.winner === 'BLUE' && game.blueSide === series.team2Name) ||
+      (game.winner === 'RED' && game.redSide === series.team2Name)
+    )
   }).length
 
-  const gamesNeeded = series.format === 'BO5' ? 3 : series.format === 'BO3' ? 2 : 1
+  const gamesNeeded =
+    series.format === 'BO5' ? 3 : series.format === 'BO3' ? 2 : 1
   const isSeriesOver = team1Wins >= gamesNeeded || team2Wins >= gamesNeeded
 
   const handleCopyUrl = () => {
@@ -96,40 +101,42 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
 
         <div className='flex h-16 items-center justify-between rounded-lg bg-card px-6'>
           {/* Left Timer Space */}
-          <div className='w-[120px] flex items-center justify-center'>
-            <AnimatePresence mode="wait">
-              {gameStatus === 'IN_PROGRESS' && timeRemaining !== null && nextAction && nextAction.team === 'BLUE' && (
-                <motion.div
-                  key="blue-timer"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={cn(
-                    'flex items-center justify-center rounded-md px-2 h-full',
-                    'bg-blue-500/10'
-                  )}
-                >
-                  {isTimerReady && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className={cn(
-                        'text-4xl 2xl:text-6xl font-medium tabular-nums text-center p-2',
-                        typeof timeRemaining === 'number' && (
-                          timeRemaining <= 4
-                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                            : timeRemaining <= 9
-                              ? 'text-destructive'
-                              : 'text-blue-500'
-                        )
-                      )}
-                    >
-                      {timeRemaining}
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
+          <div className='flex w-[120px] items-center justify-center'>
+            <AnimatePresence mode='wait'>
+              {gameStatus === 'IN_PROGRESS' &&
+                timeRemaining !== null &&
+                nextAction &&
+                nextAction.team === 'BLUE' && (
+                  <motion.div
+                    key='blue-timer'
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={cn(
+                      'flex h-full items-center justify-center rounded-md px-2',
+                      'bg-blue-500/10',
+                    )}
+                  >
+                    {isTimerReady && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={cn(
+                          'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
+                          typeof timeRemaining === 'number' &&
+                            (timeRemaining <= 4
+                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                              : timeRemaining <= 9
+                                ? 'text-destructive'
+                                : 'text-blue-500'),
+                        )}
+                      >
+                        {timeRemaining}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
             </AnimatePresence>
           </div>
 
@@ -138,26 +145,43 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
             {/* Game Navigation */}
             <div className='flex gap-2'>
               {Array.from({
-                length: series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1,
+                length:
+                  series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1,
               }).map((_, i) => {
                 const gameNum = i + 1
                 const isCurrentGame = gameNum === currentGameNumber
                 const isPreviousGame = gameNum < currentGameNumber
                 const game = series.games.find(g => g.gameNumber === gameNum)
-                const isNextGame = !isSeriesOver && gameNum === Math.max(...series.games.filter(g => g.status === 'COMPLETED').map(g => g.gameNumber)) + 1
-                const isDisabled = !isCurrentGame && !isNextGame && !game?.status && (isSeriesOver || (!isPreviousGame && !isCurrentGame))
+                const isNextGame =
+                  !isSeriesOver &&
+                  gameNum ===
+                    Math.max(
+                      ...series.games
+                        .filter(g => g.status === 'COMPLETED')
+                        .map(g => g.gameNumber),
+                    ) +
+                      1
+                const isDisabled =
+                  !isCurrentGame &&
+                  !isNextGame &&
+                  !game?.status &&
+                  (isSeriesOver || (!isPreviousGame && !isCurrentGame))
 
                 return isNextGame ? (
                   <motion.div
                     key={`${gameNum}-${gameId}`}
-                    animate={gameId && game?.id !== gameId ? {
-                      y: [0, -4, 0],
-                      scale: [1, 1.05, 1],
-                    } : {}}
-                    transition={{ 
+                    animate={
+                      gameId && game?.id !== gameId
+                        ? {
+                            y: [0, -4, 0],
+                            scale: [1, 1.05, 1],
+                          }
+                        : {}
+                    }
+                    transition={{
                       duration: 1,
                       repeat: Infinity,
-                      ease: "easeInOut"
+                      ease: 'easeInOut',
                     }}
                   >
                     <Link
@@ -166,7 +190,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         seriesId: series.id,
                         gameNumber: gameNum.toString(),
                         team: side || '',
-                        auth: side ? side === 'team1' ? series.team1AuthToken : series.team2AuthToken : '',
+                        auth: side
+                          ? side === 'team1'
+                            ? series.team1AuthToken
+                            : series.team2AuthToken
+                          : '',
                       }}
                       className={cn(
                         'relative block rounded px-3 py-1 text-sm transition-colors',
@@ -177,31 +205,35 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                           : blueSide === series.team2Name
                             ? 'bg-blue-500/20 text-blue-500'
                             : 'bg-red-500/20 text-red-500',
-                        game?.status === 'COMPLETED' && !isCurrentGame && 'ring-2 ring-accent'
+                        game?.status === 'COMPLETED' &&
+                          !isCurrentGame &&
+                          'ring-2 ring-accent',
                       )}
                     >
                       <span>Game {gameNum}</span>
-                      {gameStatus === 'DRAFT_COMPLETE' && gameId && game?.id !== gameId && (
-                        <motion.div
-                          className={cn(
-                            'absolute inset-0 rounded',
-                            side === 'team1'
-                              ? blueSide === series.team1Name
-                                ? 'bg-blue-500'
-                                : 'bg-red-500'
-                              : blueSide === series.team2Name
-                                ? 'bg-blue-500'
-                                : 'bg-red-500'
-                          )}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: [0.2, 0.1, 0.2] }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
-                        />
-                      )}
+                      {gameStatus === 'DRAFT_COMPLETE' &&
+                        gameId &&
+                        game?.id !== gameId && (
+                          <motion.div
+                            className={cn(
+                              'absolute inset-0 rounded',
+                              side === 'team1'
+                                ? blueSide === series.team1Name
+                                  ? 'bg-blue-500'
+                                  : 'bg-red-500'
+                                : blueSide === series.team2Name
+                                  ? 'bg-blue-500'
+                                  : 'bg-red-500',
+                            )}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: [0.2, 0.1, 0.2] }}
+                            transition={{
+                              duration: 1,
+                              repeat: Infinity,
+                              ease: 'easeInOut',
+                            }}
+                          />
+                        )}
                     </Link>
                   </motion.div>
                 ) : (
@@ -212,14 +244,22 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                       seriesId: series.id,
                       gameNumber: gameNum.toString(),
                       team: side || '',
-                      auth: side ? side === 'team1' ? series.team1AuthToken : series.team2AuthToken : '',
+                      auth: side
+                        ? side === 'team1'
+                          ? series.team1AuthToken
+                          : series.team2AuthToken
+                        : '',
                     }}
                     className={cn(
                       'relative rounded px-3 py-1 text-sm transition-colors',
-                      isCurrentGame ? 'bg-accent text-accent-foreground' : 
-                      isDisabled ? 'cursor-not-allowed text-muted-foreground opacity-50' :
-                      'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                      game?.status === 'COMPLETED' && !isCurrentGame && 'ring-2 ring-accent'
+                      isCurrentGame
+                        ? 'bg-accent text-accent-foreground'
+                        : isDisabled
+                          ? 'cursor-not-allowed text-muted-foreground opacity-50'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                      game?.status === 'COMPLETED' &&
+                        !isCurrentGame &&
+                        'ring-2 ring-accent',
                     )}
                     onClick={e => {
                       if (isDisabled) {
@@ -236,7 +276,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               {/* Team 1 */}
               <div
                 className={cn(
-                  'w-40 text-right text-4xl font-semibold uppercase tracking-wider truncate',
+                  'w-40 truncate text-right text-4xl font-semibold uppercase tracking-wider',
                   side === 'team1' && 'text-primary',
                 )}
                 title={series.team1Name}
@@ -245,7 +285,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               </div>
 
               {/* Score */}
-              <div className='flex items-center gap-2 text-2xl uppercase tracking-wider font-bold bg-muted rounded-sm p-2'>
+              <div className='flex items-center gap-2 rounded-sm bg-muted p-2 text-2xl font-bold uppercase tracking-wider'>
                 <span
                   className={cn(
                     'min-w-[1.5ch] text-center',
@@ -268,7 +308,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               {/* Team 2 */}
               <div
                 className={cn(
-                  'w-40 text-left text-4xl font-semibold uppercase tracking-wider truncate',
+                  'w-40 truncate text-left text-4xl font-semibold uppercase tracking-wider',
                   side === 'team2' && 'text-primary',
                 )}
                 title={series.team2Name}
@@ -279,40 +319,42 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
           </div>
 
           {/* Right Timer Space */}
-          <div className='w-[120px] flex items-center justify-center'>
-            <AnimatePresence mode="wait">
-              {gameStatus === 'IN_PROGRESS' && timeRemaining !== null && nextAction && nextAction.team === 'RED' && (
-                <motion.div
-                  key="red-timer"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={cn(
-                    'flex items-center justify-center rounded-md px-2 h-full',
-                    'bg-red-500/10'
-                  )}
-                >
-                  {isTimerReady && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className={cn(
-                        'text-4xl 2xl:text-6xl font-medium tabular-nums text-center p-2',
-                        typeof timeRemaining === 'number' && (
-                          timeRemaining <= 4
-                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                            : timeRemaining <= 9
-                              ? 'text-destructive'
-                              : 'text-red-500'
-                        )
-                      )}
-                    >
-                      {timeRemaining}
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
+          <div className='flex w-[120px] items-center justify-center'>
+            <AnimatePresence mode='wait'>
+              {gameStatus === 'IN_PROGRESS' &&
+                timeRemaining !== null &&
+                nextAction &&
+                nextAction.team === 'RED' && (
+                  <motion.div
+                    key='red-timer'
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={cn(
+                      'flex h-full items-center justify-center rounded-md px-2',
+                      'bg-red-500/10',
+                    )}
+                  >
+                    {isTimerReady && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={cn(
+                          'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
+                          typeof timeRemaining === 'number' &&
+                            (timeRemaining <= 4
+                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                              : timeRemaining <= 9
+                                ? 'text-destructive'
+                                : 'text-red-500'),
+                        )}
+                      >
+                        {timeRemaining}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
             </AnimatePresence>
           </div>
         </div>
@@ -337,7 +379,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               onClick={() => handleSetWinner('RED')}
               className='rounded-lg bg-[hsl(var(--team-red))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
             >
-              <div className='font-medium text-[hsl(var(--team-red-foreground))] truncate max-w-[120px]'>
+              <div className='max-w-[120px] truncate font-medium text-[hsl(var(--team-red-foreground))]'>
                 Red Wins
               </div>
             </button>

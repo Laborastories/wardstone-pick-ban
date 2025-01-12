@@ -46,25 +46,27 @@ ${baseUrl}/draft/${series.id}/1`
     }
 
     // Calculate series info
-    const team1Wins = series?.games.filter(
-      g =>
-        (g.status === 'COMPLETED' &&
-          g.winner === 'BLUE' &&
-          g.blueSide === series.team1Name) ||
-        (g.status === 'COMPLETED' &&
-          g.winner === 'RED' &&
-          g.redSide === series.team1Name),
-    ).length || 0
+    const team1Wins =
+      series?.games.filter(
+        g =>
+          (g.status === 'COMPLETED' &&
+            g.winner === 'BLUE' &&
+            g.blueSide === series.team1Name) ||
+          (g.status === 'COMPLETED' &&
+            g.winner === 'RED' &&
+            g.redSide === series.team1Name),
+      ).length || 0
 
-    const team2Wins = series?.games.filter(
-      g =>
-        (g.status === 'COMPLETED' &&
-          g.winner === 'BLUE' &&
-          g.blueSide === series.team2Name) ||
-        (g.status === 'COMPLETED' &&
-          g.winner === 'RED' &&
-          g.redSide === series.team2Name),
-    ).length || 0
+    const team2Wins =
+      series?.games.filter(
+        g =>
+          (g.status === 'COMPLETED' &&
+            g.winner === 'BLUE' &&
+            g.blueSide === series.team2Name) ||
+          (g.status === 'COMPLETED' &&
+            g.winner === 'RED' &&
+            g.redSide === series.team2Name),
+      ).length || 0
 
     return (
       <nav
@@ -115,7 +117,12 @@ ${baseUrl}/draft/${series.id}/1`
                 {/* Game Numbers */}
                 <div className='flex gap-2'>
                   {Array.from({
-                    length: series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1,
+                    length:
+                      series.format === 'BO5'
+                        ? 5
+                        : series.format === 'BO3'
+                          ? 3
+                          : 1,
                   }).map((_, i) => {
                     const gameNum = i + 1
                     const isCurrentGame = gameNum === currentGameNumber
@@ -126,7 +133,7 @@ ${baseUrl}/draft/${series.id}/1`
                           'rounded px-3 py-1 text-sm',
                           isCurrentGame
                             ? 'bg-accent text-accent-foreground'
-                            : 'text-muted-foreground'
+                            : 'text-muted-foreground',
                         )}
                       >
                         Game {gameNum}

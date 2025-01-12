@@ -22,7 +22,6 @@ import { useParams } from 'react-router-dom'
 import { SideSelection } from '../components/SideSelection'
 import { cn } from '../../lib/utils'
 
-
 type GameWithRelations = Game & {
   series: Series & {
     games: (Game & {
@@ -113,7 +112,7 @@ export function DraftPage() {
         timeRemaining: data.timeRemaining,
         lastTeam: lastTeam,
         nextTeam: nextAction.team,
-        isNewTurn: lastTeam !== nextAction.team
+        isNewTurn: lastTeam !== nextAction.team,
       })
 
       // If this is a new team's turn
@@ -301,9 +300,14 @@ export function DraftPage() {
           className={cn(
             'relative overflow-hidden transition-all duration-200',
             type === 'PICK' ? 'h-full' : 'aspect-square w-16 2xl:w-20',
-            isActive && 'after:absolute after:inset-0 after:border-2 after:border-primary after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
-            (isPending || isPreviewed) && 'after:absolute after:inset-0 after:border-2 after:border-primary/50 after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
-            !isActive && !isPending && !isPreviewed && 'border border-border hover:border-primary/20',
+            isActive &&
+              'after:absolute after:inset-0 after:border-2 after:border-primary after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
+            (isPending || isPreviewed) &&
+              'after:absolute after:inset-0 after:border-2 after:border-primary/50 after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
+            !isActive &&
+              !isPending &&
+              !isPreviewed &&
+              'border border-border hover:border-primary/20',
             'bg-card shadow-sm hover:shadow-md',
             type === 'BAN' && 'rounded-md',
             type === 'PICK' && 'rounded-lg',
@@ -341,9 +345,7 @@ export function DraftPage() {
                   alt={action.champion}
                   className={cn(
                     'absolute inset-0 w-full object-cover transition-transform duration-200 group-hover:scale-105',
-                    type === 'PICK'
-                      ? '-top-[12%] h-[200%]'
-                      : 'h-full',
+                    type === 'PICK' ? '-top-[12%] h-[200%]' : 'h-full',
                   )}
                   loading='lazy'
                 />
@@ -354,22 +356,23 @@ export function DraftPage() {
                     transition={{ duration: 0.3, ease: 'easeOut' }}
                     className='absolute inset-0 flex items-center justify-center'
                     style={{
-                      background: 'linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)',
+                      background:
+                        'linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)',
                     }}
                   >
                     <div className='relative'>
-                      <X 
-                        size={32} 
-                        weight='bold' 
+                      <X
+                        size={32}
+                        weight='bold'
                         className={cn(
                           'drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
-                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400'
-                        )} 
+                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400',
+                        )}
                       />
-                      <X 
-                        size={32} 
-                        weight='regular' 
-                        className='absolute inset-0 text-white/90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]' 
+                      <X
+                        size={32}
+                        weight='regular'
+                        className='absolute inset-0 text-white/90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]'
                       />
                     </div>
                   </motion.div>
@@ -398,25 +401,26 @@ export function DraftPage() {
                   loading='lazy'
                 />
                 {type === 'BAN' && (
-                  <motion.div 
+                  <motion.div
                     className='absolute inset-0 flex items-center justify-center'
                     style={{
-                      background: 'linear-gradient(45deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%)',
+                      background:
+                        'linear-gradient(45deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%)',
                     }}
                   >
                     <div className='relative'>
-                      <X 
-                        size={32} 
-                        weight='bold' 
+                      <X
+                        size={32}
+                        weight='bold'
                         className={cn(
                           'opacity-75 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
-                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400'
-                        )} 
+                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400',
+                        )}
                       />
-                      <X 
-                        size={32} 
-                        weight='regular' 
-                        className='absolute inset-0 text-white/75 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]' 
+                      <X
+                        size={32}
+                        weight='regular'
+                        className='absolute inset-0 text-white/75 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]'
                       />
                     </div>
                   </motion.div>
@@ -445,25 +449,26 @@ export function DraftPage() {
                   loading='lazy'
                 />
                 {type === 'BAN' && (
-                  <motion.div 
+                  <motion.div
                     className='absolute inset-0 flex items-center justify-center'
                     style={{
-                      background: 'linear-gradient(45deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%)',
+                      background:
+                        'linear-gradient(45deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%)',
                     }}
                   >
                     <div className='relative'>
-                      <X 
-                        size={32} 
-                        weight='bold' 
+                      <X
+                        size={32}
+                        weight='bold'
                         className={cn(
                           'opacity-50 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
-                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400'
-                        )} 
+                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400',
+                        )}
                       />
-                      <X 
-                        size={32} 
-                        weight='regular' 
-                        className='absolute inset-0 text-white/50 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]' 
+                      <X
+                        size={32}
+                        weight='regular'
+                        className='absolute inset-0 text-white/50 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]'
                       />
                     </div>
                   </motion.div>
@@ -477,7 +482,7 @@ export function DraftPage() {
                 exit={{ opacity: 0 }}
                 className={cn(
                   'absolute inset-0 flex items-center justify-center bg-muted/50 font-light text-muted-foreground',
-                  type === 'PICK' ? 'text-4xl font-thin' : 'text-lg'
+                  type === 'PICK' ? 'text-4xl font-thin' : 'text-lg',
                 )}
               >
                 {type === 'PICK'
@@ -523,7 +528,7 @@ export function DraftPage() {
 
   return (
     <div className='h-screen overflow-hidden bg-background'>
-      <div className='flex h-full flex-col rounded-lg p-3 shadow-lg backdrop-blur-sm min-w-[1280px]'>
+      <div className='flex h-full min-w-[1280px] flex-col rounded-lg p-3 shadow-lg backdrop-blur-sm'>
         {/* Main Draft UI */}
         <div className='flex h-full flex-col gap-4'>
           {/* Top Section: Picks and Series Info */}
@@ -675,7 +680,7 @@ export function DraftPage() {
             </div>
 
             {/* Red Side - Vertical */}
-            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col bg-muted rounded-sm p-6 shadow-md backdrop-blur-sm'>
+            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col rounded-sm bg-muted p-6 shadow-md backdrop-blur-sm'>
               <motion.h2
                 className={cn(
                   'mb-4 flex-none truncate text-center text-4xl font-bold uppercase tracking-wider',
@@ -712,7 +717,7 @@ export function DraftPage() {
           </div>
 
           {/* Bottom Section: Bans and Actions */}
-          <div className='mt-0 flex flex-none items-center justify-between gap-4 rounded-lg bg-muted p-4 shadow-md backdrop-blur-sm min-w-min'>
+          <div className='mt-0 flex min-w-min flex-none items-center justify-between gap-4 rounded-lg bg-muted p-4 shadow-md backdrop-blur-sm'>
             {/* Blue Bans */}
             <div className='flex justify-center gap-2'>
               {[0, 2, 4, 13, 15].map((i, index) => {

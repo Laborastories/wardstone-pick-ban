@@ -122,7 +122,7 @@ const championRoles: Record<string, ChampionRole[]> = {
   Fiddlesticks: ['jungle', 'support'],
   Fiora: ['top'],
   Fizz: ['mid'],
-  Galio: ['top','mid', 'support'],
+  Galio: ['top', 'mid', 'support'],
   Gangplank: ['top'],
   Garen: ['top', 'mid'],
   Gnar: ['top'],

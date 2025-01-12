@@ -26,7 +26,7 @@ const ScrollToTopLink = ({
   children,
   className,
 }: {
-  to: "/"
+  to: '/'
   children: React.ReactNode
   className?: string
 }) => {
@@ -89,21 +89,22 @@ export function Footer({ user, userLoading }: FooterProps) {
                 ))}
               </nav>
             </div>
-                      {/* Work in Progress Banner */}
-          <div className='flex items-center justify-center gap-2 rounded-md bg-muted/50 px-3 py-1'>
-            <span className='text-xs text-muted-foreground'>
-              🚧 Scout Ahead is a work in progress. Please submit feedback via our{' '}
-              <a
-                href='https://github.com/Laborastories/wardstone-pick-ban/issues'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='font-medium text-foreground hover:underline'
-              >
-                GitHub repository
-              </a>
-              .
-            </span>
-          </div>
+            {/* Work in Progress Banner */}
+            <div className='flex items-center justify-center gap-2 rounded-md bg-muted/50 px-3 py-1'>
+              <span className='text-xs text-muted-foreground'>
+                🚧 Scout Ahead is a work in progress. Please submit feedback via
+                our{' '}
+                <a
+                  href='https://github.com/Laborastories/wardstone-pick-ban/issues'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='font-medium text-foreground hover:underline'
+                >
+                  GitHub repository
+                </a>
+                .
+              </span>
+            </div>
             <div className='flex items-center gap-4'>
               <a
                 href='https://www.buymeacoffee.com/wardbox'
@@ -129,7 +130,11 @@ export function Footer({ user, userLoading }: FooterProps) {
                       modal={false}
                     >
                       <DropdownMenuTrigger asChild>
-                        <Button variant='outline' size='icon' aria-label='User menu'>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          aria-label='User menu'
+                        >
                           <UserIcon size={16} />
                         </Button>
                       </DropdownMenuTrigger>

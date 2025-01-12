@@ -138,7 +138,7 @@ export function ChampionGrid({
       </div>
 
       {/* Grid */}
-      <div className='grid min-h-0 auto-rows-16 grid-cols-[repeat(auto-fit,minmax(theme(spacing.16),1fr))] gap-1 overflow-y-auto p-4'>
+      <div className='auto-rows-16 grid min-h-0 grid-cols-[repeat(auto-fit,minmax(theme(spacing.16),1fr))] gap-1 overflow-y-auto p-4'>
         {filteredChampions.map(champion => {
           const isUsed = usedChampions.includes(champion.id)
           const isBanned = bannedChampions.includes(champion.id)

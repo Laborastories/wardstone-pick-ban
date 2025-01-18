@@ -247,8 +247,8 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                     key={`${gameNum}-${gameId}`}
                     animate={
                       gameNum === nextGameNumber &&
-                        currentGameComplete &&
-                        !isSeriesOver
+                      currentGameComplete &&
+                      !isSeriesOver
                         ? {
                             y: [0, -4, 0],
                             scale: [1, 1.05, 1],
@@ -278,13 +278,13 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         'relative block rounded px-3 py-1 text-sm transition-colors',
                         isCurrentGame && 'bg-accent text-accent-foreground',
                         gameNum === nextGameNumber &&
-                        currentGameComplete &&
-                        'bg-primary text-primary-foreground',
+                          currentGameComplete &&
+                          'bg-primary text-primary-foreground',
                         game?.status === 'COMPLETED' &&
-                        'bg-muted text-muted-foreground',
+                          'bg-muted text-muted-foreground',
                         game?.status === 'COMPLETED' &&
-                        isCurrentGame &&
-                        'bg-primary text-primary-foreground',
+                          isCurrentGame &&
+                          'bg-primary text-primary-foreground',
                       )}
                     >
                       <span>Game {gameNum}</span>

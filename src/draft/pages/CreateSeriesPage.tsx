@@ -44,11 +44,18 @@ export function CreateSeriesPage() {
   const [scrimBlock, setScrimBlock] = useState(false)
 
   const handleCopyAll = () => {
-    const formatText = seriesFormat === 'BO5' ? 'best of 5' : seriesFormat === 'BO3' ? 'best of 3' : 'best of 1'
+    const formatText =
+      seriesFormat === 'BO5'
+        ? 'best of 5'
+        : seriesFormat === 'BO3'
+          ? 'best of 3'
+          : 'best of 1'
     const modeText = [
       fearlessDraft ? 'fearless' : '',
-      scrimBlock ? 'scrim block' : ''
-    ].filter(Boolean).join(' ')
+      scrimBlock ? 'scrim block' : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
 
     const description = `You've been invited to play a ${formatText}${modeText ? ` ${modeText}` : ''} draft via scoutahead.pro`
 
@@ -185,7 +192,9 @@ ${urls.spectatorUrl}`
             <Select
               name='format'
               value={seriesFormat}
-              onValueChange={value => setSeriesFormat(value as 'BO1' | 'BO3' | 'BO5')}
+              onValueChange={value =>
+                setSeriesFormat(value as 'BO1' | 'BO3' | 'BO5')
+              }
             >
               <SelectTrigger className='mt-1'>
                 <SelectValue placeholder='Select format' />

@@ -66,11 +66,18 @@ export function SeriesInfo({
 
   const handleCopyUrl = () => {
     const baseUrl = window.location.origin
-    const formatText = series.format === 'BO5' ? 'best of 5' : series.format === 'BO3' ? 'best of 3' : 'best of 1'
+    const formatText =
+      series.format === 'BO5'
+        ? 'best of 5'
+        : series.format === 'BO3'
+          ? 'best of 3'
+          : 'best of 1'
     const modeText = [
       series.fearlessDraft ? 'fearless' : '',
-      series.scrimBlock ? 'scrim block' : ''
-    ].filter(Boolean).join(' ')
+      series.scrimBlock ? 'scrim block' : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
 
     const description = `You've been invited to play a ${formatText}${modeText ? ` ${modeText}` : ''} draft via scoutahead.pro`
 
@@ -118,7 +125,10 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                   <Info size={16} />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side='right' className='flex flex-col gap-2 whitespace-nowrap'>
+              <TooltipContent
+                side='right'
+                className='flex flex-col gap-2 whitespace-nowrap'
+              >
                 {series.fearlessDraft && (
                   <div className='flex items-center gap-2'>
                     <div className='rounded bg-primary/10 px-2 py-0.5 font-medium text-primary'>
@@ -182,11 +192,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         className={cn(
                           'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
                           typeof timeRemaining === 'number' &&
-                          (timeRemaining <= 4
-                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                            : timeRemaining <= 9
-                              ? 'text-destructive'
-                              : 'text-blue-500'),
+                            (timeRemaining <= 4
+                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                              : timeRemaining <= 9
+                                ? 'text-destructive'
+                                : 'text-blue-500'),
                         )}
                       >
                         {timeRemaining}
@@ -211,17 +221,24 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                 const completedGames = series.games.filter(
                   g => g.status === 'COMPLETED',
                 )
-                const currentGameComplete = series.games.find(
-                  g => g.gameNumber === currentGameNumber,
-                )?.status === 'COMPLETED'
+                const currentGameComplete =
+                  series.games.find(g => g.gameNumber === currentGameNumber)
+                    ?.status === 'COMPLETED'
                 const nextGameNumber =
-                  Math.max(...(completedGames.length ? completedGames.map(g => g.gameNumber) : [0])) + 1
+                  Math.max(
+                    ...(completedGames.length
+                      ? completedGames.map(g => g.gameNumber)
+                      : [0]),
+                  ) + 1
                 const isDisabled =
                   (!isCurrentGame && !game?.status) ||
                   (gameNum > currentGameNumber && !currentGameComplete) ||
-                  (gameNum > nextGameNumber)
+                  gameNum > nextGameNumber
 
-                const shouldAnimate = isCurrentGame || game?.status === 'COMPLETED' || (gameNum === nextGameNumber && currentGameComplete)
+                const shouldAnimate =
+                  isCurrentGame ||
+                  game?.status === 'COMPLETED' ||
+                  (gameNum === nextGameNumber && currentGameComplete)
 
                 return shouldAnimate ? (
                   <motion.div
@@ -229,9 +246,9 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                     animate={
                       gameNum === nextGameNumber && currentGameComplete
                         ? {
-                          y: [0, -4, 0],
-                          scale: [1, 1.05, 1],
-                        }
+                            y: [0, -4, 0],
+                            scale: [1, 1.05, 1],
+                          }
                         : {}
                     }
                     transition={{
@@ -256,9 +273,14 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                       className={cn(
                         'relative block rounded px-3 py-1 text-sm transition-colors',
                         isCurrentGame && 'bg-accent text-accent-foreground',
-                        gameNum === nextGameNumber && currentGameComplete && 'bg-primary text-primary-foreground',
-                        game?.status === 'COMPLETED' && 'bg-muted text-muted-foreground',
-                        game?.status === 'COMPLETED' && isCurrentGame && 'bg-primary text-primary-foreground',
+                        gameNum === nextGameNumber &&
+                          currentGameComplete &&
+                          'bg-primary text-primary-foreground',
+                        game?.status === 'COMPLETED' &&
+                          'bg-muted text-muted-foreground',
+                        game?.status === 'COMPLETED' &&
+                          isCurrentGame &&
+                          'bg-primary text-primary-foreground',
                       )}
                     >
                       <span>Game {gameNum}</span>
@@ -298,8 +320,8 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                           ? 'cursor-not-allowed text-muted-foreground opacity-50'
                           : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                       game?.status === 'COMPLETED' &&
-                      !isCurrentGame &&
-                      'ring-2 ring-accent',
+                        !isCurrentGame &&
+                        'ring-2 ring-accent',
                     )}
                     onClick={e => {
                       if (isDisabled) {
@@ -385,11 +407,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         className={cn(
                           'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
                           typeof timeRemaining === 'number' &&
-                          (timeRemaining <= 4
-                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                            : timeRemaining <= 9
-                              ? 'text-destructive'
-                              : 'text-red-500'),
+                            (timeRemaining <= 4
+                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                              : timeRemaining <= 9
+                                ? 'text-destructive'
+                                : 'text-red-500'),
                         )}
                       >
                         {timeRemaining}

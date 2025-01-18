@@ -50,6 +50,8 @@ export default function Profile() {
                 matchName: string
                 createdAt: string
                 status: string
+                fearlessDraft: boolean
+                scrimBlock: boolean
               }) => {
                 const team1Wins = s.games.filter(
                   (g: {
@@ -102,12 +104,17 @@ export default function Profile() {
                       team: isTeam1 ? 'team1' : 'team2',
                       auth: authToken,
                     }}
-                    className='group relative overflow-hidden rounded-lg border border-border bg-card p-6 transition-colors hover:bg-accent'
+                    className='group relative overflow-hidden rounded-lg border border-border bg-card p-6 shadow-md transition-all duration-200 hover:scale-[1.02] hover:border-primary hover:shadow-xl'
                   >
                     <div className='space-y-4'>
                       {/* Match Name */}
                       <div className='space-y-1'>
-                        <div className='text-lg font-medium'>{s.matchName}</div>
+                        <div
+                          className='truncate text-lg font-medium'
+                          title={s.matchName}
+                        >
+                          {s.matchName}
+                        </div>
                         <div className='text-sm text-muted-foreground'>
                           {new Date(s.createdAt).toLocaleDateString(undefined, {
                             year: 'numeric',
@@ -123,7 +130,8 @@ export default function Profile() {
                       <div className='flex items-center justify-between gap-4'>
                         <div className='flex items-center gap-2'>
                           <span
-                            className={`font-medium ${hasWon ? 'text-green-500' : hasLost ? 'text-destructive' : ''}`}
+                            className={`max-w-[100px] truncate font-medium ${hasWon ? 'text-green-500' : hasLost ? 'text-destructive' : ''}`}
+                            title={userTeamName}
                           >
                             {userTeamName}
                           </span>
@@ -147,7 +155,8 @@ export default function Profile() {
                             />
                           )}
                           <span
-                            className={`font-medium ${hasLost ? 'text-destructive' : ''}`}
+                            className={`max-w-[100px] truncate font-medium ${hasLost ? 'text-destructive' : ''}`}
+                            title={opponentName}
                           >
                             {opponentName}
                           </span>
@@ -156,16 +165,21 @@ export default function Profile() {
 
                       {/* Format & Status */}
                       <div className='flex items-center justify-between text-sm text-muted-foreground'>
-                        <span>{s.format}</span>
+                        <div className='flex items-center gap-2'>
+                          <span>{s.format}</span>
+                          {s.fearlessDraft && (
+                            <span className='rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs font-medium text-yellow-500'>
+                              Fearless
+                            </span>
+                          )}
+                          {s.scrimBlock && (
+                            <span className='rounded bg-primary/20 px-1.5 py-0.5 text-xs font-medium text-primary'>
+                              Scrim
+                            </span>
+                          )}
+                        </div>
                         <span>{s.status}</span>
                       </div>
-                    </div>
-
-                    {/* Hover Overlay */}
-                    <div className='absolute inset-0 flex items-center justify-center bg-accent/80 opacity-0 transition-opacity group-hover:opacity-100'>
-                      <span className='font-medium text-accent-foreground'>
-                        View Draft
-                      </span>
                     </div>
                   </Link>
                 )

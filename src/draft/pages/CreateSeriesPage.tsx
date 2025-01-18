@@ -84,22 +84,59 @@ export function CreateSeriesPage() {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-background'>
+    <div className='flex min-h-screen flex-col items-center justify-center bg-background'>
+      <div className='mb-12 text-center'>
+        <h1 className='mb-4 text-6xl font-bold tracking-tight'>
+          Scout<span className='text-primary'>Ahead</span>
+        </h1>
+        <p className='text-lg text-muted-foreground'>
+          Professional League of Legends draft tool for teams and coaches.
+          <br />
+          Create custom draft lobbies with advanced features like fearless draft and scrim blocks.
+        </p>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className='w-full max-w-md px-4'
       >
-        <h1 className='mb-8 text-center text-3xl font-bold'>
-          Create Draft Series
-        </h1>
-
         <form
           onSubmit={handleSubmit}
-          className='space-y-6 rounded-lg bg-card p-6 shadow-xl'
+          className='space-y-4 rounded-lg bg-card p-6 shadow-xl'
         >
+          <div className='grid grid-cols-2 gap-4'>
+            <div>
+              <label htmlFor='team1Name' className='text-sm font-medium'>
+                Team 1
+              </label>
+              <Input
+                type='text'
+                name='team1Name'
+                id='team1Name'
+                required
+                className='mt-1'
+                placeholder='e.g. Cloud9'
+              />
+            </div>
+
+            <div>
+              <label htmlFor='team2Name' className='text-sm font-medium'>
+                Team 2
+              </label>
+              <Input
+                type='text'
+                name='team2Name'
+                id='team2Name'
+                required
+                className='mt-1'
+                placeholder='e.g. Team Liquid'
+              />
+            </div>
+          </div>
+
           <div>
-            <label htmlFor='matchName' className='block text-sm font-medium'>
+            <label htmlFor='matchName' className='text-sm font-medium'>
               Match Name
             </label>
             <Input
@@ -113,38 +150,10 @@ export function CreateSeriesPage() {
           </div>
 
           <div>
-            <label htmlFor='team1Name' className='block text-sm font-medium'>
-              Team 1 Name
-            </label>
-            <Input
-              type='text'
-              name='team1Name'
-              id='team1Name'
-              required
-              className='mt-1'
-              placeholder='e.g. Cloud9'
-            />
-          </div>
-
-          <div>
-            <label htmlFor='team2Name' className='block text-sm font-medium'>
-              Team 2 Name
-            </label>
-            <Input
-              type='text'
-              name='team2Name'
-              id='team2Name'
-              required
-              className='mt-1'
-              placeholder='e.g. Team Liquid'
-            />
-          </div>
-
-          <div>
-            <label htmlFor='format' className='block text-sm font-medium'>
+            <label htmlFor='format' className='text-sm font-medium'>
               Series Format
             </label>
-            <Select name='format' required>
+            <Select name='format' required defaultValue='BO3'>
               <SelectTrigger className='mt-1'>
                 <SelectValue placeholder='Select format' />
               </SelectTrigger>
@@ -156,19 +165,19 @@ export function CreateSeriesPage() {
             </Select>
           </div>
 
-          <div className='flex items-center'>
-            <Checkbox name='fearlessDraft' id='fearlessDraft' />
-            <label htmlFor='fearlessDraft' className='ml-2 block text-sm'>
-              Enable Fearless Draft (champions can only be picked once per
-              series)
-            </label>
-          </div>
-
-          <div className='flex items-center'>
-            <Checkbox name='scrimBlock' id='scrimBlock' />
-            <label htmlFor='scrimBlock' className='ml-2 block text-sm'>
-              Scrim Block Mode (play all games regardless of wins)
-            </label>
+          <div className='space-y-2 pt-2'>
+            <div className='flex items-center space-x-2'>
+              <Checkbox name='fearlessDraft' id='fearlessDraft' />
+              <label htmlFor='fearlessDraft' className='text-sm'>
+                Enable Fearless Draft
+              </label>
+            </div>
+            <div className='flex items-center space-x-2'>
+              <Checkbox name='scrimBlock' id='scrimBlock' />
+              <label htmlFor='scrimBlock' className='text-sm'>
+                Enable Scrim Block Mode
+              </label>
+            </div>
           </div>
 
           {error && (
@@ -184,9 +193,9 @@ export function CreateSeriesPage() {
           <Button
             type='submit'
             disabled={isLoading}
-            className='flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50'
+            className='w-full'
           >
-            {isLoading ? 'Creating...' : 'Create Series'}
+            {isLoading ? 'Creating...' : 'Create Draft'}
           </Button>
         </form>
 
@@ -219,7 +228,7 @@ export function CreateSeriesPage() {
             </div>
 
             <div className='space-y-2'>
-              <p className='text-sm font-medium'>Team 1 URL:</p>
+              <p className='text-sm font-medium'>{urls.team1Name} URL:</p>
               <Input
                 type='text'
                 readOnly
@@ -230,7 +239,7 @@ export function CreateSeriesPage() {
             </div>
 
             <div className='space-y-2'>
-              <p className='text-sm font-medium'>Team 2 URL:</p>
+              <p className='text-sm font-medium'>{urls.team2Name} URL:</p>
               <Input
                 type='text'
                 readOnly

@@ -89,7 +89,17 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
     <div className='flex flex-col gap-2 p-2'>
       <div className='flex flex-col gap-2'>
         {/* Copy URL Button */}
-        <div className='flex justify-end'>
+        <div className='flex justify-end gap-2'>
+          {isSeriesOver && (
+            <Button
+              variant='outline'
+              size='sm'
+              asChild
+              className='h-8'
+            >
+              <Link to='/'>New Draft</Link>
+            </Button>
+          )}
           <Button
             variant='ghost'
             size='icon'

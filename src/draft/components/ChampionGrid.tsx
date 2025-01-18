@@ -91,7 +91,7 @@ export function ChampionGrid({
   }, [search, champions, selectedRole])
 
   return (
-    <div className='flex h-full flex-col bg-muted p-2 rounded-md w-full'>
+    <div className='flex h-full w-full flex-col rounded-md bg-muted p-2'>
       {/* Search and Filters */}
       <div className='flex items-center gap-2 p-2'>
         {/* Search */}
@@ -152,7 +152,7 @@ export function ChampionGrid({
                   prefetchImage(getChampionImageUrl(champion.id, 'splash'))
                 }}
                 disabled={isDisabled}
-                className={`group relative flex aspect-square w-16 xl:w-20 3xl:w-24 flex-col items-center justify-center rounded transition-colors hover:bg-accent ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
+                className={`3xl:w-24 group relative flex aspect-square w-16 flex-col items-center justify-center rounded transition-colors hover:bg-accent xl:w-20 ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
                 title={`${champion.name}${isUsed ? ' (Already picked in this series)' : isBanned ? ' (Banned this game)' : ''}`}
               >
                 <div className='relative h-full w-full overflow-hidden rounded'>

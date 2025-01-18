@@ -55,7 +55,8 @@ export function SeriesInfo({
 
   const gamesNeeded =
     series.format === 'BO5' ? 3 : series.format === 'BO3' ? 2 : 1
-  const isSeriesOver = !series.scrimBlock && (team1Wins >= gamesNeeded || team2Wins >= gamesNeeded)
+  const isSeriesOver =
+    !series.scrimBlock && (team1Wins >= gamesNeeded || team2Wins >= gamesNeeded)
 
   const handleCopyUrl = () => {
     const baseUrl = window.location.origin
@@ -126,11 +127,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         className={cn(
                           'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
                           typeof timeRemaining === 'number' &&
-                          (timeRemaining <= 4
-                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                            : timeRemaining <= 9
-                              ? 'text-destructive'
-                              : 'text-blue-500'),
+                            (timeRemaining <= 4
+                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                              : timeRemaining <= 9
+                                ? 'text-destructive'
+                                : 'text-blue-500'),
                         )}
                       >
                         {timeRemaining}
@@ -152,13 +153,16 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                 const gameNum = i + 1
                 const isCurrentGame = gameNum === currentGameNumber
                 const game = series.games.find(g => g.gameNumber === gameNum)
-                const completedGames = series.games.filter(g => g.status === 'COMPLETED')
-                const nextGameNumber = Math.max(
-                  ...completedGames.map(g => g.gameNumber),
-                ) + 1
+                const completedGames = series.games.filter(
+                  g => g.status === 'COMPLETED',
+                )
+                const nextGameNumber =
+                  Math.max(...completedGames.map(g => g.gameNumber)) + 1
                 const isNextGame =
                   (!isSeriesOver || series.scrimBlock) &&
-                  (isCurrentGame || (series.scrimBlock && game?.status === 'PENDING') || gameNum === nextGameNumber)
+                  (isCurrentGame ||
+                    (series.scrimBlock && game?.status === 'PENDING') ||
+                    gameNum === nextGameNumber)
                 const isDisabled =
                   !isCurrentGame &&
                   !isNextGame &&
@@ -171,9 +175,9 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                     animate={
                       gameId && game?.id !== gameId
                         ? {
-                          y: [0, -4, 0],
-                          scale: [1, 1.05, 1],
-                        }
+                            y: [0, -4, 0],
+                            scale: [1, 1.05, 1],
+                          }
                         : {}
                     }
                     transition={{
@@ -204,8 +208,8 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                             ? 'bg-blue-500/20 text-blue-500'
                             : 'bg-red-500/20 text-red-500',
                         game?.status === 'COMPLETED' &&
-                        !isCurrentGame &&
-                        'ring-2 ring-accent',
+                          !isCurrentGame &&
+                          'ring-2 ring-accent',
                       )}
                     >
                       <span>Game {gameNum}</span>
@@ -256,8 +260,8 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                           ? 'cursor-not-allowed text-muted-foreground opacity-50'
                           : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                       game?.status === 'COMPLETED' &&
-                      !isCurrentGame &&
-                      'ring-2 ring-accent',
+                        !isCurrentGame &&
+                        'ring-2 ring-accent',
                     )}
                     onClick={e => {
                       if (isDisabled) {
@@ -284,7 +288,9 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                 <span
                   className={cn(
                     'min-w-[1.5ch] text-center text-foreground',
-                    (blueSide === series.team1Name ? (team1Wins > team2Wins) : (team2Wins > team1Wins)) && 'text-primary',
+                    (blueSide === series.team1Name
+                      ? team1Wins > team2Wins
+                      : team2Wins > team1Wins) && 'text-primary',
                   )}
                 >
                   {blueSide === series.team1Name ? team1Wins : team2Wins}
@@ -293,7 +299,9 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                 <span
                   className={cn(
                     'min-w-[1.5ch] text-center text-foreground',
-                    (blueSide === series.team1Name ? (team2Wins > team1Wins) : (team1Wins > team2Wins)) && 'text-primary',
+                    (blueSide === series.team1Name
+                      ? team2Wins > team1Wins
+                      : team1Wins > team2Wins) && 'text-primary',
                   )}
                 >
                   {blueSide === series.team1Name ? team2Wins : team1Wins}
@@ -335,11 +343,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         className={cn(
                           'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
                           typeof timeRemaining === 'number' &&
-                          (timeRemaining <= 4
-                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                            : timeRemaining <= 9
-                              ? 'text-destructive'
-                              : 'text-red-500'),
+                            (timeRemaining <= 4
+                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                              : timeRemaining <= 9
+                                ? 'text-destructive'
+                                : 'text-red-500'),
                         )}
                       >
                         {timeRemaining}
@@ -353,33 +361,31 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
       </div>
 
       {/* Winner Selection */}
-      {
-        gameStatus === 'DRAFT_COMPLETE' && side && (
-          <div className='flex flex-col items-center gap-2 rounded-lg bg-card px-6 py-4 shadow'>
-            <div className='text-sm font-medium text-muted-foreground'>
-              Select the winner:
-            </div>
-            <div className='flex gap-4'>
-              <button
-                onClick={() => handleSetWinner('BLUE')}
-                className='rounded-lg bg-[hsl(var(--team-blue))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
-              >
-                <div className='font-medium text-[hsl(var(--team-blue-foreground))]'>
-                  Blue Wins
-                </div>
-              </button>
-              <button
-                onClick={() => handleSetWinner('RED')}
-                className='rounded-lg bg-[hsl(var(--team-red))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
-              >
-                <div className='max-w-[120px] truncate font-medium text-[hsl(var(--team-red-foreground))]'>
-                  Red Wins
-                </div>
-              </button>
-            </div>
+      {gameStatus === 'DRAFT_COMPLETE' && side && (
+        <div className='flex flex-col items-center gap-2 rounded-lg bg-card px-6 py-4 shadow'>
+          <div className='text-sm font-medium text-muted-foreground'>
+            Select the winner:
           </div>
-        )
-      }
-    </div >
+          <div className='flex gap-4'>
+            <button
+              onClick={() => handleSetWinner('BLUE')}
+              className='rounded-lg bg-[hsl(var(--team-blue))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
+            >
+              <div className='font-medium text-[hsl(var(--team-blue-foreground))]'>
+                Blue Wins
+              </div>
+            </button>
+            <button
+              onClick={() => handleSetWinner('RED')}
+              className='rounded-lg bg-[hsl(var(--team-red))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
+            >
+              <div className='max-w-[120px] truncate font-medium text-[hsl(var(--team-red-foreground))]'>
+                Red Wins
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

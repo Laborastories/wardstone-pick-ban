@@ -214,7 +214,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                             : 'bg-red-500/20 text-red-500',
                         game?.status === 'COMPLETED' &&
                           !isCurrentGame &&
-                          'ring-2 ring-accent',
+                          'ring-2 ring-accent ring-offset-2 ring-offset-background',
                       )}
                     >
                       <span>Game {gameNum}</span>

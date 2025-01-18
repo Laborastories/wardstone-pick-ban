@@ -2,21 +2,21 @@ app wardstonepickban {
   wasp: {
     version: "^0.15.1"
   },
-  title: "Scout Ahead: A Drafting Tool for League of Legends that supports fearless drafting",
+  title: "scoutahead.pro - League of Legends drafting tool with fearless mode",
   head: [
-    "<meta name='description' content='Scout Ahead is a drafting tool for League of Legends that supports fearless drafting.'>",
+    "<meta name='description' content='League of Legends drafting tool with fearless mode, scrim blocks, and series support. Create custom draft lobbies for teams, coaches, and players.'>",
     
     "<meta property='og:url' content='https://scoutahead.pro'>",
     "<meta property='og:type' content='website'>",
-    "<meta property='og:title' content='Scout Ahead: A Drafting Tool for League of Legends that supports fearless drafting'>",
-    "<meta property='og:description' content='Scout Ahead is a drafting tool for League of Legends that supports fearless drafting.'>",
+    "<meta property='og:title' content='scoutahead.pro - League of Legends drafting tool with fearless mode'>",
+    "<meta property='og:description' content='League of Legends drafting tool with fearless mode, scrim blocks, and series support. Create custom draft lobbies for teams, coaches, and players.'>",
     "<meta property='og:image' content='https://scoutahead.pro/scoutahead.png'>",
     
     "<meta name='twitter:card' content='summary_large_image'>",
     "<meta property='twitter:domain' content='scoutahead.pro'>",
     "<meta property='twitter:url' content='https://scoutahead.pro'>",
-    "<meta name='twitter:title' content='Scout Ahead: A Drafting Tool for League of Legends that supports fearless drafting'>",
-    "<meta name='twitter:description' content='Scout Ahead is a drafting tool for League of Legends that supports fearless drafting.'>",
+    "<meta name='twitter:title' content='scoutahead.pro - League of Legends drafting tool with fearless mode'>",
+    "<meta name='twitter:description' content='League of Legends drafting tool with fearless mode, scrim blocks, and series support. Create custom draft lobbies for teams, coaches, and players.'>",
     "<meta name='twitter:image' content='https://scoutahead.pro/scoutahead.png'>",
     "<script defer data-domain='scoutahead.pro' src='https://plausible.io/js/script.js'></script>"
   ],

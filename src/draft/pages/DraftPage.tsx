@@ -108,12 +108,6 @@ export function DraftPage() {
     (data: ServerToClientPayload<'timerUpdate'>) => {
       if (!nextAction) return
 
-      console.log('Timer update:', {
-        timeRemaining: data.timeRemaining,
-        lastTeam: lastTeam,
-        nextTeam: nextAction.team,
-        isNewTurn: lastTeam !== nextAction.team,
-      })
 
       // If this is a new team's turn
       if (lastTeam !== nextAction.team) {
@@ -300,12 +294,10 @@ export function DraftPage() {
           className={cn(
             'relative overflow-hidden border-2 border-primary transition-all duration-200',
             type === 'PICK' ? 'h-full' : 'aspect-square w-16 2xl:w-20',
-            isActive && '',
-            (isPending || isPreviewed) && '',
             !isActive &&
-              !isPending &&
-              !isPreviewed &&
-              'border border-border hover:border-primary/20',
+            !isPending &&
+            !isPreviewed &&
+            'border border-border hover:border-primary/20',
             'bg-card shadow-sm hover:shadow-md',
             type === 'BAN' && 'rounded-md',
             type === 'PICK' && 'rounded-lg',
@@ -358,21 +350,6 @@ export function DraftPage() {
                         'linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)',
                     }}
                   >
-                    <div className='relative'>
-                      <X
-                        size={32}
-                        weight='bold'
-                        className={cn(
-                          'drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
-                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400',
-                        )}
-                      />
-                      <X
-                        size={32}
-                        weight='regular'
-                        className='absolute inset-0 text-white/90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]'
-                      />
-                    </div>
                   </motion.div>
                 )}
               </motion.div>
@@ -543,12 +520,12 @@ export function DraftPage() {
                 animate={
                   gameWithRelations.series.winner === gameWithRelations.blueSide
                     ? {
-                        textShadow: [
-                          '0 0 4px rgb(59 130 246 / 0.5)',
-                          '0 0 8px rgb(59 130 246 / 0.5)',
-                          '0 0 4px rgb(59 130 246 / 0.5)',
-                        ],
-                      }
+                      textShadow: [
+                        '0 0 4px rgb(59 130 246 / 0.5)',
+                        '0 0 8px rgb(59 130 246 / 0.5)',
+                        '0 0 4px rgb(59 130 246 / 0.5)',
+                      ],
+                    }
                     : {}
                 }
                 transition={{ repeat: Infinity, duration: 2 }}
@@ -593,7 +570,7 @@ export function DraftPage() {
               {/* Side Selection or Draft Content */}
               <div className='flex min-h-0 flex-1 flex-col gap-2'>
                 {gameWithRelations.status === 'PENDING' &&
-                (!gameWithRelations.blueSide || !gameWithRelations.redSide) ? (
+                  (!gameWithRelations.blueSide || !gameWithRelations.redSide) ? (
                   <div className='flex min-h-0 flex-1 items-center justify-center'>
                     <SideSelection
                       series={gameWithRelations.series}
@@ -605,8 +582,8 @@ export function DraftPage() {
                   <>
                     {/* Ready State */}
                     {gameWithRelations.status === 'PENDING' &&
-                    gameWithRelations.blueSide &&
-                    gameWithRelations.redSide ? (
+                      gameWithRelations.blueSide &&
+                      gameWithRelations.redSide ? (
                       <div className='flex h-[72px] items-center justify-center'>
                         <div className='flex flex-col items-center gap-2'>
                           <div className='text-sm font-medium text-muted-foreground'>
@@ -658,14 +635,14 @@ export function DraftPage() {
                               // If fearless draft, add all picks from previous games
                               ...(gameWithRelations.series.fearlessDraft
                                 ? gameWithRelations.series.games
-                                    .filter(
-                                      g =>
-                                        g.gameNumber <
-                                        gameWithRelations.gameNumber,
-                                    )
-                                    .flatMap(g => g.actions)
-                                    .filter(a => a.type === 'PICK')
-                                    .map(a => a.champion)
+                                  .filter(
+                                    g =>
+                                      g.gameNumber <
+                                      gameWithRelations.gameNumber,
+                                  )
+                                  .flatMap(g => g.actions)
+                                  .filter(a => a.type === 'PICK')
+                                  .map(a => a.champion)
                                 : []),
                             ]}
                           />
@@ -689,12 +666,12 @@ export function DraftPage() {
                 animate={
                   gameWithRelations.series.winner === gameWithRelations.redSide
                     ? {
-                        textShadow: [
-                          '0 0 4px rgb(239 68 68 / 0.5)',
-                          '0 0 8px rgb(239 68 68 / 0.5)',
-                          '0 0 4px rgb(239 68 68 / 0.5)',
-                        ],
-                      }
+                      textShadow: [
+                        '0 0 4px rgb(239 68 68 / 0.5)',
+                        '0 0 8px rgb(239 68 68 / 0.5)',
+                        '0 0 4px rgb(239 68 68 / 0.5)',
+                      ],
+                    }
                     : {}
                 }
                 transition={{ repeat: Infinity, duration: 2 }}

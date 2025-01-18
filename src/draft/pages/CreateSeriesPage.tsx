@@ -10,8 +10,14 @@ import {
   SelectValue,
 } from '../../client/components/ui/select'
 import { Button } from '../../client/components/ui/button'
-import { Copy, Check } from '@phosphor-icons/react'
+import { Copy, Check, Info } from '@phosphor-icons/react'
 import { Checkbox } from '../../client/components/ui/checkbox'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../../client/components/ui/tooltip'
 
 type SeriesArgs = {
   team1Name: string
@@ -33,9 +39,30 @@ export function CreateSeriesPage() {
     team2Name?: string
   }>({})
   const [copied, setCopied] = useState(false)
+  const [seriesFormat, setSeriesFormat] = useState<'BO1' | 'BO3' | 'BO5'>('BO3')
+  const [fearlessDraft, setFearlessDraft] = useState(false)
+  const [scrimBlock, setScrimBlock] = useState(false)
 
   const handleCopyAll = () => {
-    const formattedLinks = `${urls.blueUrl ? `${urls.team1Name}: ${urls.blueUrl}\n` : ''}${urls.redUrl ? `${urls.team2Name}: ${urls.redUrl}\n` : ''}${urls.spectatorUrl ? `Spectator: ${urls.spectatorUrl}` : ''}`
+    const formatText = seriesFormat === 'BO5' ? 'best of 5' : seriesFormat === 'BO3' ? 'best of 3' : 'best of 1'
+    const modeText = [
+      fearlessDraft ? 'fearless' : '',
+      scrimBlock ? 'scrim block' : ''
+    ].filter(Boolean).join(' ')
+
+    const description = `You've been invited to play a ${formatText}${modeText ? ` ${modeText}` : ''} draft via scoutahead.pro`
+
+    const formattedLinks = `${description}
+
+${urls.team1Name}:
+${urls.blueUrl}
+
+${urls.team2Name}:
+${urls.redUrl}
+
+Spectator:
+${urls.spectatorUrl}`
+
     navigator.clipboard.writeText(formattedLinks)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -50,6 +77,7 @@ export function CreateSeriesPage() {
     const formData = new FormData(e.currentTarget)
     const team1Name = formData.get('team1Name') as string
     const team2Name = formData.get('team2Name') as string
+    const matchName = formData.get('matchName') as string
 
     if (team1Name.toLowerCase() === team2Name.toLowerCase()) {
       setError('Team names must be different')
@@ -60,10 +88,10 @@ export function CreateSeriesPage() {
     const data: SeriesArgs = {
       team1Name,
       team2Name,
-      matchName: formData.get('matchName') as string,
-      format: formData.get('format') as 'BO1' | 'BO3' | 'BO5',
-      fearlessDraft: formData.get('fearlessDraft') === 'on',
-      scrimBlock: formData.get('scrimBlock') === 'on',
+      matchName,
+      format: seriesFormat,
+      fearlessDraft,
+      scrimBlock,
     }
 
     try {
@@ -87,7 +115,7 @@ export function CreateSeriesPage() {
     <div className='flex min-h-screen flex-col items-center justify-center bg-background p-8'>
       <div className='mb-12 text-center'>
         <h1 className='mb-4 text-6xl font-bold tracking-tight'>
-          Scout<span className='text-primary'>Ahead</span>
+          scout<span className='text-primary'>ahead</span>.pro
         </h1>
         <p className='max-w-3xl text-pretty text-lg text-muted-foreground'>
           League of Legends draft tool for teams, coaches, and players.
@@ -154,7 +182,11 @@ export function CreateSeriesPage() {
             <label htmlFor='format' className='text-sm font-medium'>
               Series Format
             </label>
-            <Select name='format' required defaultValue='BO3'>
+            <Select
+              name='format'
+              value={seriesFormat}
+              onValueChange={value => setSeriesFormat(value as 'BO1' | 'BO3' | 'BO5')}
+            >
               <SelectTrigger className='mt-1'>
                 <SelectValue placeholder='Select format' />
               </SelectTrigger>
@@ -168,16 +200,60 @@ export function CreateSeriesPage() {
 
           <div className='space-y-2 pt-2'>
             <div className='flex items-center space-x-2'>
-              <Checkbox name='fearlessDraft' id='fearlessDraft' />
-              <label htmlFor='fearlessDraft' className='text-sm'>
-                Enable Fearless Draft
-              </label>
+              <Checkbox
+                name='fearlessDraft'
+                id='fearlessDraft'
+                checked={fearlessDraft}
+                onCheckedChange={checked => setFearlessDraft(checked === true)}
+              />
+              <div className='flex items-center gap-2'>
+                <label htmlFor='fearlessDraft' className='text-sm'>
+                  Enable Fearless Draft
+                </label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className='h-4 w-4 text-muted-foreground transition-colors hover:text-foreground' />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className='flex items-center gap-2'>
+                        <div className='rounded bg-primary/10 px-2 py-0.5 font-medium text-primary'>
+                          Fearless
+                        </div>
+                        <span>Champions can only be picked once</span>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
             <div className='flex items-center space-x-2'>
-              <Checkbox name='scrimBlock' id='scrimBlock' />
-              <label htmlFor='scrimBlock' className='text-sm'>
-                Enable Scrim Block Mode
-              </label>
+              <Checkbox
+                name='scrimBlock'
+                id='scrimBlock'
+                checked={scrimBlock}
+                onCheckedChange={checked => setScrimBlock(checked === true)}
+              />
+              <div className='flex items-center gap-2'>
+                <label htmlFor='scrimBlock' className='text-sm'>
+                  Enable Scrim Block Mode
+                </label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className='h-4 w-4 text-muted-foreground transition-colors hover:text-foreground' />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className='flex items-center gap-2'>
+                        <div className='rounded bg-primary/10 px-2 py-0.5 font-medium text-primary'>
+                          Scrim
+                        </div>
+                        <span>All games must be played</span>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
           </div>
 

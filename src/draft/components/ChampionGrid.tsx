@@ -152,27 +152,27 @@ export function ChampionGrid({
                   prefetchImage(getChampionImageUrl(champion.id, 'splash'))
                 }}
                 disabled={isDisabled}
-                className={`3xl:w-24 group relative flex aspect-square w-16 flex-col items-center justify-center rounded transition-colors hover:bg-accent xl:w-20 ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
+                className={`group relative flex aspect-square w-16 flex-col items-center justify-center transition-colors xl:w-20 2xl:w-24 3xl:w-28 ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} overflow-hidden`}
                 title={`${champion.name}${isUsed ? ' (Already picked in this series)' : isBanned ? ' (Banned this game)' : ''}`}
               >
-                <div className='relative h-full w-full overflow-hidden rounded'>
+                <div className='relative h-full w-full'>
                   <img
                     src={getChampionImageUrl(champion)}
                     alt={champion.name}
-                    className={`absolute inset-0 h-full w-full object-cover object-center ${isUsed ? 'grayscale' : isBanned ? 'brightness-50' : ''} `}
+                    className={`absolute inset-0 h-full w-full object-cover group-hover:scale-105 object-center transition-all ${isUsed ? 'grayscale' : isBanned ? 'brightness-50' : 'group-hover:scale-135'} `}
                     loading='lazy'
                   />
                   <div
-                    className={`absolute inset-0 bg-black/50 ${isUsed || isBanned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} flex items-center justify-center rounded p-1 transition-opacity`}
+                    className={`absolute inset-0 bg-black/50 ${isUsed || isBanned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} flex items-center justify-center p-1 transition-opacity`}
                   >
                     <span>
                       {isUsed && (
-                        <div className='champion-name text-[0.8rem] font-bold text-red-400'>
+                        <div className='font-inter text-[0.8rem] font-bold text-red-400'>
                           Already Picked
                         </div>
                       )}
                       {isBanned && (
-                        <div className='champion-name text-[0.8rem] font-bold text-yellow-400'>
+                        <div className='font-inter text-[0.8rem] font-bold text-yellow-400'>
                           Banned
                         </div>
                       )}

@@ -48,7 +48,7 @@ const ScrollToTopLink = ({
 }
 
 const navigation = {
-  main: [{ name: 'Home', href: '/' as const }],
+  main: [{ name: 'New Draft', href: '/' as const }],
   social: [
     {
       name: 'GitHub',
@@ -66,7 +66,7 @@ export function Footer({ user, userLoading }: FooterProps) {
       variants={fadeIn}
       initial='initial'
       animate='animate'
-      className='relative z-50 mx-auto max-w-7xl'
+      className='relative z-50 mx-auto'
     >
       <div className='px-4 py-2'>
         {/* Main footer container */}
@@ -101,13 +101,13 @@ export function Footer({ user, userLoading }: FooterProps) {
             {/* Navigation */}
             <nav className='flex gap-4' aria-label='Footer'>
               {navigation.main.map(item => (
-                <ScrollToTopLink
+                <Button
                   key={item.name}
-                  to={item.href}
-                  className='text-xs text-muted-foreground transition-colors hover:text-foreground'
+                  size='sm'
+                  className='text-xs transition-colors'
                 >
-                  {item.name}
-                </ScrollToTopLink>
+                  <ScrollToTopLink to={item.href}>{item.name}</ScrollToTopLink>
+                </Button>
               ))}
             </nav>
 

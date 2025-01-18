@@ -2,8 +2,14 @@ name: Format and Lint
 on:
   pull_request_target:
     branches: [main, deploy]
+    paths-ignore:
+      - 'README.md'
+      - 'INSTRUCTIONS.md'
   push:
     branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'INSTRUCTIONS.md'
 jobs:
   format-and-lint:
     runs-on: ubuntu-latest

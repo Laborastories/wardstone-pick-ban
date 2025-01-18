@@ -84,16 +84,15 @@ export function CreateSeriesPage() {
   }
 
   return (
-    <div className='flex min-h-screen flex-col items-center justify-center bg-background'>
+    <div className='flex min-h-screen flex-col items-center justify-center bg-background p-8'>
       <div className='mb-12 text-center'>
         <h1 className='mb-4 text-6xl font-bold tracking-tight'>
           Scout<span className='text-primary'>Ahead</span>
         </h1>
-        <p className='text-lg text-muted-foreground'>
-          Professional League of Legends draft tool for teams and coaches.
+        <p className='text-lg text-muted-foreground max-w-3xl text-pretty'>
+          League of Legends draft tool for teams, coaches, and players.
           <br />
-          Create custom draft lobbies with advanced features like fearless draft
-          and scrim blocks.
+          Create custom draft lobbies with advanced features like fearless draft and scrim blocks. Use a single link for the entire series.
         </p>
       </div>
 

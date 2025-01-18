@@ -69,43 +69,50 @@ export function Footer({ user, userLoading }: FooterProps) {
       className='relative z-50 mx-auto max-w-7xl'
     >
       <div className='px-4 py-2'>
-        <div className='flex flex-col gap-2'>
-          {/* Single row layout */}
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-4'>
+        {/* Main footer container */}
+        <div className='flex flex-col items-center gap-4'>
+          {/* Work in Progress Banner */}
+          <div className='text-center'>
+            <span className='inline-flex items-center gap-2 rounded-md bg-muted/50 px-3 py-1 text-xs text-muted-foreground'>
+              🚧 Scout Ahead is a work in progress. Please submit feedback via
+              our{' '}
+              <a
+                href='https://github.com/Laborastories/wardstone-pick-ban/issues'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='font-medium text-foreground hover:underline'
+              >
+                GitHub repository
+              </a>
+              .
+            </span>
+          </div>
+
+          {/* Bottom row with logo, links, and buttons */}
+          <div className='flex items-center gap-4'>
+            {/* Logo and copyright */}
+            <div className='flex items-center gap-2'>
               <Strategy size={16} weight='fill' />
               <span className='text-xs text-muted-foreground'>
                 &copy; {new Date().getFullYear()} SCOUT AHEAD
               </span>
-              <nav className='flex gap-4' aria-label='Footer'>
-                {navigation.main.map(item => (
-                  <ScrollToTopLink
-                    key={item.name}
-                    to={item.href}
-                    className='text-xs text-muted-foreground transition-colors hover:text-foreground'
-                  >
-                    {item.name}
-                  </ScrollToTopLink>
-                ))}
-              </nav>
             </div>
-            {/* Work in Progress Banner */}
-            <div className='flex items-center justify-center gap-2 rounded-md bg-muted/50 px-3 py-1'>
-              <span className='text-xs text-muted-foreground'>
-                🚧 Scout Ahead is a work in progress. Please submit feedback via
-                our{' '}
-                <a
-                  href='https://github.com/Laborastories/wardstone-pick-ban/issues'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='font-medium text-foreground hover:underline'
+
+            {/* Navigation */}
+            <nav className='flex gap-4' aria-label='Footer'>
+              {navigation.main.map(item => (
+                <ScrollToTopLink
+                  key={item.name}
+                  to={item.href}
+                  className='text-xs text-muted-foreground transition-colors hover:text-foreground'
                 >
-                  GitHub repository
-                </a>
-                .
-              </span>
-            </div>
-            <div className='flex items-center gap-4'>
+                  {item.name}
+                </ScrollToTopLink>
+              ))}
+            </nav>
+
+            {/* Coffee button and user menu */}
+            <div className='flex items-center gap-2'>
               <a
                 href='https://www.buymeacoffee.com/wardbox'
                 aria-label='Buy me a coffee'

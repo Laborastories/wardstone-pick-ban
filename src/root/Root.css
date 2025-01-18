@@ -60,13 +60,13 @@ html {
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3%;
     --popover-foreground: 0 0% 98%;
-    --primary: 220 20% 75%;
+    --primary: 220 70% 65%;
     --primary-foreground: 240 10% 3%;
     --secondary: 240 8% 15%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 8% 15%;
     --muted-foreground: 240 5% 75%;
-    --accent: 220 20% 75%;
+    --accent: 220 70% 65%;
     --accent-foreground: 240 10% 3%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;

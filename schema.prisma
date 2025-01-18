@@ -30,6 +30,7 @@ model Series {
   team2AuthToken String    @unique
   format        String    // "BO1", "BO3", "BO5"
   fearlessDraft Boolean   @default(false)
+  scrimBlock    Boolean   @default(false)
   games         Game[]
   status        String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
   winner        String?   // "BLUE" or "RED"

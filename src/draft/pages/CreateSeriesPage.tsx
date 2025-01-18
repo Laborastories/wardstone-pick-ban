@@ -19,6 +19,7 @@ type SeriesArgs = {
   matchName: string
   format: 'BO1' | 'BO3' | 'BO5'
   fearlessDraft: boolean
+  scrimBlock: boolean
 }
 
 export function CreateSeriesPage() {
@@ -62,6 +63,7 @@ export function CreateSeriesPage() {
       matchName: formData.get('matchName') as string,
       format: formData.get('format') as 'BO1' | 'BO3' | 'BO5',
       fearlessDraft: formData.get('fearlessDraft') === 'on',
+      scrimBlock: formData.get('scrimBlock') === 'on',
     }
 
     try {
@@ -159,6 +161,13 @@ export function CreateSeriesPage() {
             <label htmlFor='fearlessDraft' className='ml-2 block text-sm'>
               Enable Fearless Draft (champions can only be picked once per
               series)
+            </label>
+          </div>
+
+          <div className='flex items-center'>
+            <Checkbox name='scrimBlock' id='scrimBlock' />
+            <label htmlFor='scrimBlock' className='ml-2 block text-sm'>
+              Scrim Block Mode (play all games regardless of wins)
             </label>
           </div>
 

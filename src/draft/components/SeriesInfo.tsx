@@ -55,7 +55,7 @@ export function SeriesInfo({
 
   const gamesNeeded =
     series.format === 'BO5' ? 3 : series.format === 'BO3' ? 2 : 1
-  const isSeriesOver = team1Wins >= gamesNeeded || team2Wins >= gamesNeeded
+  const isSeriesOver = !series.scrimBlock && (team1Wins >= gamesNeeded || team2Wins >= gamesNeeded)
 
   const handleCopyUrl = () => {
     const baseUrl = window.location.origin
@@ -151,22 +151,19 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               }).map((_, i) => {
                 const gameNum = i + 1
                 const isCurrentGame = gameNum === currentGameNumber
-                const isPreviousGame = gameNum < currentGameNumber
                 const game = series.games.find(g => g.gameNumber === gameNum)
+                const completedGames = series.games.filter(g => g.status === 'COMPLETED')
+                const nextGameNumber = Math.max(
+                  ...completedGames.map(g => g.gameNumber),
+                ) + 1
                 const isNextGame =
-                  !isSeriesOver &&
-                  gameNum ===
-                  Math.max(
-                    ...series.games
-                      .filter(g => g.status === 'COMPLETED')
-                      .map(g => g.gameNumber),
-                  ) +
-                  1
+                  (!isSeriesOver || series.scrimBlock) &&
+                  (isCurrentGame || (series.scrimBlock && game?.status === 'PENDING') || gameNum === nextGameNumber)
                 const isDisabled =
                   !isCurrentGame &&
                   !isNextGame &&
                   !game?.status &&
-                  (isSeriesOver || (!isPreviousGame && !isCurrentGame))
+                  !series.scrimBlock
 
                 return isNextGame ? (
                   <motion.div
@@ -276,10 +273,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
             <div className='flex items-center gap-8'>
               {/* Left Team */}
               <div
-                className={cn(
-                  'w-40 truncate text-right text-4xl font-semibold uppercase tracking-wider',
-                  side === (blueSide === series.team1Name ? 'team1' : 'team2') && 'text-primary',
-                )}
+                className='w-40 truncate text-right text-4xl font-semibold uppercase tracking-wider'
                 title={blueSide}
               >
                 {blueSide}
@@ -289,7 +283,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               <div className='flex items-center gap-2 rounded-sm bg-muted p-2 text-2xl font-bold uppercase tracking-wider'>
                 <span
                   className={cn(
-                    'min-w-[1.5ch] text-center',
+                    'min-w-[1.5ch] text-center text-foreground',
                     (blueSide === series.team1Name ? (team1Wins > team2Wins) : (team2Wins > team1Wins)) && 'text-primary',
                   )}
                 >
@@ -298,7 +292,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                 <span className='text-muted-foreground'>-</span>
                 <span
                   className={cn(
-                    'min-w-[1.5ch] text-center',
+                    'min-w-[1.5ch] text-center text-foreground',
                     (blueSide === series.team1Name ? (team2Wins > team1Wins) : (team1Wins > team2Wins)) && 'text-primary',
                   )}
                 >
@@ -308,10 +302,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
 
               {/* Right Team */}
               <div
-                className={cn(
-                  'w-40 truncate text-left text-4xl font-semibold uppercase tracking-wider',
-                  side === (redSide === series.team1Name ? 'team1' : 'team2') && 'text-primary',
-                )}
+                className='w-40 truncate text-left text-4xl font-semibold uppercase tracking-wider'
                 title={redSide}
               >
                 {redSide}
@@ -362,31 +353,33 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
       </div>
 
       {/* Winner Selection */}
-      {gameStatus === 'DRAFT_COMPLETE' && side && (
-        <div className='flex flex-col items-center gap-2 rounded-lg bg-card px-6 py-4 shadow'>
-          <div className='text-sm font-medium text-muted-foreground'>
-            Select the winner:
+      {
+        gameStatus === 'DRAFT_COMPLETE' && side && (
+          <div className='flex flex-col items-center gap-2 rounded-lg bg-card px-6 py-4 shadow'>
+            <div className='text-sm font-medium text-muted-foreground'>
+              Select the winner:
+            </div>
+            <div className='flex gap-4'>
+              <button
+                onClick={() => handleSetWinner('BLUE')}
+                className='rounded-lg bg-[hsl(var(--team-blue))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
+              >
+                <div className='font-medium text-[hsl(var(--team-blue-foreground))]'>
+                  Blue Wins
+                </div>
+              </button>
+              <button
+                onClick={() => handleSetWinner('RED')}
+                className='rounded-lg bg-[hsl(var(--team-red))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
+              >
+                <div className='max-w-[120px] truncate font-medium text-[hsl(var(--team-red-foreground))]'>
+                  Red Wins
+                </div>
+              </button>
+            </div>
           </div>
-          <div className='flex gap-4'>
-            <button
-              onClick={() => handleSetWinner('BLUE')}
-              className='rounded-lg bg-[hsl(var(--team-blue))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
-            >
-              <div className='font-medium text-[hsl(var(--team-blue-foreground))]'>
-                Blue Wins
-              </div>
-            </button>
-            <button
-              onClick={() => handleSetWinner('RED')}
-              className='rounded-lg bg-[hsl(var(--team-red))] px-6 py-2 text-sm transition-transform hover:scale-[1.02]'
-            >
-              <div className='max-w-[120px] truncate font-medium text-[hsl(var(--team-red-foreground))]'>
-                Red Wins
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   )
 }

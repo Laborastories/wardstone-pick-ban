@@ -108,13 +108,6 @@ export function DraftPage() {
     (data: ServerToClientPayload<'timerUpdate'>) => {
       if (!nextAction) return
 
-      console.log('Timer update:', {
-        timeRemaining: data.timeRemaining,
-        lastTeam: lastTeam,
-        nextTeam: nextAction.team,
-        isNewTurn: lastTeam !== nextAction.team,
-      })
-
       // If this is a new team's turn
       if (lastTeam !== nextAction.team) {
         setLastTeam(nextAction.team)
@@ -298,12 +291,8 @@ export function DraftPage() {
       >
         <div
           className={cn(
-            'relative overflow-hidden transition-all duration-200',
+            'relative overflow-hidden border-2 border-primary transition-all duration-200',
             type === 'PICK' ? 'h-full' : 'aspect-square w-16 2xl:w-20',
-            isActive &&
-              'after:absolute after:inset-0 after:border-2 after:border-primary after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
-            (isPending || isPreviewed) &&
-              'after:absolute after:inset-0 after:border-2 after:border-primary/50 after:shadow-[inset_0_0_0_2px_hsl(var(--background))]',
             !isActive &&
               !isPending &&
               !isPreviewed &&
@@ -359,23 +348,7 @@ export function DraftPage() {
                       background:
                         'linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)',
                     }}
-                  >
-                    <div className='relative'>
-                      <X
-                        size={32}
-                        weight='bold'
-                        className={cn(
-                          'drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
-                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400',
-                        )}
-                      />
-                      <X
-                        size={32}
-                        weight='regular'
-                        className='absolute inset-0 text-white/90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]'
-                      />
-                    </div>
-                  </motion.div>
+                  ></motion.div>
                 )}
               </motion.div>
             ) : isPending ? (
@@ -534,7 +507,7 @@ export function DraftPage() {
           {/* Top Section: Picks and Series Info */}
           <div className='flex min-h-0 flex-1 gap-4'>
             {/* Blue Side - Vertical */}
-            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col rounded-sm border bg-muted p-6 shadow-md backdrop-blur-sm'>
+            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col rounded-lg border border-border/50 bg-card/50 p-6 shadow-md backdrop-blur-sm'>
               <motion.h2
                 className={cn(
                   'mb-4 flex-none truncate text-center text-4xl font-bold uppercase tracking-wider',
@@ -560,7 +533,7 @@ export function DraftPage() {
               </motion.h2>
 
               {/* Blue Picks */}
-              <div className='grid flex-1 grid-rows-5 gap-2'>
+              <div className='grid flex-1 grid-rows-5 gap-3'>
                 {[6, 9, 10, 17, 18].map((i, index) => {
                   const action = gameWithRelations.actions.find(
                     a => a.type === 'PICK' && a.position === i,
@@ -680,7 +653,7 @@ export function DraftPage() {
             </div>
 
             {/* Red Side - Vertical */}
-            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col rounded-sm bg-muted p-6 shadow-md backdrop-blur-sm'>
+            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col rounded-lg border border-border/50 bg-card/50 p-6 shadow-md backdrop-blur-sm'>
               <motion.h2
                 className={cn(
                   'mb-4 flex-none truncate text-center text-4xl font-bold uppercase tracking-wider',
@@ -705,7 +678,7 @@ export function DraftPage() {
               </motion.h2>
 
               {/* Red Picks */}
-              <div className='grid flex-1 grid-rows-5 gap-2'>
+              <div className='grid flex-1 grid-rows-5 gap-3'>
                 {[7, 8, 11, 16, 19].map((i, index) => {
                   const action = gameWithRelations.actions.find(
                     a => a.type === 'PICK' && a.position === i,

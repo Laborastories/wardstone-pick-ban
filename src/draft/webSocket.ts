@@ -1,7 +1,7 @@
-import type { WebSocketDefinition, WaspSocketData } from 'wasp/server/webSocket'
+import type { WaspSocketData, WebSocketDefinition } from 'wasp/server/webSocket'
 import { prisma } from 'wasp/server'
 import { type DraftAction } from 'wasp/entities'
-import { getChampions, type Champion } from '../draft/services/championService'
+import { type Champion, getChampions } from '../draft/services/championService'
 
 export interface ServerToClientEvents {
   readyStateUpdate: (data: {
@@ -416,8 +416,11 @@ export const webSocketFn: WebSocketFn = io => {
           },
         })
 
-        // Check if someone has won the series
-        if (team1Wins >= gamesNeeded || team2Wins >= gamesNeeded) {
+        // Check if someone has won the series (only if not in scrim block mode)
+        if (
+          !series.scrimBlock &&
+          (team1Wins >= gamesNeeded || team2Wins >= gamesNeeded)
+        ) {
           // Update series as completed
           const updatedSeries = await prisma.series.update({
             where: { id: series.id },
@@ -554,7 +557,9 @@ export const webSocketFn: WebSocketFn = io => {
 
     socket.on('previewChampion', ({ gameId, position, champion }) => {
       console.log(
-        `[WS] Champion preview: ${champion || 'cleared'} for position ${position}`,
+        `[WS] Champion preview: ${
+          champion || 'cleared'
+        } for position ${position}`,
       )
       // Broadcast preview to all other clients in the game room
       socket.to(gameId).emit('championPreview', {

@@ -1,11 +1,17 @@
 import { type Series, type Game } from 'wasp/entities'
 import { cn } from '../../lib/utils'
 import { Button } from '../../client/components/ui/button'
-import { Copy } from '@phosphor-icons/react'
+import { Copy, Info } from '@phosphor-icons/react'
 import { useToast } from '../../hooks/use-toast'
 import { useSocket } from 'wasp/client/webSocket'
 import { Link } from 'wasp/client/router'
 import { motion, AnimatePresence } from 'motion/react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../../client/components/ui/tooltip'
 
 export interface SeriesInfoProps {
   series: Series & {
@@ -28,6 +34,7 @@ export function SeriesInfo({
   side,
   gameStatus,
   blueSide,
+  redSide,
   gameId,
   timeRemaining,
   nextAction,
@@ -54,11 +61,29 @@ export function SeriesInfo({
 
   const gamesNeeded =
     series.format === 'BO5' ? 3 : series.format === 'BO3' ? 2 : 1
-  const isSeriesOver = team1Wins >= gamesNeeded || team2Wins >= gamesNeeded
+  const isSeriesOver =
+    !series.scrimBlock && (team1Wins >= gamesNeeded || team2Wins >= gamesNeeded)
 
   const handleCopyUrl = () => {
     const baseUrl = window.location.origin
-    const urls = `${series.team1Name}:
+    const formatText =
+      series.format === 'BO5'
+        ? 'best of 5'
+        : series.format === 'BO3'
+          ? 'best of 3'
+          : 'best of 1'
+    const modeText = [
+      series.fearlessDraft ? 'fearless' : '',
+      series.scrimBlock ? 'scrim block' : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    const description = `You've been invited to play a ${formatText}${modeText ? ` ${modeText}` : ''} draft via scoutahead.pro`
+
+    const urls = `${description}
+
+${series.team1Name}:
 ${baseUrl}/draft/${series.id}/${currentGameNumber}/team1/${series.team1AuthToken}
 
 ${series.team2Name}:
@@ -87,16 +112,58 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
     <div className='flex flex-col gap-2 p-2'>
       <div className='flex flex-col gap-2'>
         {/* Copy URL Button */}
-        <div className='flex justify-end'>
-          <Button
-            variant='ghost'
-            size='icon'
-            onClick={handleCopyUrl}
-            className='h-8 w-8'
-            title='Copy all draft URLs'
-          >
-            <Copy className='h-4 w-4' />
-          </Button>
+        <div className='flex justify-between gap-2 p-2'>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='h-8 w-8'
+                  title='Series Info'
+                >
+                  <Info size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side='right'
+                className='flex flex-col gap-2 whitespace-nowrap'
+              >
+                {series.fearlessDraft && (
+                  <div className='flex items-center gap-2'>
+                    <div className='rounded bg-primary/10 px-2 py-0.5 font-medium text-primary'>
+                      Fearless
+                    </div>
+                    <span>Champions can only be picked once</span>
+                  </div>
+                )}
+                {series.scrimBlock && (
+                  <div className='flex items-center gap-2'>
+                    <div className='rounded bg-primary/10 px-2 py-0.5 font-medium text-primary'>
+                      Scrim
+                    </div>
+                    <span>All games must be played</span>
+                  </div>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <div className='flex gap-2'>
+            {isSeriesOver && (
+              <Button variant='outline' size='sm' asChild className='h-8'>
+                <Link to='/'>New Draft</Link>
+              </Button>
+            )}
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={handleCopyUrl}
+              className='h-8 w-8'
+              title='Copy all draft URLs'
+            >
+              <Copy className='h-4 w-4' />
+            </Button>
+          </div>
         </div>
 
         <div className='flex h-16 items-center justify-between rounded-lg bg-card px-6'>
@@ -150,28 +217,38 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               }).map((_, i) => {
                 const gameNum = i + 1
                 const isCurrentGame = gameNum === currentGameNumber
-                const isPreviousGame = gameNum < currentGameNumber
                 const game = series.games.find(g => g.gameNumber === gameNum)
-                const isNextGame =
-                  !isSeriesOver &&
-                  gameNum ===
-                    Math.max(
-                      ...series.games
-                        .filter(g => g.status === 'COMPLETED')
-                        .map(g => g.gameNumber),
-                    ) +
-                      1
+                const completedGames = series.games.filter(
+                  g => g.status === 'COMPLETED',
+                )
+                const currentGameComplete =
+                  series.games.find(g => g.gameNumber === currentGameNumber)
+                    ?.status === 'COMPLETED'
+                const nextGameNumber =
+                  Math.max(
+                    ...(completedGames.length
+                      ? completedGames.map(g => g.gameNumber)
+                      : [0]),
+                  ) + 1
                 const isDisabled =
-                  !isCurrentGame &&
-                  !isNextGame &&
-                  !game?.status &&
-                  (isSeriesOver || (!isPreviousGame && !isCurrentGame))
+                  (!isCurrentGame && !game?.status) ||
+                  (gameNum > currentGameNumber && !currentGameComplete) ||
+                  gameNum > nextGameNumber
 
-                return isNextGame ? (
+                const shouldAnimate =
+                  isCurrentGame ||
+                  game?.status === 'COMPLETED' ||
+                  (gameNum === nextGameNumber &&
+                    currentGameComplete &&
+                    !isSeriesOver)
+
+                return shouldAnimate ? (
                   <motion.div
                     key={`${gameNum}-${gameId}`}
                     animate={
-                      gameId && game?.id !== gameId
+                      gameNum === nextGameNumber &&
+                      currentGameComplete &&
+                      !isSeriesOver
                         ? {
                             y: [0, -4, 0],
                             scale: [1, 1.05, 1],
@@ -183,6 +260,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                       repeat: Infinity,
                       ease: 'easeInOut',
                     }}
+                    className='font-inter'
                   >
                     <Link
                       to='/draft/:seriesId/:gameNumber/:team?/:auth?'
@@ -198,42 +276,30 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                       }}
                       className={cn(
                         'relative block rounded px-3 py-1 text-sm transition-colors',
-                        side === 'team1'
-                          ? blueSide === series.team1Name
-                            ? 'bg-blue-500/20 text-blue-500'
-                            : 'bg-red-500/20 text-red-500'
-                          : blueSide === series.team2Name
-                            ? 'bg-blue-500/20 text-blue-500'
-                            : 'bg-red-500/20 text-red-500',
+                        isCurrentGame && 'bg-accent text-accent-foreground',
+                        gameNum === nextGameNumber &&
+                          currentGameComplete &&
+                          'bg-primary text-primary-foreground',
                         game?.status === 'COMPLETED' &&
-                          !isCurrentGame &&
-                          'ring-2 ring-accent',
+                          'bg-muted text-muted-foreground',
+                        game?.status === 'COMPLETED' &&
+                          isCurrentGame &&
+                          'bg-primary text-primary-foreground',
                       )}
                     >
                       <span>Game {gameNum}</span>
-                      {gameStatus === 'DRAFT_COMPLETE' &&
-                        gameId &&
-                        game?.id !== gameId && (
-                          <motion.div
-                            className={cn(
-                              'absolute inset-0 rounded',
-                              side === 'team1'
-                                ? blueSide === series.team1Name
-                                  ? 'bg-blue-500'
-                                  : 'bg-red-500'
-                                : blueSide === series.team2Name
-                                  ? 'bg-blue-500'
-                                  : 'bg-red-500',
-                            )}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: [0.2, 0.1, 0.2] }}
-                            transition={{
-                              duration: 1,
-                              repeat: Infinity,
-                              ease: 'easeInOut',
-                            }}
-                          />
-                        )}
+                      {gameNum === nextGameNumber && currentGameComplete && (
+                        <motion.div
+                          className='absolute inset-0 rounded bg-primary'
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: [0.3, 0.15, 0.3] }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                          }}
+                        />
+                      )}
                     </Link>
                   </motion.div>
                 ) : (
@@ -273,47 +339,49 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               })}
             </div>
             <div className='flex items-center gap-8'>
-              {/* Team 1 */}
-              <div
-                className={cn(
-                  'w-40 truncate text-right text-4xl font-semibold uppercase tracking-wider',
-                  side === 'team1' && 'text-primary',
-                )}
-                title={series.team1Name}
-              >
-                {series.team1Name}
+              {/* Left Team */}
+              <div className='flex w-40 items-center justify-end gap-2'>
+                <div
+                  className='truncate text-right text-4xl font-semibold uppercase tracking-wider'
+                  title={blueSide}
+                >
+                  {blueSide}
+                </div>
               </div>
 
               {/* Score */}
               <div className='flex items-center gap-2 rounded-sm bg-muted p-2 text-2xl font-bold uppercase tracking-wider'>
                 <span
                   className={cn(
-                    'min-w-[1.5ch] text-center',
-                    team1Wins > team2Wins && 'text-primary',
+                    'min-w-[1.5ch] text-center text-foreground',
+                    (blueSide === series.team1Name
+                      ? team1Wins > team2Wins
+                      : team2Wins > team1Wins) && 'text-primary',
                   )}
                 >
-                  {team1Wins}
+                  {blueSide === series.team1Name ? team1Wins : team2Wins}
                 </span>
                 <span className='text-muted-foreground'>-</span>
                 <span
                   className={cn(
-                    'min-w-[1.5ch] text-center',
-                    team2Wins > team1Wins && 'text-primary',
+                    'min-w-[1.5ch] text-center text-foreground',
+                    (blueSide === series.team1Name
+                      ? team2Wins > team1Wins
+                      : team1Wins > team2Wins) && 'text-primary',
                   )}
                 >
-                  {team2Wins}
+                  {blueSide === series.team1Name ? team2Wins : team1Wins}
                 </span>
               </div>
 
-              {/* Team 2 */}
-              <div
-                className={cn(
-                  'w-40 truncate text-left text-4xl font-semibold uppercase tracking-wider',
-                  side === 'team2' && 'text-primary',
-                )}
-                title={series.team2Name}
-              >
-                {series.team2Name}
+              {/* Right Team */}
+              <div className='flex w-40 items-center gap-2'>
+                <div
+                  className='truncate text-left text-4xl font-semibold uppercase tracking-wider'
+                  title={redSide}
+                >
+                  {redSide}
+                </div>
               </div>
             </div>
           </div>

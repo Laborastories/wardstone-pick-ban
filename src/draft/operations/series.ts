@@ -1,9 +1,9 @@
 import { HttpError } from 'wasp/server'
-import { type Series, type Game } from 'wasp/entities'
+import { type Game, type Series } from 'wasp/entities'
 import {
-  type GetSeries,
   type CreateSeries,
   type GetGame,
+  type GetSeries,
 } from 'wasp/server/operations'
 
 type SeriesArgs = {
@@ -12,6 +12,7 @@ type SeriesArgs = {
   matchName: string
   format: 'BO1' | 'BO3' | 'BO5'
   fearlessDraft: boolean
+  scrimBlock: boolean
 }
 
 export const getSeries: GetSeries<{ seriesId: string }, Series> = async (
@@ -58,6 +59,7 @@ export const createSeries: CreateSeries<SeriesArgs, Series> = async (
       matchName: args.matchName,
       format: args.format,
       fearlessDraft: args.fearlessDraft,
+      scrimBlock: args.scrimBlock,
       team1AuthToken: team1AuthToken,
       team2AuthToken: team2AuthToken,
       status: 'PENDING',

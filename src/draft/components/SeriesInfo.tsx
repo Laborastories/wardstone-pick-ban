@@ -28,6 +28,7 @@ export function SeriesInfo({
   side,
   gameStatus,
   blueSide,
+  redSide,
   gameId,
   timeRemaining,
   nextAction,
@@ -125,11 +126,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         className={cn(
                           'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
                           typeof timeRemaining === 'number' &&
-                            (timeRemaining <= 4
-                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                              : timeRemaining <= 9
-                                ? 'text-destructive'
-                                : 'text-blue-500'),
+                          (timeRemaining <= 4
+                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                            : timeRemaining <= 9
+                              ? 'text-destructive'
+                              : 'text-blue-500'),
                         )}
                       >
                         {timeRemaining}
@@ -155,12 +156,12 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                 const isNextGame =
                   !isSeriesOver &&
                   gameNum ===
-                    Math.max(
-                      ...series.games
-                        .filter(g => g.status === 'COMPLETED')
-                        .map(g => g.gameNumber),
-                    ) +
-                      1
+                  Math.max(
+                    ...series.games
+                      .filter(g => g.status === 'COMPLETED')
+                      .map(g => g.gameNumber),
+                  ) +
+                  1
                 const isDisabled =
                   !isCurrentGame &&
                   !isNextGame &&
@@ -173,9 +174,9 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                     animate={
                       gameId && game?.id !== gameId
                         ? {
-                            y: [0, -4, 0],
-                            scale: [1, 1.05, 1],
-                          }
+                          y: [0, -4, 0],
+                          scale: [1, 1.05, 1],
+                        }
                         : {}
                     }
                     transition={{
@@ -206,8 +207,8 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                             ? 'bg-blue-500/20 text-blue-500'
                             : 'bg-red-500/20 text-red-500',
                         game?.status === 'COMPLETED' &&
-                          !isCurrentGame &&
-                          'ring-2 ring-accent',
+                        !isCurrentGame &&
+                        'ring-2 ring-accent',
                       )}
                     >
                       <span>Game {gameNum}</span>
@@ -258,8 +259,8 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                           ? 'cursor-not-allowed text-muted-foreground opacity-50'
                           : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                       game?.status === 'COMPLETED' &&
-                        !isCurrentGame &&
-                        'ring-2 ring-accent',
+                      !isCurrentGame &&
+                      'ring-2 ring-accent',
                     )}
                     onClick={e => {
                       if (isDisabled) {
@@ -273,15 +274,15 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               })}
             </div>
             <div className='flex items-center gap-8'>
-              {/* Team 1 */}
+              {/* Left Team */}
               <div
                 className={cn(
                   'w-40 truncate text-right text-4xl font-semibold uppercase tracking-wider',
-                  side === 'team1' && 'text-primary',
+                  side === (blueSide === series.team1Name ? 'team1' : 'team2') && 'text-primary',
                 )}
-                title={series.team1Name}
+                title={blueSide}
               >
-                {series.team1Name}
+                {blueSide}
               </div>
 
               {/* Score */}
@@ -289,31 +290,31 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                 <span
                   className={cn(
                     'min-w-[1.5ch] text-center',
-                    team1Wins > team2Wins && 'text-primary',
+                    (blueSide === series.team1Name ? (team1Wins > team2Wins) : (team2Wins > team1Wins)) && 'text-primary',
                   )}
                 >
-                  {team1Wins}
+                  {blueSide === series.team1Name ? team1Wins : team2Wins}
                 </span>
                 <span className='text-muted-foreground'>-</span>
                 <span
                   className={cn(
                     'min-w-[1.5ch] text-center',
-                    team2Wins > team1Wins && 'text-primary',
+                    (blueSide === series.team1Name ? (team2Wins > team1Wins) : (team1Wins > team2Wins)) && 'text-primary',
                   )}
                 >
-                  {team2Wins}
+                  {blueSide === series.team1Name ? team2Wins : team1Wins}
                 </span>
               </div>
 
-              {/* Team 2 */}
+              {/* Right Team */}
               <div
                 className={cn(
                   'w-40 truncate text-left text-4xl font-semibold uppercase tracking-wider',
-                  side === 'team2' && 'text-primary',
+                  side === (redSide === series.team1Name ? 'team1' : 'team2') && 'text-primary',
                 )}
-                title={series.team2Name}
+                title={redSide}
               >
-                {series.team2Name}
+                {redSide}
               </div>
             </div>
           </div>
@@ -343,11 +344,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         className={cn(
                           'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
                           typeof timeRemaining === 'number' &&
-                            (timeRemaining <= 4
-                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                              : timeRemaining <= 9
-                                ? 'text-destructive'
-                                : 'text-red-500'),
+                          (timeRemaining <= 4
+                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                            : timeRemaining <= 9
+                              ? 'text-destructive'
+                              : 'text-red-500'),
                         )}
                       >
                         {timeRemaining}

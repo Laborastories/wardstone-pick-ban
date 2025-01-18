@@ -91,9 +91,9 @@ export function ChampionGrid({
   }, [search, champions, selectedRole])
 
   return (
-    <div className='flex h-full flex-col bg-muted p-2'>
+    <div className='flex h-full flex-col bg-muted p-2 rounded-md w-full'>
       {/* Search and Filters */}
-      <div className='flex items-center gap-2'>
+      <div className='flex items-center gap-2 p-2'>
         {/* Search */}
         <div className='relative'>
           <MagnifyingGlass
@@ -110,7 +110,7 @@ export function ChampionGrid({
         </div>
 
         {/* Role Filter */}
-        <div className='flex gap-0.5'>
+        <div className='flex gap-2'>
           {Object.entries(roleIcons).map(([role, iconUrl]) => (
             <Button
               key={role}
@@ -137,51 +137,52 @@ export function ChampionGrid({
         </div>
       </div>
 
-      {/* Grid */}
-      <div className='auto-rows-16 grid min-h-0 grid-cols-[repeat(auto-fit,minmax(theme(spacing.16),1fr))] gap-1 overflow-y-auto p-4'>
-        {filteredChampions.map(champion => {
-          const isUsed = usedChampions.includes(champion.id)
-          const isBanned = bannedChampions.includes(champion.id)
-          const isDisabled = disabled || isUsed || isBanned
-          return (
-            <button
-              key={champion.id}
-              onClick={() => onSelect(champion)}
-              onMouseEnter={() => {
-                // Prefetch splash art on hover
-                prefetchImage(getChampionImageUrl(champion.id, 'splash'))
-              }}
-              disabled={isDisabled}
-              className={`group relative flex aspect-square min-w-16 flex-col items-center justify-center rounded transition-colors hover:bg-accent ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
-              title={`${champion.name}${isUsed ? ' (Already picked in this series)' : isBanned ? ' (Banned this game)' : ''}`}
-            >
-              <div className='relative aspect-square h-full w-full overflow-hidden rounded'>
-                <img
-                  src={getChampionImageUrl(champion)}
-                  alt={champion.name}
-                  className={`absolute inset-0 h-full w-full scale-[115%] rounded object-cover ${isUsed ? 'grayscale' : isBanned ? 'brightness-50' : ''} `}
-                  loading='lazy'
-                />
-                <div
-                  className={`absolute inset-0 bg-black/50 ${isUsed || isBanned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} flex items-center justify-center rounded p-1 transition-opacity`}
-                >
-                  <span>
-                    {isUsed && (
-                      <div className='champion-name text-[0.8rem] font-bold text-red-400'>
-                        Already Picked
-                      </div>
-                    )}
-                    {isBanned && (
-                      <div className='champion-name text-[0.8rem] font-bold text-yellow-400'>
-                        Banned
-                      </div>
-                    )}
-                  </span>
+      {/* Grid Container */}
+      <div className='flex min-h-0 overflow-y-auto p-2'>
+        <div className='flex flex-wrap gap-2'>
+          {filteredChampions.map(champion => {
+            const isUsed = usedChampions.includes(champion.id)
+            const isBanned = bannedChampions.includes(champion.id)
+            const isDisabled = disabled || isUsed || isBanned
+            return (
+              <button
+                key={champion.id}
+                onClick={() => onSelect(champion)}
+                onMouseEnter={() => {
+                  prefetchImage(getChampionImageUrl(champion.id, 'splash'))
+                }}
+                disabled={isDisabled}
+                className={`group relative flex aspect-square w-16 xl:w-20 3xl:w-24 flex-col items-center justify-center rounded transition-colors hover:bg-accent ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
+                title={`${champion.name}${isUsed ? ' (Already picked in this series)' : isBanned ? ' (Banned this game)' : ''}`}
+              >
+                <div className='relative h-full w-full overflow-hidden rounded'>
+                  <img
+                    src={getChampionImageUrl(champion)}
+                    alt={champion.name}
+                    className={`absolute inset-0 h-full w-full object-cover object-center ${isUsed ? 'grayscale' : isBanned ? 'brightness-50' : ''} `}
+                    loading='lazy'
+                  />
+                  <div
+                    className={`absolute inset-0 bg-black/50 ${isUsed || isBanned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} flex items-center justify-center rounded p-1 transition-opacity`}
+                  >
+                    <span>
+                      {isUsed && (
+                        <div className='champion-name text-[0.8rem] font-bold text-red-400'>
+                          Already Picked
+                        </div>
+                      )}
+                      {isBanned && (
+                        <div className='champion-name text-[0.8rem] font-bold text-yellow-400'>
+                          Banned
+                        </div>
+                      )}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </button>
-          )
-        })}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

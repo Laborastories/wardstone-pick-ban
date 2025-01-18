@@ -28,11 +28,13 @@ export function CreateSeriesPage() {
     blueUrl?: string
     redUrl?: string
     spectatorUrl?: string
+    team1Name?: string
+    team2Name?: string
   }>({})
   const [copied, setCopied] = useState(false)
 
   const handleCopyAll = () => {
-    const formattedLinks = `${urls.blueUrl ? `Team 1: ${urls.blueUrl}\n` : ''}${urls.redUrl ? `Team 2: ${urls.redUrl}\n` : ''}${urls.spectatorUrl ? `Spectator: ${urls.spectatorUrl}` : ''}`
+    const formattedLinks = `${urls.blueUrl ? `${urls.team1Name}: ${urls.blueUrl}\n` : ''}${urls.redUrl ? `${urls.team2Name}: ${urls.redUrl}\n` : ''}${urls.spectatorUrl ? `Spectator: ${urls.spectatorUrl}` : ''}`
     navigator.clipboard.writeText(formattedLinks)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -69,6 +71,8 @@ export function CreateSeriesPage() {
         blueUrl: `${baseUrl}/draft/${series.id}/1/team1/${series.team1AuthToken}`,
         redUrl: `${baseUrl}/draft/${series.id}/1/team2/${series.team2AuthToken}`,
         spectatorUrl: `${baseUrl}/draft/${series.id}/1`,
+        team1Name,
+        team2Name,
       })
     } catch (err: any) {
       setError(err.message || 'Failed to create series')

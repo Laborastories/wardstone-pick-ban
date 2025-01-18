@@ -92,7 +92,8 @@ export function CreateSeriesPage() {
         <p className='text-lg text-muted-foreground'>
           Professional League of Legends draft tool for teams and coaches.
           <br />
-          Create custom draft lobbies with advanced features like fearless draft and scrim blocks.
+          Create custom draft lobbies with advanced features like fearless draft
+          and scrim blocks.
         </p>
       </div>
 
@@ -190,11 +191,7 @@ export function CreateSeriesPage() {
             </motion.div>
           )}
 
-          <Button
-            type='submit'
-            disabled={isLoading}
-            className='w-full'
-          >
+          <Button type='submit' disabled={isLoading} className='w-full'>
             {isLoading ? 'Creating...' : 'Create Draft'}
           </Button>
         </form>

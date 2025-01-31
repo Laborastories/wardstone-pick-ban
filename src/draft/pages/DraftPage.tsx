@@ -9,7 +9,6 @@ import {
   ServerToClientPayload,
 } from 'wasp/client/webSocket'
 import { Button } from '../../client/components/ui/button'
-import { X } from '@phosphor-icons/react'
 import { ChampionGrid } from '../components/ChampionGrid'
 import { getChampionImageUrl, type Champion } from '../services/championService'
 import {
@@ -292,11 +291,11 @@ export function DraftPage() {
         <div
           className={cn(
             'relative overflow-hidden border-2 border-primary transition-all duration-200',
-            type === 'PICK' ? 'h-full' : 'aspect-square w-16 2xl:w-20',
+            type === 'PICK' ? 'h-full' : 'aspect-square w-full',
             !isActive &&
-              !isPending &&
-              !isPreviewed &&
-              'border border-border hover:border-primary/20',
+            !isPending &&
+            !isPreviewed &&
+            'border border-border hover:border-primary/20',
             'bg-card shadow-sm hover:shadow-md',
             type === 'BAN' && 'rounded-md',
             type === 'PICK' && 'rounded-lg',
@@ -375,35 +374,19 @@ export function DraftPage() {
                 />
                 {type === 'BAN' && (
                   <motion.div
-                    className='absolute inset-0 flex items-center justify-center'
+                    className='absolute inset-0'
                     style={{
                       background:
-                        'linear-gradient(45deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%)',
+                        'linear-gradient(45deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)',
                     }}
-                  >
-                    <div className='relative'>
-                      <X
-                        size={32}
-                        weight='bold'
-                        className={cn(
-                          'opacity-75 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
-                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400',
-                        )}
-                      />
-                      <X
-                        size={32}
-                        weight='regular'
-                        className='absolute inset-0 text-white/75 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]'
-                      />
-                    </div>
-                  </motion.div>
+                  />
                 )}
               </motion.div>
             ) : isPreviewed && previewedChampions[position] ? (
               <motion.div
                 key='preview'
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.6 }}
+                animate={{ opacity: 0.8 }}
                 exit={{ opacity: 0 }}
                 className='absolute inset-0'
               >
@@ -423,28 +406,12 @@ export function DraftPage() {
                 />
                 {type === 'BAN' && (
                   <motion.div
-                    className='absolute inset-0 flex items-center justify-center'
+                    className='absolute inset-0'
                     style={{
                       background:
-                        'linear-gradient(45deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%)',
+                        'linear-gradient(45deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%)',
                     }}
-                  >
-                    <div className='relative'>
-                      <X
-                        size={32}
-                        weight='bold'
-                        className={cn(
-                          'opacity-50 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]',
-                          team === 'BLUE' ? 'text-blue-400' : 'text-red-400',
-                        )}
-                      />
-                      <X
-                        size={32}
-                        weight='regular'
-                        className='absolute inset-0 text-white/50 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]'
-                      />
-                    </div>
-                  </motion.div>
+                  />
                 )}
               </motion.div>
             ) : (
@@ -454,13 +421,18 @@ export function DraftPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className={cn(
-                  'absolute inset-0 flex items-center justify-center bg-muted/50 font-light text-muted-foreground',
-                  type === 'PICK' ? 'text-4xl font-thin' : 'text-lg',
+                  'absolute inset-0 flex items-center justify-center bg-muted/50',
+                  type === 'PICK' ? 'text-4xl font-thin' : 'text-md font-medium flex-col',
                 )}
               >
-                {type === 'PICK'
-                  ? `${team[0]}${index + 1}`
-                  : `Ban ${index + 1}`}
+                {type === 'PICK' ? (
+                  `${team[0]}${index + 1}`
+                ) : (
+                  <>
+                    <span className='opacity-50'>Ban</span>
+                    <span>{index + 1}</span>
+                  </>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -501,16 +473,16 @@ export function DraftPage() {
 
   return (
     <div className='h-screen overflow-hidden bg-background'>
-      <div className='flex h-full min-w-[1280px] flex-col rounded-lg p-3 shadow-lg backdrop-blur-sm'>
+      <div className='flex h-full flex-col rounded-lg p-2 sm:p-3 shadow-lg backdrop-blur-sm'>
         {/* Main Draft UI */}
-        <div className='flex h-full flex-col gap-4'>
+        <div className='flex h-full flex-col gap-2 sm:gap-4'>
           {/* Top Section: Picks and Series Info */}
-          <div className='flex min-h-0 flex-1 gap-4'>
+          <div className='flex min-h-0 flex-1 gap-2 sm:gap-4'>
             {/* Blue Side - Vertical */}
-            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col rounded-lg border border-border/50 bg-card/50 p-6 shadow-md backdrop-blur-sm'>
+            <div className='flex min-h-0 w-[18%] flex-col rounded-lg border border-border/50 bg-card/50 p-2 sm:p-4 shadow-md backdrop-blur-sm'>
               <motion.h2
                 className={cn(
-                  'mb-4 flex-none truncate text-center text-4xl font-bold uppercase tracking-wider',
+                  'mb-2 sm:mb-4 flex-none truncate text-center text-lg sm:text-2xl lg:text-3xl font-bold uppercase tracking-wider',
                   gameWithRelations.series.winner === gameWithRelations.blueSide
                     ? 'text-blue-400'
                     : 'text-blue-500',
@@ -518,12 +490,12 @@ export function DraftPage() {
                 animate={
                   gameWithRelations.series.winner === gameWithRelations.blueSide
                     ? {
-                        textShadow: [
-                          '0 0 4px rgb(59 130 246 / 0.5)',
-                          '0 0 8px rgb(59 130 246 / 0.5)',
-                          '0 0 4px rgb(59 130 246 / 0.5)',
-                        ],
-                      }
+                      textShadow: [
+                        '0 0 4px rgb(59 130 246 / 0.5)',
+                        '0 0 8px rgb(59 130 246 / 0.5)',
+                        '0 0 4px rgb(59 130 246 / 0.5)',
+                      ],
+                    }
                     : {}
                 }
                 transition={{ repeat: Infinity, duration: 2 }}
@@ -544,11 +516,11 @@ export function DraftPage() {
             </div>
 
             {/* Center Content */}
-            <div className='flex min-w-[640px] flex-1 flex-col gap-4'>
+            <div className='flex flex-1 flex-col gap-2 sm:gap-4 min-w-0'>
               {/* Series Info */}
               <div>
                 {(game as GameWithRelations)?.series && (
-                  <div className=''>
+                  <div className='min-w-0'>
                     <SeriesInfo
                       series={(game as GameWithRelations).series}
                       currentGameNumber={parseInt(gameNumber)}
@@ -568,7 +540,7 @@ export function DraftPage() {
               {/* Side Selection or Draft Content */}
               <div className='flex min-h-0 flex-1 flex-col gap-2'>
                 {gameWithRelations.status === 'PENDING' &&
-                (!gameWithRelations.blueSide || !gameWithRelations.redSide) ? (
+                  (!gameWithRelations.blueSide || !gameWithRelations.redSide) ? (
                   <div className='flex min-h-0 flex-1 items-center justify-center'>
                     <SideSelection
                       series={gameWithRelations.series}
@@ -580,8 +552,8 @@ export function DraftPage() {
                   <>
                     {/* Ready State */}
                     {gameWithRelations.status === 'PENDING' &&
-                    gameWithRelations.blueSide &&
-                    gameWithRelations.redSide ? (
+                      gameWithRelations.blueSide &&
+                      gameWithRelations.redSide ? (
                       <div className='flex h-[72px] items-center justify-center'>
                         <div className='flex flex-col items-center gap-2'>
                           <div className='text-sm font-medium text-muted-foreground'>
@@ -611,7 +583,7 @@ export function DraftPage() {
                     {/* Champion Grid */}
                     <div className='flex min-h-0 flex-1 flex-col gap-2'>
                       <div className='flex min-h-0 flex-1 justify-center'>
-                        <div className='w-full min-w-[calc(6*5rem)]'>
+                        <div className='min-w-0 w-full'>
                           <ChampionGrid
                             onSelect={handleChampionSelect}
                             disabled={
@@ -633,14 +605,14 @@ export function DraftPage() {
                               // If fearless draft, add all picks from previous games
                               ...(gameWithRelations.series.fearlessDraft
                                 ? gameWithRelations.series.games
-                                    .filter(
-                                      g =>
-                                        g.gameNumber <
-                                        gameWithRelations.gameNumber,
-                                    )
-                                    .flatMap(g => g.actions)
-                                    .filter(a => a.type === 'PICK')
-                                    .map(a => a.champion)
+                                  .filter(
+                                    g =>
+                                      g.gameNumber <
+                                      gameWithRelations.gameNumber,
+                                  )
+                                  .flatMap(g => g.actions)
+                                  .filter(a => a.type === 'PICK')
+                                  .map(a => a.champion)
                                 : []),
                             ]}
                           />
@@ -653,10 +625,10 @@ export function DraftPage() {
             </div>
 
             {/* Red Side - Vertical */}
-            <div className='flex min-h-0 w-[20%] min-w-[240px] flex-col rounded-lg border border-border/50 bg-card/50 p-6 shadow-md backdrop-blur-sm'>
+            <div className='flex min-h-0 w-[18%] flex-col rounded-lg border border-border/50 bg-card/50 p-2 sm:p-4 shadow-md backdrop-blur-sm'>
               <motion.h2
                 className={cn(
-                  'mb-4 flex-none truncate text-center text-4xl font-bold uppercase tracking-wider',
+                  'mb-2 sm:mb-4 flex-none truncate text-center text-lg sm:text-2xl lg:text-3xl font-bold uppercase tracking-wider',
                   gameWithRelations.series.winner === gameWithRelations.redSide
                     ? 'text-red-400'
                     : 'text-red-500',
@@ -664,12 +636,12 @@ export function DraftPage() {
                 animate={
                   gameWithRelations.series.winner === gameWithRelations.redSide
                     ? {
-                        textShadow: [
-                          '0 0 4px rgb(239 68 68 / 0.5)',
-                          '0 0 8px rgb(239 68 68 / 0.5)',
-                          '0 0 4px rgb(239 68 68 / 0.5)',
-                        ],
-                      }
+                      textShadow: [
+                        '0 0 4px rgb(239 68 68 / 0.5)',
+                        '0 0 8px rgb(239 68 68 / 0.5)',
+                        '0 0 4px rgb(239 68 68 / 0.5)',
+                      ],
+                    }
                     : {}
                 }
                 transition={{ repeat: Infinity, duration: 2 }}
@@ -690,15 +662,15 @@ export function DraftPage() {
           </div>
 
           {/* Bottom Section: Bans and Actions */}
-          <div className='mt-0 flex min-w-min flex-none items-center justify-between gap-4 rounded-lg bg-muted p-4 shadow-md backdrop-blur-sm'>
+          <div className='mt-0 flex flex-none items-center justify-between gap-1 sm:gap-2 lg:gap-4 rounded-lg bg-muted p-2 sm:p-4 shadow-md backdrop-blur-sm'>
             {/* Blue Bans */}
-            <div className='flex justify-center gap-2'>
+            <div className='flex justify-center gap-1 sm:gap-2'>
               {[0, 2, 4, 13, 15].map((i, index) => {
                 const action = gameWithRelations.actions.find(
                   a => a.type === 'BAN' && a.position === i,
                 )
                 return (
-                  <div key={i}>
+                  <div key={i} className='w-16 sm:w-16 2xl:w-24'>
                     {renderSlot('BAN', i, index, 'BLUE', action)}
                   </div>
                 )
@@ -706,7 +678,7 @@ export function DraftPage() {
             </div>
 
             {/* Center Actions */}
-            <div className='flex h-[48px] w-[200px] flex-none items-center justify-center'>
+            <div className='flex h-[48px] w-[90px] sm:w-[120px] lg:w-[160px] flex-none items-center justify-center'>
               {/* Confirmation Button */}
               {pendingAction && isCurrentTeam && (
                 <motion.div
@@ -726,13 +698,13 @@ export function DraftPage() {
             </div>
 
             {/* Red Bans */}
-            <div className='flex justify-center gap-2'>
+            <div className='flex justify-center gap-1 sm:gap-2'>
               {[1, 3, 5, 12, 14].map((i, index) => {
                 const action = gameWithRelations.actions.find(
                   a => a.type === 'BAN' && a.position === i,
                 )
                 return (
-                  <div key={i}>
+                  <div key={i} className='w-16 sm:w-16 2xl:w-24'>
                     {renderSlot('BAN', i, index, 'RED', action)}
                   </div>
                 )

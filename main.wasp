@@ -46,6 +46,7 @@ route RootRoute { path: "/", to: CreateSeriesPage }
 route Profile { path: "/profile/:id", to: ProfilePage }
 route LoginRoute { path: "/login", to: LoginPage }
 route SignupRoute { path: "/signup", to: SignupPage }
+route AdminDashboardRoute { path: "/admin", to: AdminDashboardPage }
 route NotFoundRoute { path: "*", to: NotFoundPage }
 
 // Draft Routes
@@ -84,10 +85,10 @@ page DraftPage {
   component: import { DraftPage } from "@src/draft/pages/DraftPage"
 }
 
-// page AdminDashboardPage {
-//   component: import { AdminDashboardPage } from "@src/admin/AdminDashboardPage",
-//   authRequired: true
-// }
+page AdminDashboardPage {
+  component: import { AdminDashboardPage } from "@src/admin/AdminDashboardPage",
+  authRequired: true
+}
 //#endregion
 
 // Operations
@@ -118,5 +119,10 @@ action updateGame {
 action createDraftAction {
   fn: import { createDraftAction } from "@src/draft/operations/draftActions",
   entities: [DraftAction, Game]
+}
+
+query getAdminStats {
+  fn: import { getAdminStats } from "@src/admin/operations",
+  entities: [User, Series, Game]
 }
 

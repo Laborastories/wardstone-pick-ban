@@ -168,7 +168,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
 
         <div className='flex h-16 items-center justify-between rounded-lg bg-card px-6'>
           {/* Left Timer Space */}
-          <div className='flex w-[120px] items-center justify-center'>
+          <div className='flex w-[80px] sm:w-[100px] lg:w-[120px] items-center justify-center'>
             <AnimatePresence mode='wait'>
               {gameStatus === 'IN_PROGRESS' &&
                 timeRemaining !== null &&
@@ -192,11 +192,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         className={cn(
                           'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
                           typeof timeRemaining === 'number' &&
-                            (timeRemaining <= 4
-                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                              : timeRemaining <= 9
-                                ? 'text-destructive'
-                                : 'text-blue-500'),
+                          (timeRemaining <= 4
+                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                            : timeRemaining <= 9
+                              ? 'text-destructive'
+                              : 'text-blue-500'),
                         )}
                       >
                         {timeRemaining}
@@ -247,12 +247,12 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                     key={`${gameNum}-${gameId}`}
                     animate={
                       gameNum === nextGameNumber &&
-                      currentGameComplete &&
-                      !isSeriesOver
+                        currentGameComplete &&
+                        !isSeriesOver
                         ? {
-                            y: [0, -4, 0],
-                            scale: [1, 1.05, 1],
-                          }
+                          y: [0, -4, 0],
+                          scale: [1, 1.05, 1],
+                        }
                         : {}
                     }
                     transition={{
@@ -278,13 +278,13 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         'relative block rounded px-3 py-1 text-sm transition-colors',
                         isCurrentGame && 'bg-accent text-accent-foreground',
                         gameNum === nextGameNumber &&
-                          currentGameComplete &&
-                          'bg-primary text-primary-foreground',
+                        currentGameComplete &&
+                        'bg-primary text-primary-foreground',
                         game?.status === 'COMPLETED' &&
-                          'bg-muted text-muted-foreground',
+                        'bg-muted text-muted-foreground',
                         game?.status === 'COMPLETED' &&
-                          isCurrentGame &&
-                          'bg-primary text-primary-foreground',
+                        isCurrentGame &&
+                        'bg-primary text-primary-foreground',
                       )}
                     >
                       <span>Game {gameNum}</span>
@@ -324,8 +324,8 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                           ? 'cursor-not-allowed text-muted-foreground opacity-50'
                           : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                       game?.status === 'COMPLETED' &&
-                        !isCurrentGame &&
-                        'ring-2 ring-accent',
+                      !isCurrentGame &&
+                      'ring-2 ring-accent',
                     )}
                     onClick={e => {
                       if (isDisabled) {
@@ -338,11 +338,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                 )
               })}
             </div>
-            <div className='flex items-center gap-8'>
+            <div className='flex items-center gap-4 sm:gap-8'>
               {/* Left Team */}
-              <div className='flex w-40 items-center justify-end gap-2'>
+              <div className='flex w-24 sm:w-32 lg:w-40 items-center justify-end gap-2'>
                 <div
-                  className='truncate text-right text-4xl font-semibold uppercase tracking-wider'
+                  className='truncate text-right text-xl sm:text-2xl lg:text-4xl font-semibold uppercase tracking-wider'
                   title={blueSide}
                 >
                   {blueSide}
@@ -350,7 +350,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               </div>
 
               {/* Score */}
-              <div className='flex items-center gap-2 rounded-sm bg-muted p-2 text-2xl font-bold uppercase tracking-wider'>
+              <div className='flex items-center gap-2 rounded-sm bg-muted p-2 text-xl sm:text-2xl font-bold uppercase tracking-wider'>
                 <span
                   className={cn(
                     'min-w-[1.5ch] text-center text-foreground',
@@ -375,9 +375,9 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               </div>
 
               {/* Right Team */}
-              <div className='flex w-40 items-center gap-2'>
+              <div className='flex w-24 sm:w-32 lg:w-40 items-center gap-2'>
                 <div
-                  className='truncate text-left text-4xl font-semibold uppercase tracking-wider'
+                  className='truncate text-left text-xl sm:text-2xl lg:text-4xl font-semibold uppercase tracking-wider'
                   title={redSide}
                 >
                   {redSide}
@@ -387,7 +387,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
           </div>
 
           {/* Right Timer Space */}
-          <div className='flex w-[120px] items-center justify-center'>
+          <div className='flex w-[80px] sm:w-[100px] lg:w-[120px] items-center justify-center'>
             <AnimatePresence mode='wait'>
               {gameStatus === 'IN_PROGRESS' &&
                 timeRemaining !== null &&
@@ -411,11 +411,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                         className={cn(
                           'p-2 text-center text-4xl font-medium tabular-nums 2xl:text-6xl',
                           typeof timeRemaining === 'number' &&
-                            (timeRemaining <= 4
-                              ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
-                              : timeRemaining <= 9
-                                ? 'text-destructive'
-                                : 'text-red-500'),
+                          (timeRemaining <= 4
+                            ? 'animate-[pulse_0.5s_ease-in-out_infinite] text-destructive'
+                            : timeRemaining <= 9
+                              ? 'text-destructive'
+                              : 'text-red-500'),
                         )}
                       >
                         {timeRemaining}

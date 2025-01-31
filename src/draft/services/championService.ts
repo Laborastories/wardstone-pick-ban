@@ -167,6 +167,7 @@ const championRoles: Record<string, ChampionRole[]> = {
   Malzahar: ['mid'],
   Maokai: ['top', 'jungle', 'support'],
   MasterYi: ['jungle'],
+  Mel: ['mid', 'support'],
   Milio: ['support'],
   MissFortune: ['bot'],
   Mordekaiser: ['top'],

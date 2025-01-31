@@ -168,7 +168,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
 
         <div className='flex h-16 items-center justify-between rounded-lg bg-card px-6'>
           {/* Left Timer Space */}
-          <div className='flex w-[120px] items-center justify-center'>
+          <div className='flex w-[80px] items-center justify-center sm:w-[100px] lg:w-[120px]'>
             <AnimatePresence mode='wait'>
               {gameStatus === 'IN_PROGRESS' &&
                 timeRemaining !== null &&
@@ -338,11 +338,11 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                 )
               })}
             </div>
-            <div className='flex items-center gap-8'>
+            <div className='flex items-center gap-4 sm:gap-8'>
               {/* Left Team */}
-              <div className='flex w-40 items-center justify-end gap-2'>
+              <div className='flex w-24 items-center justify-end gap-2 sm:w-32 lg:w-40'>
                 <div
-                  className='truncate text-right text-4xl font-semibold uppercase tracking-wider'
+                  className='truncate text-right text-xl font-semibold uppercase tracking-wider sm:text-2xl lg:text-4xl'
                   title={blueSide}
                 >
                   {blueSide}
@@ -350,7 +350,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               </div>
 
               {/* Score */}
-              <div className='flex items-center gap-2 rounded-sm bg-muted p-2 text-2xl font-bold uppercase tracking-wider'>
+              <div className='flex items-center gap-2 rounded-sm bg-muted p-2 text-xl font-bold uppercase tracking-wider sm:text-2xl'>
                 <span
                   className={cn(
                     'min-w-[1.5ch] text-center text-foreground',
@@ -375,9 +375,9 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               </div>
 
               {/* Right Team */}
-              <div className='flex w-40 items-center gap-2'>
+              <div className='flex w-24 items-center gap-2 sm:w-32 lg:w-40'>
                 <div
-                  className='truncate text-left text-4xl font-semibold uppercase tracking-wider'
+                  className='truncate text-left text-xl font-semibold uppercase tracking-wider sm:text-2xl lg:text-4xl'
                   title={redSide}
                 >
                   {redSide}
@@ -387,7 +387,7 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
           </div>
 
           {/* Right Timer Space */}
-          <div className='flex w-[120px] items-center justify-center'>
+          <div className='flex w-[80px] items-center justify-center sm:w-[100px] lg:w-[120px]'>
             <AnimatePresence mode='wait'>
               {gameStatus === 'IN_PROGRESS' &&
                 timeRemaining !== null &&

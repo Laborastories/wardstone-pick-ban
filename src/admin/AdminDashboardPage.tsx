@@ -59,8 +59,12 @@ export function AdminDashboardPage() {
   const [page, setPage] = useState(1)
   const itemsPerPage = 10
 
-  const { data: stats, isLoading, error } = useQuery(getAdminStats, {
-    enabled: !!user?.isAdmin
+  const {
+    data: stats,
+    isLoading,
+    error,
+  } = useQuery(getAdminStats, {
+    enabled: !!user?.isAdmin,
   })
 
   useEffect(() => {
@@ -72,7 +76,9 @@ export function AdminDashboardPage() {
   if (!user || !user.isAdmin) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-background'>
-        <div className='text-destructive'>Unauthorized: Admin access required</div>
+        <div className='text-destructive'>
+          Unauthorized: Admin access required
+        </div>
       </div>
     )
   }
@@ -119,7 +125,9 @@ export function AdminDashboardPage() {
     >
       <div className='mb-8'>
         <h1 className='text-4xl font-bold'>Admin Dashboard</h1>
-        <p className='text-muted-foreground font-sans'>Monitor your platform&apos;s performance and user activity</p>
+        <p className='font-sans text-muted-foreground'>
+          Monitor your platform&apos;s performance and user activity
+        </p>
       </div>
 
       {/* Stats Overview */}
@@ -131,7 +139,7 @@ export function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{adminStats.totalUsers}</div>
-            <p className='text-xs text-muted-foreground font-sans'>
+            <p className='font-sans text-xs text-muted-foreground'>
               {adminStats.activeUsers24h} active in last 24h
             </p>
           </CardContent>
@@ -143,7 +151,7 @@ export function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{adminStats.totalDrafts}</div>
-            <p className='text-xs text-muted-foreground font-sans'>
+            <p className='font-sans text-xs text-muted-foreground'>
               {adminStats.recentDrafts.length} drafts today
             </p>
           </CardContent>
@@ -154,22 +162,28 @@ export function AdminDashboardPage() {
             <Crown size={32} className='text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{adminStats.totalGamesPlayed}</div>
-            <p className='text-xs text-muted-foreground font-sans'>
+            <div className='text-2xl font-bold'>
+              {adminStats.totalGamesPlayed}
+            </div>
+            <p className='font-sans text-xs text-muted-foreground'>
               Across all drafts
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Avg. Games per Draft</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              Avg. Games per Draft
+            </CardTitle>
             <ChartLine size={32} className='text-muted-foreground' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {(adminStats.totalGamesPlayed / adminStats.totalDrafts).toFixed(1)}
+              {(adminStats.totalGamesPlayed / adminStats.totalDrafts).toFixed(
+                1,
+              )}
             </div>
-            <p className='text-xs text-muted-foreground font-sans'>
+            <p className='font-sans text-xs text-muted-foreground'>
               Games completed
             </p>
           </CardContent>
@@ -180,7 +194,9 @@ export function AdminDashboardPage() {
       <Card className='mb-8'>
         <CardHeader>
           <CardTitle>Users</CardTitle>
-          <CardDescription className='font-sans'>A list of all users registered on the platform.</CardDescription>
+          <CardDescription className='font-sans'>
+            A list of all users registered on the platform.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -190,8 +206,12 @@ export function AdminDashboardPage() {
                 <TableHead className='font-sans'>Email</TableHead>
                 <TableHead className='font-sans'>Joined</TableHead>
                 <TableHead className='font-sans'>Last Active</TableHead>
-                <TableHead className='text-right font-sans'>Total Drafts</TableHead>
-                <TableHead className='text-right font-sans'>Total Games</TableHead>
+                <TableHead className='text-right font-sans'>
+                  Total Drafts
+                </TableHead>
+                <TableHead className='text-right font-sans'>
+                  Total Games
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className='font-sans'>
@@ -205,8 +225,12 @@ export function AdminDashboardPage() {
                   <TableCell>
                     {new Date(user.lastLoginAt).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className='text-right'>{user.totalDrafts}</TableCell>
-                  <TableCell className='text-right'>{user.totalGames}</TableCell>
+                  <TableCell className='text-right'>
+                    {user.totalDrafts}
+                  </TableCell>
+                  <TableCell className='text-right'>
+                    {user.totalGames}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -214,7 +238,8 @@ export function AdminDashboardPage() {
           {/* Pagination Controls */}
           <div className='mt-4 flex items-center justify-between font-sans'>
             <div className='text-sm text-muted-foreground'>
-              Showing {startIndex + 1}-{Math.min(endIndex, adminStats.users.length)} of{' '}
+              Showing {startIndex + 1}-
+              {Math.min(endIndex, adminStats.users.length)} of{' '}
               {adminStats.users.length} users
             </div>
             <div className='flex gap-2'>
@@ -243,7 +268,9 @@ export function AdminDashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Recent Drafts</CardTitle>
-          <CardDescription className='font-sans'>The latest drafts created on the platform.</CardDescription>
+          <CardDescription className='font-sans'>
+            The latest drafts created on the platform.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -264,23 +291,30 @@ export function AdminDashboardPage() {
                   className='group cursor-pointer hover:bg-muted/50'
                 >
                   <Link
-                    to="/draft/:seriesId/:gameNumber"
+                    to='/draft/:seriesId/:gameNumber'
                     params={{ seriesId: draft.id, gameNumber: 1 }}
                     className='contents'
                   >
                     <TableCell>
                       {new Date(draft.createdAt).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className='font-medium'>{draft.team1Name}</TableCell>
-                    <TableCell className='font-medium'>{draft.team2Name}</TableCell>
+                    <TableCell className='font-medium'>
+                      {draft.team1Name}
+                    </TableCell>
+                    <TableCell className='font-medium'>
+                      {draft.team2Name}
+                    </TableCell>
                     <TableCell>{draft.format}</TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${draft.status === 'COMPLETED'
-                        ? 'bg-green-100 text-green-700'
-                        : draft.status === 'IN_PROGRESS'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                        }`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          draft.status === 'COMPLETED'
+                            ? 'bg-green-100 text-green-700'
+                            : draft.status === 'IN_PROGRESS'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                        }`}
+                      >
                         {draft.status.toLowerCase()}
                       </span>
                     </TableCell>

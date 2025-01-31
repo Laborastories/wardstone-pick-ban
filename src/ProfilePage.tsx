@@ -38,22 +38,27 @@ export default function Profile() {
   const gamesPerPage = 10
 
   // Group series by week
-  const groupedSeries = series?.reduce((acc: Record<string, Series[]>, s: Series) => {
-    const date = new Date(s.createdAt)
-    const weekStart = new Date(date)
-    weekStart.setHours(0, 0, 0, 0)
-    weekStart.setDate(date.getDate() - date.getDay()) // Start of week (Sunday)
-    const weekKey = weekStart.toISOString()
+  const groupedSeries = series?.reduce(
+    (acc: Record<string, Series[]>, s: Series) => {
+      const date = new Date(s.createdAt)
+      const weekStart = new Date(date)
+      weekStart.setHours(0, 0, 0, 0)
+      weekStart.setDate(date.getDate() - date.getDay()) // Start of week (Sunday)
+      const weekKey = weekStart.toISOString()
 
-    if (!acc[weekKey]) {
-      acc[weekKey] = []
-    }
-    acc[weekKey].push(s)
-    return acc
-  }, {})
+      if (!acc[weekKey]) {
+        acc[weekKey] = []
+      }
+      acc[weekKey].push(s)
+      return acc
+    },
+    {},
+  )
 
   // Flatten and sort all series for pagination
-  const allSeries = (Object.entries(groupedSeries || {}) as [string, Series[]][])
+  const allSeries = (
+    Object.entries(groupedSeries || {}) as [string, Series[]][]
+  )
     .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
     .flatMap(([, weekSeries]) =>
       weekSeries.sort(
@@ -94,22 +99,30 @@ export default function Profile() {
     >
       {/* Profile Header */}
       <div className='space-y-6'>
-        <h1 className='text-2xl sm:text-4xl font-bold'>Welcome back, {user?.username}!</h1>
+        <h1 className='text-2xl font-bold sm:text-4xl'>
+          Welcome back, {user?.username}!
+        </h1>
       </div>
 
       {/* Drafts Section */}
       <div className='space-y-8'>
         <h2 className='text-xl font-bold'>Your Drafts</h2>
         {isLoading ? (
-          <div className='text-center text-muted-foreground'>Loading drafts...</div>
+          <div className='text-center text-muted-foreground'>
+            Loading drafts...
+          </div>
         ) : !series?.length ? (
-          <div className='text-center text-muted-foreground'>No drafts found</div>
+          <div className='text-center text-muted-foreground'>
+            No drafts found
+          </div>
         ) : (
           <div className='space-y-8'>
             {/* Draft List */}
             <div className='space-y-8'>
               {Object.entries(currentGroupedSeries || {})
-                .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+                .sort(
+                  ([a], [b]) => new Date(b).getTime() - new Date(a).getTime(),
+                )
                 .map(([weekStart, weekSeries]: [string, Series[]]) => (
                   <div key={weekStart} className='space-y-3'>
                     <h3 className='text-sm font-medium text-muted-foreground'>
@@ -149,8 +162,12 @@ export default function Profile() {
                           ).length
 
                           const isTeam1 = s.creatorId === user?.id
-                          const userTeamName = isTeam1 ? s.team1Name : s.team2Name
-                          const opponentName = isTeam1 ? s.team2Name : s.team1Name
+                          const userTeamName = isTeam1
+                            ? s.team1Name
+                            : s.team2Name
+                          const opponentName = isTeam1
+                            ? s.team2Name
+                            : s.team1Name
                           const userWins = isTeam1 ? team1Wins : team2Wins
                           const opponentWins = isTeam1 ? team2Wins : team1Wins
                           const authToken = isTeam1
@@ -177,7 +194,7 @@ export default function Profile() {
                                 >
                                   {s.matchName}
                                 </div>
-                                <div className='flex items-center gap-1.5 text-xs font-sans'>
+                                <div className='flex items-center gap-1.5 font-sans text-xs'>
                                   <span className='rounded-sm bg-zinc-800 px-1.5 py-0.5 font-medium text-zinc-400'>
                                     {s.format}
                                   </span>
@@ -193,13 +210,16 @@ export default function Profile() {
                                   )}
                                 </div>
                                 <div className='font-sans text-[11px] text-muted-foreground/75'>
-                                  {new Date(s.createdAt).toLocaleDateString(undefined, {
-                                    weekday: 'short',
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
+                                  {new Date(s.createdAt).toLocaleDateString(
+                                    undefined,
+                                    {
+                                      weekday: 'short',
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    },
+                                  )}
                                   {s.status !== 'COMPLETED' && (
                                     <span className='ml-1.5 text-muted-foreground/50'>
                                       • {s.status.toLowerCase()}
@@ -213,25 +233,27 @@ export default function Profile() {
                                 {/* Left Team */}
                                 <div className='flex w-[100px] items-center justify-end sm:w-[120px]'>
                                   <span
-                                    className={`truncate text-sm font-medium font-sans ${s.status === 'COMPLETED'
-                                      ? userWins > opponentWins
-                                        ? 'text-green-500'
-                                        : userWins < opponentWins
-                                          ? 'text-destructive'
-                                          : ''
-                                      : ''
-                                      }`}
+                                    className={`truncate font-sans text-sm font-medium ${
+                                      s.status === 'COMPLETED'
+                                        ? userWins > opponentWins
+                                          ? 'text-green-500'
+                                          : userWins < opponentWins
+                                            ? 'text-destructive'
+                                            : ''
+                                        : ''
+                                    }`}
                                     title={userTeamName}
                                   >
                                     {userTeamName}
                                   </span>
-                                  {s.status === 'COMPLETED' && userWins > opponentWins && (
-                                    <Crown
-                                      className='ml-1.5 text-green-500 shrink-0'
-                                      size={14}
-                                      weight='fill'
-                                    />
-                                  )}
+                                  {s.status === 'COMPLETED' &&
+                                    userWins > opponentWins && (
+                                      <Crown
+                                        className='ml-1.5 shrink-0 text-green-500'
+                                        size={14}
+                                        weight='fill'
+                                      />
+                                    )}
                                 </div>
 
                                 {/* Score */}
@@ -241,22 +263,24 @@ export default function Profile() {
 
                                 {/* Right Team */}
                                 <div className='flex w-[100px] items-center sm:w-[120px]'>
-                                  {s.status === 'COMPLETED' && opponentWins > userWins && (
-                                    <Crown
-                                      className='mr-1.5 text-green-500 shrink-0'
-                                      size={14}
-                                      weight='fill'
-                                    />
-                                  )}
+                                  {s.status === 'COMPLETED' &&
+                                    opponentWins > userWins && (
+                                      <Crown
+                                        className='mr-1.5 shrink-0 text-green-500'
+                                        size={14}
+                                        weight='fill'
+                                      />
+                                    )}
                                   <span
-                                    className={`truncate text-sm font-medium font-sans ${s.status === 'COMPLETED'
-                                      ? opponentWins > userWins
-                                        ? 'text-green-500'
-                                        : opponentWins < userWins
-                                          ? 'text-destructive'
-                                          : ''
-                                      : ''
-                                      }`}
+                                    className={`truncate font-sans text-sm font-medium ${
+                                      s.status === 'COMPLETED'
+                                        ? opponentWins > userWins
+                                          ? 'text-green-500'
+                                          : opponentWins < userWins
+                                            ? 'text-destructive'
+                                            : ''
+                                        : ''
+                                    }`}
                                     title={opponentName}
                                   >
                                     {opponentName}
@@ -290,7 +314,9 @@ export default function Profile() {
                   <Button
                     variant='outline'
                     size='sm'
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage(p => Math.min(totalPages, p + 1))
+                    }
                     disabled={currentPage === totalPages}
                   >
                     Next

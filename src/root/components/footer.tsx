@@ -1,7 +1,13 @@
 import { Link } from 'wasp/client/router'
 import { motion } from 'motion/react'
 import { fadeIn } from '../../motion/transitionPresets'
-import { Strategy, User as UserIcon, Coffee, DiscordLogo, Plus } from '@phosphor-icons/react'
+import {
+  Strategy,
+  User as UserIcon,
+  Coffee,
+  DiscordLogo,
+  Plus,
+} from '@phosphor-icons/react'
 import { usePrefetch } from '../../lib/utils'
 import { Button } from '../../client/components/ui/button'
 import {
@@ -69,7 +75,7 @@ export function Footer({ user, userLoading }: FooterProps) {
             <img
               src='https://wardstone.io/favicon.ico'
               alt='Wardstone'
-              className='w-4 h-4'
+              className='h-4 w-4'
             />
             Manage your team with Wardstone
           </a>
@@ -78,9 +84,14 @@ export function Footer({ user, userLoading }: FooterProps) {
         <div className='flex flex-col items-center gap-6 sm:flex-row sm:justify-between'>
           {/* Logo and copyright */}
           <div className='flex flex-col items-center gap-2 sm:items-start'>
-            <Link to='/' className='group flex items-center gap-3 hover:opacity-80 transition-opacity'>
+            <Link
+              to='/'
+              className='group flex items-center gap-3 transition-opacity hover:opacity-80'
+            >
               <Strategy size={24} weight='fill' className='text-foreground' />
-              <span className='font-medium text-base text-foreground'>SCOUT AHEAD</span>
+              <span className='text-base font-medium text-foreground'>
+                SCOUT AHEAD
+              </span>
             </Link>
             <span className='text-xs text-muted-foreground'>
               &copy; {new Date().getFullYear()} Scout Ahead
@@ -94,7 +105,10 @@ export function Footer({ user, userLoading }: FooterProps) {
               variant='default'
               className='w-full font-sans font-medium tracking-wide sm:w-auto'
             >
-              <ScrollToTopLink to='/' className="flex items-center gap-2"><Plus size={16} />Start New Draft</ScrollToTopLink>
+              <ScrollToTopLink to='/' className='flex items-center gap-2'>
+                <Plus size={16} />
+                Start New Draft
+              </ScrollToTopLink>
             </Button>
 
             {userLoading ? (

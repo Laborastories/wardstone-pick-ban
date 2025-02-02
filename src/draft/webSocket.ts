@@ -1,7 +1,17 @@
 import type { WaspSocketData, WebSocketDefinition } from 'wasp/server/webSocket'
 import { prisma } from 'wasp/server'
 import { type DraftAction } from 'wasp/entities'
-import { type Champion, getChampions } from '../draft/services/championService'
+import { type Champion } from '../draft/services/championService'
+import {
+  getGameReadyState,
+  setGameReadyState,
+  clearGameReadyState,
+  getGameTimer,
+  setGameTimer,
+  clearGameTimer,
+  getGamePreviews,
+  setChampionPreview,
+} from '../lib/redis'
 
 export interface ServerToClientEvents {
   readyStateUpdate: (data: {
@@ -15,6 +25,8 @@ export interface ServerToClientEvents {
     gameId: string
     status: string
     winner?: 'BLUE' | 'RED'
+    blueSide?: string
+    redSide?: string
   }) => void
   gameCreated: (data: {
     gameId: string
@@ -31,6 +43,7 @@ export interface ServerToClientEvents {
     position: number
     champion: string | null
   }) => void
+  error: (data: { message: string }) => void
 }
 
 interface ClientToServerEvents {
@@ -75,32 +88,241 @@ type WebSocketFn = WebSocketDefinition<
   SocketData
 >
 
-// Store ready states and timers in memory
-const gameReadyStates: Record<string, { blue?: boolean; red?: boolean }> = {}
-const gameTimers: Record<
-  string,
-  {
-    timeRemaining: number
-    intervalId?: NodeJS.Timeout
+const PHASE_TIME_LIMIT = 30 // 30 seconds per pick/ban
+
+// Keep track of active timers
+const activeTimers: Record<string, NodeJS.Timeout> = {}
+
+// Helper function to broadcast timer update
+async function broadcastTimerUpdate(
+  io: any,
+  gameId: string,
+  timeRemaining: number,
+) {
+  io.to(gameId).emit('timerUpdate', {
+    gameId,
+    timeRemaining,
+  })
+}
+
+// Helper function to manage timers with Redis
+async function startTimer(io: any, gameId: string) {
+  // Clear existing interval if any
+  if (activeTimers[gameId]) {
+    clearInterval(activeTimers[gameId])
+    delete activeTimers[gameId]
   }
-> = {}
 
-const PHASE_TIME_LIMIT = 31 // 30 seconds per pick/ban
+  // Store the turn start time in Redis
+  await setGameTimer(gameId, {
+    turnStartedAt: Date.now(),
+    phaseTimeLimit: PHASE_TIME_LIMIT,
+  })
 
-export const webSocketFn: WebSocketFn = io => {
+  // Emit initial timer state
+  await broadcastTimerUpdate(io, gameId, PHASE_TIME_LIMIT)
+
+  // Create interval to broadcast time updates
+  const intervalId = setInterval(async () => {
+    const timer = await getGameTimer(gameId)
+    if (!timer) {
+      clearInterval(activeTimers[gameId])
+      delete activeTimers[gameId]
+      return
+    }
+
+    const elapsed = Math.floor((Date.now() - timer.turnStartedAt) / 1000)
+    const timeRemaining = Math.max(0, timer.phaseTimeLimit - elapsed)
+
+    await broadcastTimerUpdate(io, gameId, timeRemaining)
+
+    // Clear interval if time is up
+    if (timeRemaining <= 0) {
+      clearInterval(activeTimers[gameId])
+      delete activeTimers[gameId]
+      await clearGameTimer(gameId)
+    }
+  }, 1000)
+
+  // Store the new interval
+  activeTimers[gameId] = intervalId
+}
+
+// Helper function to reset timer
+async function resetTimer(io: any, gameId: string) {
+  await startTimer(io, gameId)
+}
+
+// Clean up function to clear all timers
+function clearAllTimers() {
+  Object.entries(activeTimers).forEach(([gameId, intervalId]) => {
+    clearInterval(intervalId)
+    delete activeTimers[gameId]
+  })
+}
+
+interface GameWithRelations {
+  id: string
+  status: string
+  gameNumber: number
+  seriesId: string
+  series?: {
+    id: string
+    fearlessDraft: boolean
+    games: {
+      gameNumber: number
+      actions: {
+        type: string
+        champion: string
+      }[]
+    }[]
+  }
+  actions: {
+    type: string
+    champion: string
+    position: number
+  }[]
+}
+
+// Helper function to determine whose turn it is based on position
+function getTeamForPosition(position: number): 'BLUE' | 'RED' {
+  // Draft order: BLUE BAN, RED BAN, BLUE BAN, RED BAN, BLUE BAN, RED BAN
+  //              BLUE PICK, RED PICK x2, BLUE PICK x2, RED PICK x2, BLUE PICK x2, RED PICK
+  const draftOrder: ('BLUE' | 'RED')[] = [
+    // First Ban Phase (0-5)
+    'BLUE',
+    'RED',
+    'BLUE',
+    'RED',
+    'BLUE',
+    'RED',
+    // First Pick Phase (6-11)
+    'BLUE',
+    'RED',
+    'RED',
+    'BLUE',
+    'BLUE',
+    'RED',
+    // Second Ban Phase (12-15)
+    'RED',
+    'BLUE',
+    'RED',
+    'BLUE',
+    // Second Pick Phase (16-19)
+    'RED',
+    'BLUE',
+    'BLUE',
+    'RED',
+  ]
+  return draftOrder[position]
+}
+
+// Helper function to validate game state
+async function validateGameState(gameId: string): Promise<GameWithRelations> {
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    include: {
+      series: {
+        include: {
+          games: {
+            include: { actions: true },
+          },
+        },
+      },
+      actions: {
+        orderBy: {
+          position: 'asc',
+        },
+      },
+    },
+  })
+
+  if (!game) {
+    throw new Error('Game not found')
+  }
+
+  if (game.status !== 'IN_PROGRESS') {
+    throw new Error('Game is not in progress')
+  }
+
+  return game as GameWithRelations
+}
+
+// Helper function to check if champion is valid for fearless draft
+async function validateChampionForFearlessDraft(
+  champion: string,
+  game: GameWithRelations,
+  type: 'PICK' | 'BAN',
+) {
+  if (game.series?.fearlessDraft && type === 'PICK') {
+    const isChampionUsedInSeries = game.series.games
+      .filter(g => g.gameNumber < game.gameNumber)
+      .some(g =>
+        g.actions.some(a => a.type === 'PICK' && a.champion === champion),
+      )
+
+    if (isChampionUsedInSeries) {
+      throw new Error('Champion already used in series (fearless draft)')
+    }
+  }
+}
+
+// Helper function to validate draft action
+async function validateDraftAction(
+  game: GameWithRelations,
+  team: 'BLUE' | 'RED',
+  position: number,
+) {
+  // Validate position is next in sequence
+  if (game.actions.length !== position) {
+    throw new Error('Invalid draft position')
+  }
+
+  // Validate it's this team's turn
+  const expectedTeam = getTeamForPosition(position)
+  if (team !== expectedTeam) {
+    throw new Error(`Not ${team}'s turn to draft. It's ${expectedTeam}'s turn.`)
+  }
+}
+
+export const webSocketFn: WebSocketFn = (io, context) => {
   console.log('WebSocket server initialized')
 
-  io.on('connection', socket => {
-    console.log(
-      'Client connected, socket id:',
-      socket.id,
-      'auth:',
-      socket.data?.token,
-    )
+  // Clean up any existing timers on server restart
+  clearAllTimers()
 
-    socket.on('joinGame', (gameId: string) => {
+  io.on('connection', async socket => {
+    console.log('Client connected, socket id:', socket.id)
+
+    socket.on('joinGame', async (gameId: string) => {
       console.log(`[WS] Client joined game ${gameId.slice(0, 8)}...`)
       socket.join(gameId)
+
+      // Send current ready state to newly joined client
+      const readyState = await getGameReadyState(gameId)
+      io.to(gameId).emit('readyStateUpdate', {
+        gameId,
+        readyStates: readyState,
+      })
+
+      // Send current timer state if exists
+      const timer = await getGameTimer(gameId)
+      if (timer) {
+        const elapsed = Math.floor((Date.now() - timer.turnStartedAt) / 1000)
+        const timeRemaining = Math.max(0, timer.phaseTimeLimit - elapsed)
+        await broadcastTimerUpdate(io, gameId, timeRemaining)
+      }
+
+      // Send current preview state if exists
+      const previews = await getGamePreviews(gameId)
+      Object.entries(previews).forEach(([position, champion]) => {
+        // Emit to everyone in the room to ensure state is synced
+        io.to(gameId).emit('championPreview', {
+          gameId,
+          position: parseInt(position),
+          champion: champion as string | null,
+        })
+      })
     })
 
     socket.on('readyState', async ({ gameId, side, isReady }) => {
@@ -108,27 +330,24 @@ export const webSocketFn: WebSocketFn = io => {
         `[WS] Ready state: ${side} team ${isReady ? 'ready' : 'not ready'}`,
       )
 
-      // Initialize game ready state if not exists
-      if (!gameReadyStates[gameId]) {
-        gameReadyStates[gameId] = {}
-      }
+      // Get current ready state from Redis
+      const readyState = await getGameReadyState(gameId)
 
       // Update ready state
-      gameReadyStates[gameId][side] = isReady
+      readyState[side] = isReady
+      await setGameReadyState(gameId, readyState)
 
       // Emit ready state to all clients in the game room
       io.to(gameId).emit('readyStateUpdate', {
         gameId,
-        readyStates: gameReadyStates[gameId],
+        readyStates: readyState,
       })
 
       // If both teams are ready, start the draft
-      const bothTeamsReady =
-        gameReadyStates[gameId].blue === true &&
-        gameReadyStates[gameId].red === true
+      const bothTeamsReady = readyState.blue === true && readyState.red === true
       console.log(
         'Ready states:',
-        gameReadyStates[gameId],
+        readyState,
         'Both teams ready:',
         bothTeamsReady,
       )
@@ -143,7 +362,7 @@ export const webSocketFn: WebSocketFn = io => {
           })
 
           // Start the timer
-          startTimer(io, gameId)
+          await startTimer(io, gameId)
 
           // Emit draft start event
           io.to(gameId).emit('draftStart', {
@@ -152,7 +371,7 @@ export const webSocketFn: WebSocketFn = io => {
           })
 
           // Clear ready states
-          delete gameReadyStates[gameId]
+          await clearGameReadyState(gameId)
         } catch (error) {
           console.error('Error starting draft:', error)
         }
@@ -167,73 +386,18 @@ export const webSocketFn: WebSocketFn = io => {
         )
 
         try {
-          // Get the game and its actions to validate the draft action
-          const game = await prisma.game.findUnique({
-            where: { id: gameId },
-            include: {
-              series: true,
-              actions: {
-                orderBy: {
-                  position: 'asc',
-                },
-              },
-            },
-          })
+          const game = await validateGameState(gameId)
 
-          if (!game) {
-            console.log(`[WS] ❌ Game ${gameId.slice(0, 8)}... not found`)
-            return
-          }
-          console.log('✓ Game found:', {
-            id: game.id,
-            status: game.status,
-            currentActions: game.actions.length,
-          })
-
-          // Validate game is in progress
-          if (game.status !== 'IN_PROGRESS') {
-            console.log(
-              `[WS] ❌ Game ${game.id.slice(0, 8)}... is not in progress`,
-            )
-            return
-          }
-          console.log('✓ Game is in progress')
+          // Validate it's this team's turn
+          await validateDraftAction(game, team, position)
 
           // Validate champion
-          const champions = await getChampions()
+          const champions = await context.entities.Champion.findMany()
           if (!champions.find((c: Champion) => c.id === champion)) {
-            console.log(`[WS] ❌ Invalid champion: ${champion}`)
-            return
+            throw new Error('Invalid champion')
           }
-          console.log('✓ Champion is available')
 
-          // Check fearless draft rules
-          const series = await prisma.series.findUnique({
-            where: { id: game.seriesId },
-            include: {
-              games: {
-                include: { actions: true },
-              },
-            },
-          })
-
-          if (series?.fearlessDraft && type === 'PICK') {
-            const isChampionUsedInSeries = series.games
-              .filter(g => g.gameNumber < game.gameNumber)
-              .some(g =>
-                g.actions.some(
-                  a => a.type === 'PICK' && a.champion === champion,
-                ),
-              )
-
-            if (isChampionUsedInSeries) {
-              console.log(
-                `[WS] ❌ Champion ${champion} already used in series (fearless draft)`,
-              )
-              return
-            }
-          }
-          console.log('✓ Champion is valid for fearless draft')
+          await validateChampionForFearlessDraft(champion, game, type)
 
           // Create the draft action
           const draftAction = await prisma.draftAction.create({
@@ -246,75 +410,31 @@ export const webSocketFn: WebSocketFn = io => {
               position,
             },
           })
-          console.log('✓ Draft action created:', draftAction)
 
-          // Emit the action to all clients in the game room
-          console.log('Emitting draftActionUpdate event...')
+          // Clear the preview for this position
+          await setChampionPreview(gameId, position, null)
+
+          // Emit the action
           io.to(gameId).emit('draftActionUpdate', {
             gameId,
             action: draftAction,
           })
-          console.log('✓ draftActionUpdate emitted')
 
-          // Check if this was the last action (position 19 is Red Pick 5 in 0-based indexing)
+          // Handle last action
           if (position === 19) {
-            console.log('\n=== Last Action Detected ===')
-            console.log('Current game state:', {
-              gameId,
-              position,
-              currentStatus: game.status,
-              totalActions: game.actions.length + 1,
-              team,
-              type,
-            })
-
-            try {
-              console.log('Updating game status to DRAFT_COMPLETE...')
-              // Update game status to DRAFT_COMPLETE
-              const updatedGame = await prisma.game.update({
-                where: { id: gameId },
-                data: { status: 'DRAFT_COMPLETE' },
-                include: {
-                  actions: true,
-                  series: true,
-                },
-              })
-              console.log('✓ Game status updated:', {
-                id: updatedGame.id,
-                status: updatedGame.status,
-                actionsCount: updatedGame.actions.length,
-                lastAction: updatedGame.actions[updatedGame.actions.length - 1],
-              })
-
-              // Clear the timer if it exists
-              if (gameTimers[gameId]?.intervalId) {
-                console.log('Clearing timer for game:', gameId)
-                clearInterval(gameTimers[gameId].intervalId)
-                delete gameTimers[gameId]
-                console.log('✓ Timer cleared')
-              }
-
-              // Emit game updated event after everything else is done
-              console.log('Emitting gameUpdated event...')
-              io.to(gameId).emit('gameUpdated', {
-                gameId,
-                status: updatedGame.status,
-              })
-              console.log('✓ gameUpdated event emitted')
-            } catch (error) {
-              console.error(
-                '❌ Error updating game status to DRAFT_COMPLETE:',
-                error,
-              )
-            }
+            await handleLastAction(io, gameId)
           } else {
-            // Reset timer for next action
-            console.log('Resetting timer for next action...')
-            resetTimer(io, gameId)
-            console.log('✓ Timer reset')
+            await resetTimer(io, gameId)
           }
         } catch (error) {
           console.error('❌ Error handling draft action:', error)
+          // Emit error back to client
+          socket.emit('error', {
+            message:
+              error instanceof Error
+                ? error.message
+                : 'An error occurred during draft action',
+          })
         }
       },
     )
@@ -368,6 +488,8 @@ export const webSocketFn: WebSocketFn = io => {
           gameId,
           status: updatedGame.status,
           winner: updatedGame.winner as 'BLUE' | 'RED' | undefined,
+          blueSide: updatedGame.blueSide,
+          redSide: updatedGame.redSide,
         })
 
         // If game is completed, check if we need to create next game
@@ -470,7 +592,7 @@ export const webSocketFn: WebSocketFn = io => {
           })
 
           // Initialize ready states for the new game
-          gameReadyStates[nextGame.id] = {}
+          await setGameReadyState(nextGame.id, {})
 
           // Emit game created event
           io.emit('gameCreated', {
@@ -482,7 +604,7 @@ export const webSocketFn: WebSocketFn = io => {
           // Emit ready state update for the new game
           io.emit('readyStateUpdate', {
             gameId: nextGame.id,
-            readyStates: gameReadyStates[nextGame.id],
+            readyStates: {},
           })
         }
       } catch (error) {
@@ -546,23 +668,30 @@ export const webSocketFn: WebSocketFn = io => {
           },
         })
 
+        // Emit a more complete game update
         io.emit('gameUpdated', {
           gameId: updatedGame.id,
           status: updatedGame.status,
+          blueSide: updatedGame.blueSide,
+          redSide: updatedGame.redSide,
         })
       } catch (error) {
         console.error('Error selecting side:', error)
       }
     })
 
-    socket.on('previewChampion', ({ gameId, position, champion }) => {
+    socket.on('previewChampion', async ({ gameId, position, champion }) => {
       console.log(
         `[WS] Champion preview: ${
           champion || 'cleared'
         } for position ${position}`,
       )
-      // Broadcast preview to all other clients in the game room
-      socket.to(gameId).emit('championPreview', {
+
+      // Store preview in Redis
+      await setChampionPreview(gameId, position, champion)
+
+      // Broadcast preview to all clients in the game room (including sender)
+      io.to(gameId).emit('championPreview', {
         gameId,
         position,
         champion,
@@ -570,40 +699,29 @@ export const webSocketFn: WebSocketFn = io => {
     })
 
     socket.on('disconnect', () => {
-      console.log('Client disconnected')
+      console.log('Client disconnected:', socket.id)
     })
   })
 }
 
-// Timer management functions
-function startTimer(io: any, gameId: string) {
-  // Clear existing timer if any
-  if (gameTimers[gameId]?.intervalId) {
-    clearInterval(gameTimers[gameId].intervalId)
+async function handleLastAction(io: any, gameId: string) {
+  try {
+    const updatedGame = await prisma.game.update({
+      where: { id: gameId },
+      data: { status: 'DRAFT_COMPLETE' },
+      include: {
+        actions: true,
+        series: true,
+      },
+    })
+
+    await clearGameTimer(gameId)
+
+    io.to(gameId).emit('gameUpdated', {
+      gameId,
+      status: updatedGame.status,
+    })
+  } catch (error) {
+    console.error('❌ Error updating game status to DRAFT_COMPLETE:', error)
   }
-
-  // Initialize timer state
-  gameTimers[gameId] = {
-    timeRemaining: PHASE_TIME_LIMIT,
-    intervalId: setInterval(() => {
-      // Decrement timer
-      gameTimers[gameId].timeRemaining--
-
-      // Emit timer update
-      io.to(gameId).emit('timerUpdate', {
-        gameId,
-        timeRemaining: gameTimers[gameId].timeRemaining,
-      })
-
-      // Stop at 0 but don't clear the timer
-      if (gameTimers[gameId].timeRemaining <= 0) {
-        clearInterval(gameTimers[gameId].intervalId)
-        gameTimers[gameId].intervalId = undefined
-      }
-    }, 1000),
-  }
-}
-
-function resetTimer(io: any, gameId: string) {
-  startTimer(io, gameId)
 }

@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  redis-stack:
+    image: redis/redis-stack-server:latest
+    container_name: redis-stack
+    command: ["redis-server", "--requirepass", "local"]
+    ports:
+      - "6379:6379"

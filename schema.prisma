@@ -61,3 +61,13 @@ model DraftAction {
   champion  String
   position  Int      // Action number in the draft (1-20)
 }
+
+model Champion {
+  id          String   @id // Champion ID (e.g. "Aatrox")
+  key         String   // Champion numeric ID
+  name        String
+  tags        String[] // Champion tags (e.g. ["Fighter", "Tank"])
+  roles       String[] // Champion roles (e.g. ["top", "mid"])
+  splashPath  String?
+  updatedAt   DateTime @updatedAt
+}

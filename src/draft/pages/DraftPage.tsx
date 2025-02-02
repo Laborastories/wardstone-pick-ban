@@ -1,5 +1,6 @@
 import { useQuery } from 'wasp/client/operations'
 import { getGame, getSeries } from 'wasp/client/operations'
+import { getChampionsFromDb } from 'wasp/client/operations'
 import { motion, AnimatePresence } from 'motion/react'
 import { type Game, type Series } from 'wasp/entities'
 import { useEffect, useState } from 'react'
@@ -62,10 +63,18 @@ export function DraftPage() {
   }>({})
   const [isTimerReady, setIsTimerReady] = useState(false)
   const [lastTeam, setLastTeam] = useState<'BLUE' | 'RED' | null>(null)
+  const { data: champions = [] } = useQuery(getChampionsFromDb)
+  const championsMap = champions.reduce(
+    (acc: Record<string, Champion>, champion: Champion) => {
+      acc[champion.id] = champion
+      return acc
+    },
+    {},
+  )
 
-  // Set auth token when socket connects
+  // Set auth token and connect socket only once
   useEffect(() => {
-    if (socket && auth) {
+    if (socket && auth && !socket.connected) {
       socket.auth = { token: auth }
       socket.connect()
     }
@@ -79,13 +88,17 @@ export function DraftPage() {
     refetch,
   } = useQuery(getGame, { seriesId, gameNumber })
 
-  // Join game room when socket connects and game data is available
+  // Join game room only when necessary
   useEffect(() => {
-    if (!socket || !game || !isConnected) {
+    if (!socket || !game?.id || !isConnected) {
       return
     }
+
+    // Join the game room
     socket.emit('joinGame', game.id)
-  }, [socket, game, isConnected])
+
+    // No need for cleanup since socket will handle this automatically
+  }, [socket, game?.id, isConnected]) // Only depend on game.id, not the whole game object
 
   // Socket event listeners
   useSocketListener(
@@ -99,6 +112,8 @@ export function DraftPage() {
   useSocketListener('draftActionUpdate', () => {
     setLastTeam(null)
     setIsTimerReady(false)
+
+    // Always refetch on draft actions to ensure turn order is correct
     refetch()
   })
 
@@ -124,20 +139,23 @@ export function DraftPage() {
   useEffect(() => {
     if (!socket) return
 
-    socket.on('gameUpdated', data => {
-      if (data.gameId === game?.id) {
+    socket.on('gameUpdated', ({ gameId }) => {
+      if (gameId === game?.id) {
+        // Always refetch on game updates to ensure state is in sync
         refetch()
       }
     })
 
-    socket.on('gameCreated', data => {
-      if (data.seriesId === game?.seriesId) {
+    socket.on('gameCreated', ({ seriesId }) => {
+      if (seriesId === game?.seriesId) {
+        // Always refetch when new games are created
         refetch()
       }
     })
 
-    socket.on('seriesUpdated', data => {
-      if (data.seriesId === game?.seriesId) {
+    socket.on('seriesUpdated', ({ seriesId }) => {
+      if (seriesId === game?.seriesId) {
+        // Always refetch when series updates
         refetch()
       }
     })
@@ -149,6 +167,11 @@ export function DraftPage() {
     }
   }, [socket, game?.id, game?.seriesId, refetch])
 
+  // Clear pending action when game data changes
+  useEffect(() => {
+    setPendingAction(null)
+  }, [game])
+
   useSocketListener(
     'championPreview',
     (data: ServerToClientPayload<'championPreview'>) => {
@@ -156,6 +179,28 @@ export function DraftPage() {
         ...prev,
         [data.position]: data.champion,
       }))
+
+      // If this is a preview for the current team's turn, set pendingAction
+      if (gameSide && data.champion && game) {
+        const gameWithRelations = game as GameWithRelations
+        const currentTurn = getCurrentTurn(gameWithRelations.actions)
+        const nextAction = getNextAction(currentTurn)
+        const isCurrentTeam = gameSide.toUpperCase() === nextAction?.team
+
+        if (
+          isCurrentTeam &&
+          nextAction &&
+          data.position === nextAction.position
+        ) {
+          setPendingAction({
+            type: nextAction.type,
+            phase: nextAction.phase,
+            team: nextAction.team,
+            champion: data.champion,
+            position: nextAction.position,
+          })
+        }
+      }
     },
   )
 
@@ -327,7 +372,9 @@ export function DraftPage() {
                   animate={{ filter: 'brightness(1)', scale: 1 }}
                   transition={{ duration: 0.4, ease: 'easeOut' }}
                   src={getChampionImageUrl(
-                    action.champion,
+                    type === 'PICK'
+                      ? (championsMap[action.champion] ?? action.champion)
+                      : action.champion,
                     type === 'PICK' ? 'splash' : 'icon',
                   )}
                   alt={action.champion}
@@ -360,7 +407,10 @@ export function DraftPage() {
               >
                 <motion.img
                   src={getChampionImageUrl(
-                    pendingAction.champion,
+                    type === 'PICK'
+                      ? (championsMap[pendingAction.champion] ??
+                          pendingAction.champion)
+                      : pendingAction.champion,
                     type === 'PICK' ? 'splash' : 'icon',
                   )}
                   alt={pendingAction.champion}
@@ -392,7 +442,10 @@ export function DraftPage() {
               >
                 <motion.img
                   src={getChampionImageUrl(
-                    previewedChampions[position],
+                    type === 'PICK'
+                      ? (championsMap[previewedChampions[position]!] ??
+                          previewedChampions[position]!)
+                      : previewedChampions[position]!,
                     type === 'PICK' ? 'splash' : 'icon',
                   )}
                   alt={previewedChampions[position]}
@@ -617,6 +670,7 @@ export function DraftPage() {
                                     .map(a => a.champion)
                                 : []),
                             ]}
+                            isPickPhase={nextAction?.type === 'PICK'}
                           />
                         </div>
                       </div>
@@ -681,8 +735,8 @@ export function DraftPage() {
 
             {/* Center Actions */}
             <div className='flex h-[48px] w-[90px] flex-none items-center justify-center sm:w-[120px] lg:w-[160px]'>
-              {/* Confirmation Button */}
-              {pendingAction && isCurrentTeam && (
+              {/* Confirmation Button or Team Status */}
+              {pendingAction && isCurrentTeam ? (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -696,6 +750,20 @@ export function DraftPage() {
                     Lock In
                   </Button>
                 </motion.div>
+              ) : (
+                nextAction && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className='text-center text-sm font-medium text-muted-foreground'
+                  >
+                    <span className='block truncate'>
+                      {team && isCurrentTeam
+                        ? "It's your turn! 👋"
+                        : `${nextAction.team === 'BLUE' ? gameWithRelations.blueSide : gameWithRelations.redSide} is thinking 🤔`}
+                    </span>
+                  </motion.div>
+                )
               )}
             </div>
 

@@ -4,10 +4,10 @@ import { MagnifyingGlass } from '@phosphor-icons/react'
 import {
   type Champion,
   type ChampionRole,
-  getChampions,
   filterChampions,
   getChampionImageUrl,
 } from '../services/championService'
+import { getChampionsFromDb } from 'wasp/client/operations'
 import { Button } from '../../client/components/ui/button'
 
 // Track which splash arts have been prefetched
@@ -32,6 +32,7 @@ export interface ChampionGridProps {
   disabled?: boolean
   bannedChampions?: string[]
   usedChampions?: string[]
+  isPickPhase?: boolean
 }
 
 const POSITION_ICONS_BASE_URL =
@@ -50,6 +51,7 @@ export function ChampionGrid({
   disabled = false,
   bannedChampions = [],
   usedChampions = [],
+  isPickPhase = false,
 }: ChampionGridProps) {
   const [champions, setChampions] = useState<Champion[]>([])
   const [filteredChampions, setFilteredChampions] = useState<Champion[]>([])
@@ -69,16 +71,18 @@ export function ChampionGrid({
 
   useEffect(() => {
     // Get champions from cache
-    getChampions().then(data => {
+    getChampionsFromDb().then(data => {
       setChampions(data)
       setFilteredChampions(data)
 
-      // Prefetch the first 10 champion splash arts
-      data.slice(0, 10).forEach(champion => {
-        prefetchImage(getChampionImageUrl(champion.id, 'splash'))
-      })
+      // Only prefetch splash art during pick phase
+      if (isPickPhase) {
+        data.slice(0, 10).forEach(champion => {
+          prefetchImage(getChampionImageUrl(champion, 'splash'))
+        })
+      }
     })
-  }, [])
+  }, [isPickPhase])
 
   useEffect(() => {
     let filtered = filterChampions(champions, search)
@@ -105,7 +109,7 @@ export function ChampionGrid({
             placeholder='Search champions...'
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className='h-8 pl-7 text-sm'
+            className='h-8 pl-7 font-sans text-sm'
           />
         </div>
 
@@ -149,18 +153,21 @@ export function ChampionGrid({
                 key={champion.id}
                 onClick={() => onSelect(champion)}
                 onMouseEnter={() => {
-                  prefetchImage(getChampionImageUrl(champion.id, 'splash'))
+                  if (isPickPhase) {
+                    prefetchImage(getChampionImageUrl(champion, 'splash'))
+                  }
                 }}
                 disabled={isDisabled}
-                className={`group relative flex aspect-square w-10 flex-col items-center justify-center transition-colors sm:w-12 lg:w-14 xl:w-16 2xl:w-20 ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} overflow-hidden`}
+                className={`group relative flex aspect-square w-10 flex-col items-center justify-center transition-colors sm:w-12 lg:w-14 xl:w-16 2xl:w-20 ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} select-none overflow-hidden`}
                 title={`${champion.name}${isUsed ? ' (Already picked in this series)' : isBanned ? ' (Banned this game)' : ''}`}
               >
                 <div className='relative h-full w-full'>
                   <img
                     src={getChampionImageUrl(champion)}
                     alt={champion.name}
-                    className={`absolute inset-0 h-full w-full object-cover object-center transition-all group-hover:scale-105 ${isUsed ? 'grayscale' : isBanned ? 'brightness-50' : 'group-hover:scale-135'} `}
+                    className={`absolute inset-0 h-full w-full object-cover object-center transition-all group-hover:scale-105 ${isUsed ? 'grayscale' : isBanned ? 'brightness-50' : 'group-hover:scale-135'} select-none`}
                     loading='lazy'
+                    draggable='false'
                   />
                   <div
                     className={`absolute inset-0 bg-black/50 ${isUsed || isBanned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} flex items-center justify-center p-1 transition-opacity`}

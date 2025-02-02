@@ -64,10 +64,13 @@ export function DraftPage() {
   const [isTimerReady, setIsTimerReady] = useState(false)
   const [lastTeam, setLastTeam] = useState<'BLUE' | 'RED' | null>(null)
   const { data: champions = [] } = useQuery(getChampionsFromDb)
-  const championsMap = champions.reduce((acc: Record<string, Champion>, champion: Champion) => {
-    acc[champion.id] = champion
-    return acc
-  }, {})
+  const championsMap = champions.reduce(
+    (acc: Record<string, Champion>, champion: Champion) => {
+      acc[champion.id] = champion
+      return acc
+    },
+    {},
+  )
 
   // Set auth token and connect socket only once
   useEffect(() => {
@@ -78,7 +81,12 @@ export function DraftPage() {
   }, [socket, auth])
 
   const { data: series } = useQuery(getSeries, { seriesId })
-  const { data: game, isLoading, error, refetch } = useQuery(getGame, { seriesId, gameNumber })
+  const {
+    data: game,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery(getGame, { seriesId, gameNumber })
 
   // Join game room only when necessary
   useEffect(() => {
@@ -104,7 +112,7 @@ export function DraftPage() {
   useSocketListener('draftActionUpdate', () => {
     setLastTeam(null)
     setIsTimerReady(false)
-    
+
     // Always refetch on draft actions to ensure turn order is correct
     refetch()
   })
@@ -178,8 +186,12 @@ export function DraftPage() {
         const currentTurn = getCurrentTurn(gameWithRelations.actions)
         const nextAction = getNextAction(currentTurn)
         const isCurrentTeam = gameSide.toUpperCase() === nextAction?.team
-        
-        if (isCurrentTeam && nextAction && data.position === nextAction.position) {
+
+        if (
+          isCurrentTeam &&
+          nextAction &&
+          data.position === nextAction.position
+        ) {
           setPendingAction({
             type: nextAction.type,
             phase: nextAction.phase,
@@ -360,7 +372,9 @@ export function DraftPage() {
                   animate={{ filter: 'brightness(1)', scale: 1 }}
                   transition={{ duration: 0.4, ease: 'easeOut' }}
                   src={getChampionImageUrl(
-                    type === 'PICK' ? championsMap[action.champion] ?? action.champion : action.champion,
+                    type === 'PICK'
+                      ? (championsMap[action.champion] ?? action.champion)
+                      : action.champion,
                     type === 'PICK' ? 'splash' : 'icon',
                   )}
                   alt={action.champion}
@@ -393,7 +407,10 @@ export function DraftPage() {
               >
                 <motion.img
                   src={getChampionImageUrl(
-                    type === 'PICK' ? championsMap[pendingAction.champion] ?? pendingAction.champion : pendingAction.champion,
+                    type === 'PICK'
+                      ? (championsMap[pendingAction.champion] ??
+                          pendingAction.champion)
+                      : pendingAction.champion,
                     type === 'PICK' ? 'splash' : 'icon',
                   )}
                   alt={pendingAction.champion}
@@ -425,7 +442,10 @@ export function DraftPage() {
               >
                 <motion.img
                   src={getChampionImageUrl(
-                    type === 'PICK' ? championsMap[previewedChampions[position]!] ?? previewedChampions[position]! : previewedChampions[position]!,
+                    type === 'PICK'
+                      ? (championsMap[previewedChampions[position]!] ??
+                          previewedChampions[position]!)
+                      : previewedChampions[position]!,
                     type === 'PICK' ? 'splash' : 'icon',
                   )}
                   alt={previewedChampions[position]}
@@ -730,18 +750,20 @@ export function DraftPage() {
                     Lock In
                   </Button>
                 </motion.div>
-              ) : nextAction && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className='text-center text-sm font-medium text-muted-foreground'
-                >
-                  <span className='block truncate'>
-                    {team && isCurrentTeam 
-                      ? "It's your turn! 👋" 
-                      : `${nextAction.team === 'BLUE' ? gameWithRelations.blueSide : gameWithRelations.redSide} is thinking 🤔`}
-                  </span>
-                </motion.div>
+              ) : (
+                nextAction && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className='text-center text-sm font-medium text-muted-foreground'
+                  >
+                    <span className='block truncate'>
+                      {team && isCurrentTeam
+                        ? "It's your turn! 👋"
+                        : `${nextAction.team === 'BLUE' ? gameWithRelations.blueSide : gameWithRelations.redSide} is thinking 🤔`}
+                    </span>
+                  </motion.div>
+                )
               )}
             </div>
 

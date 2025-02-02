@@ -1,4 +1,7 @@
-import { type Champion, type ChampionRole } from '../../draft/services/championService'
+import {
+  type Champion,
+  type ChampionRole,
+} from '../../draft/services/championService'
 import { type FetchChampionsJob } from 'wasp/server/jobs'
 
 const DDRAGON_LANG = 'en_US'
@@ -250,7 +253,10 @@ interface CommunityDragonChampion {
   }[]
 }
 
-export const fetchChampions: FetchChampionsJob<{}, {}> = async (args, context) => {
+export const fetchChampions: FetchChampionsJob<{}, {}> = async (
+  args,
+  context,
+) => {
   console.log('🎮 Fetching champions...')
   await initDDragon()
 
@@ -336,4 +342,4 @@ export const fetchChampions: FetchChampionsJob<{}, {}> = async (args, context) =
     console.error('❌ Failed to fetch champions:', error)
     return {}
   }
-} 
+}

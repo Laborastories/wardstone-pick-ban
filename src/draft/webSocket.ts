@@ -94,7 +94,11 @@ const PHASE_TIME_LIMIT = 30 // 30 seconds per pick/ban
 const activeTimers: Record<string, NodeJS.Timeout> = {}
 
 // Helper function to broadcast timer update
-async function broadcastTimerUpdate(io: any, gameId: string, timeRemaining: number) {
+async function broadcastTimerUpdate(
+  io: any,
+  gameId: string,
+  timeRemaining: number,
+) {
   io.to(gameId).emit('timerUpdate', {
     gameId,
     timeRemaining,
@@ -186,13 +190,29 @@ function getTeamForPosition(position: number): 'BLUE' | 'RED' {
   //              BLUE PICK, RED PICK x2, BLUE PICK x2, RED PICK x2, BLUE PICK x2, RED PICK
   const draftOrder: ('BLUE' | 'RED')[] = [
     // First Ban Phase (0-5)
-    'BLUE', 'RED', 'BLUE', 'RED', 'BLUE', 'RED',
+    'BLUE',
+    'RED',
+    'BLUE',
+    'RED',
+    'BLUE',
+    'RED',
     // First Pick Phase (6-11)
-    'BLUE', 'RED', 'RED', 'BLUE', 'BLUE', 'RED',
+    'BLUE',
+    'RED',
+    'RED',
+    'BLUE',
+    'BLUE',
+    'RED',
     // Second Ban Phase (12-15)
-    'RED', 'BLUE', 'RED', 'BLUE',
+    'RED',
+    'BLUE',
+    'RED',
+    'BLUE',
     // Second Pick Phase (16-19)
-    'RED', 'BLUE', 'BLUE', 'RED'
+    'RED',
+    'BLUE',
+    'BLUE',
+    'RED',
   ]
   return draftOrder[position]
 }
@@ -238,9 +258,7 @@ async function validateChampionForFearlessDraft(
     const isChampionUsedInSeries = game.series.games
       .filter(g => g.gameNumber < game.gameNumber)
       .some(g =>
-        g.actions.some(
-          a => a.type === 'PICK' && a.champion === champion,
-        ),
+        g.actions.some(a => a.type === 'PICK' && a.champion === champion),
       )
 
     if (isChampionUsedInSeries) {
@@ -279,7 +297,7 @@ export const webSocketFn: WebSocketFn = (io, context) => {
     socket.on('joinGame', async (gameId: string) => {
       console.log(`[WS] Client joined game ${gameId.slice(0, 8)}...`)
       socket.join(gameId)
-      
+
       // Send current ready state to newly joined client
       const readyState = await getGameReadyState(gameId)
       io.to(gameId).emit('readyStateUpdate', {
@@ -314,7 +332,7 @@ export const webSocketFn: WebSocketFn = (io, context) => {
 
       // Get current ready state from Redis
       const readyState = await getGameReadyState(gameId)
-      
+
       // Update ready state
       readyState[side] = isReady
       await setGameReadyState(gameId, readyState)
@@ -360,58 +378,66 @@ export const webSocketFn: WebSocketFn = (io, context) => {
       }
     })
 
-    socket.on('draftAction', async ({ gameId, type, phase, team, champion, position }) => {
-      console.log(`[WS] Draft action: ${team} ${type} ${champion} (pos: ${position})`)
+    socket.on(
+      'draftAction',
+      async ({ gameId, type, phase, team, champion, position }) => {
+        console.log(
+          `[WS] Draft action: ${team} ${type} ${champion} (pos: ${position})`,
+        )
 
-      try {
-        const game = await validateGameState(gameId)
-        
-        // Validate it's this team's turn
-        await validateDraftAction(game, team, position)
+        try {
+          const game = await validateGameState(gameId)
 
-        // Validate champion
-        const champions = await context.entities.Champion.findMany()
-        if (!champions.find((c: Champion) => c.id === champion)) {
-          throw new Error('Invalid champion')
-        }
+          // Validate it's this team's turn
+          await validateDraftAction(game, team, position)
 
-        await validateChampionForFearlessDraft(champion, game, type)
+          // Validate champion
+          const champions = await context.entities.Champion.findMany()
+          if (!champions.find((c: Champion) => c.id === champion)) {
+            throw new Error('Invalid champion')
+          }
 
-        // Create the draft action
-        const draftAction = await prisma.draftAction.create({
-          data: {
+          await validateChampionForFearlessDraft(champion, game, type)
+
+          // Create the draft action
+          const draftAction = await prisma.draftAction.create({
+            data: {
+              gameId,
+              type,
+              phase,
+              team,
+              champion,
+              position,
+            },
+          })
+
+          // Clear the preview for this position
+          await setChampionPreview(gameId, position, null)
+
+          // Emit the action
+          io.to(gameId).emit('draftActionUpdate', {
             gameId,
-            type,
-            phase,
-            team,
-            champion,
-            position,
-          },
-        })
+            action: draftAction,
+          })
 
-        // Clear the preview for this position
-        await setChampionPreview(gameId, position, null)
-
-        // Emit the action
-        io.to(gameId).emit('draftActionUpdate', {
-          gameId,
-          action: draftAction,
-        })
-
-        // Handle last action
-        if (position === 19) {
-          await handleLastAction(io, gameId)
-        } else {
-          await resetTimer(io, gameId)
+          // Handle last action
+          if (position === 19) {
+            await handleLastAction(io, gameId)
+          } else {
+            await resetTimer(io, gameId)
+          }
+        } catch (error) {
+          console.error('❌ Error handling draft action:', error)
+          // Emit error back to client
+          socket.emit('error', {
+            message:
+              error instanceof Error
+                ? error.message
+                : 'An error occurred during draft action',
+          })
         }
-      } catch (error) {
-        console.error('❌ Error handling draft action:', error)
-        // Emit error back to client
-        socket.emit('error', {
-          message: error instanceof Error ? error.message : 'An error occurred during draft action',
-        })
-      }
-    })
+      },
+    )
 
     socket.on('setWinner', async ({ gameId, winner }) => {
       try {
@@ -463,7 +489,7 @@ export const webSocketFn: WebSocketFn = (io, context) => {
           status: updatedGame.status,
           winner: updatedGame.winner as 'BLUE' | 'RED' | undefined,
           blueSide: updatedGame.blueSide,
-          redSide: updatedGame.redSide
+          redSide: updatedGame.redSide,
         })
 
         // If game is completed, check if we need to create next game
@@ -647,7 +673,7 @@ export const webSocketFn: WebSocketFn = (io, context) => {
           gameId: updatedGame.id,
           status: updatedGame.status,
           blueSide: updatedGame.blueSide,
-          redSide: updatedGame.redSide
+          redSide: updatedGame.redSide,
         })
       } catch (error) {
         console.error('Error selecting side:', error)

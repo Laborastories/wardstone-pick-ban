@@ -50,7 +50,9 @@ export interface GameReadyState {
   red?: boolean
 }
 
-export async function getGameReadyState(gameId: string): Promise<GameReadyState> {
+export async function getGameReadyState(
+  gameId: string,
+): Promise<GameReadyState> {
   await ensureConnection()
   const data = await client.get(generateKey('READY_STATE', gameId))
   return data ? JSON.parse(data) : {}
@@ -106,7 +108,9 @@ export interface ChampionPreview {
   champion: string | null
 }
 
-export async function getGamePreviews(gameId: string): Promise<Record<number, string | null>> {
+export async function getGamePreviews(
+  gameId: string,
+): Promise<Record<number, string | null>> {
   await ensureConnection()
   const data = await client.get(generateKey('PREVIEW', gameId))
   return data ? JSON.parse(data) : {}
@@ -115,7 +119,7 @@ export async function getGamePreviews(gameId: string): Promise<Record<number, st
 export async function setChampionPreview(
   gameId: string,
   position: number,
-  champion: string | null
+  champion: string | null,
 ) {
   await ensureConnection()
   const previews = await getGamePreviews(gameId)

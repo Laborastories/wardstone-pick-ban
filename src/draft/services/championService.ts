@@ -41,7 +41,9 @@ export function getChampionImageUrl(
 
   // For splash art, we need the champion object with splashPath
   if (typeof champion === 'string') {
-    console.warn('String champion ID provided for splash art - need champion object with splashPath')
+    console.warn(
+      'String champion ID provided for splash art - need champion object with splashPath',
+    )
     return ''
   }
 

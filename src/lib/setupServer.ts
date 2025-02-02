@@ -1,4 +1,4 @@
-import { fetchChampionsJob } from "wasp/server/jobs"
+import { fetchChampionsJob } from 'wasp/server/jobs'
 import { type ServerSetupFn } from 'wasp/server'
 
 export const setupServer: ServerSetupFn = async () => {

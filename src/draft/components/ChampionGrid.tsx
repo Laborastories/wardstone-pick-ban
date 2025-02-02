@@ -109,7 +109,7 @@ export function ChampionGrid({
             placeholder='Search champions...'
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className='h-8 pl-7 text-sm font-sans'
+            className='h-8 pl-7 font-sans text-sm'
           />
         </div>
 
@@ -158,7 +158,7 @@ export function ChampionGrid({
                   }
                 }}
                 disabled={isDisabled}
-                className={`group relative flex aspect-square w-10 flex-col items-center justify-center transition-colors sm:w-12 lg:w-14 xl:w-16 2xl:w-20 ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} overflow-hidden select-none`}
+                className={`group relative flex aspect-square w-10 flex-col items-center justify-center transition-colors sm:w-12 lg:w-14 xl:w-16 2xl:w-20 ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} select-none overflow-hidden`}
                 title={`${champion.name}${isUsed ? ' (Already picked in this series)' : isBanned ? ' (Banned this game)' : ''}`}
               >
                 <div className='relative h-full w-full'>

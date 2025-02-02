@@ -1,5 +1,6 @@
 import { useQuery } from 'wasp/client/operations'
 import { getGame, getSeries } from 'wasp/client/operations'
+import { getChampionsFromDb } from 'wasp/client/operations'
 import { motion, AnimatePresence } from 'motion/react'
 import { type Game, type Series } from 'wasp/entities'
 import { useEffect, useState } from 'react'
@@ -62,6 +63,11 @@ export function DraftPage() {
   }>({})
   const [isTimerReady, setIsTimerReady] = useState(false)
   const [lastTeam, setLastTeam] = useState<'BLUE' | 'RED' | null>(null)
+  const { data: champions = [] } = useQuery(getChampionsFromDb)
+  const championsMap = champions.reduce((acc: Record<string, Champion>, champion: Champion) => {
+    acc[champion.id] = champion
+    return acc
+  }, {})
 
   // Set auth token when socket connects
   useEffect(() => {
@@ -149,6 +155,11 @@ export function DraftPage() {
     }
   }, [socket, game?.id, game?.seriesId, refetch])
 
+  // Clear pending action when game data changes
+  useEffect(() => {
+    setPendingAction(null)
+  }, [game])
+
   useSocketListener(
     'championPreview',
     (data: ServerToClientPayload<'championPreview'>) => {
@@ -156,6 +167,24 @@ export function DraftPage() {
         ...prev,
         [data.position]: data.champion,
       }))
+
+      // If this is a preview for the current team's turn, set pendingAction
+      if (gameSide && data.champion && game) {
+        const gameWithRelations = game as GameWithRelations
+        const currentTurn = getCurrentTurn(gameWithRelations.actions)
+        const nextAction = getNextAction(currentTurn)
+        const isCurrentTeam = gameSide.toUpperCase() === nextAction?.team
+        
+        if (isCurrentTeam && nextAction && data.position === nextAction.position) {
+          setPendingAction({
+            type: nextAction.type,
+            phase: nextAction.phase,
+            team: nextAction.team,
+            champion: data.champion,
+            position: nextAction.position,
+          })
+        }
+      }
     },
   )
 
@@ -327,7 +356,7 @@ export function DraftPage() {
                   animate={{ filter: 'brightness(1)', scale: 1 }}
                   transition={{ duration: 0.4, ease: 'easeOut' }}
                   src={getChampionImageUrl(
-                    action.champion,
+                    type === 'PICK' ? championsMap[action.champion] ?? action.champion : action.champion,
                     type === 'PICK' ? 'splash' : 'icon',
                   )}
                   alt={action.champion}
@@ -360,7 +389,7 @@ export function DraftPage() {
               >
                 <motion.img
                   src={getChampionImageUrl(
-                    pendingAction.champion,
+                    type === 'PICK' ? championsMap[pendingAction.champion] ?? pendingAction.champion : pendingAction.champion,
                     type === 'PICK' ? 'splash' : 'icon',
                   )}
                   alt={pendingAction.champion}
@@ -392,7 +421,7 @@ export function DraftPage() {
               >
                 <motion.img
                   src={getChampionImageUrl(
-                    previewedChampions[position],
+                    type === 'PICK' ? championsMap[previewedChampions[position]!] ?? previewedChampions[position]! : previewedChampions[position]!,
                     type === 'PICK' ? 'splash' : 'icon',
                   )}
                   alt={previewedChampions[position]}
@@ -617,6 +646,7 @@ export function DraftPage() {
                                     .map(a => a.champion)
                                 : []),
                             ]}
+                            isPickPhase={nextAction?.type === 'PICK'}
                           />
                         </div>
                       </div>

@@ -126,3 +126,23 @@ query getAdminStats {
   entities: [User, Series, Game]
 }
 
+query getChampionsFromDb {
+  fn: import { getChampionsFromDb } from "@src/draft/operations/champions.ts",
+  entities: [Champion]
+}
+
+job fetchChampionsJob {
+  executor: PgBoss,
+  schedule: {
+    cron: "* * * * *", // Every minute
+    args: {=json {} json=}
+  },
+  perform: {
+    fn: import { fetchChampions } from "@src/server/jobs/champions.ts",
+    executorOptions: {
+      pgBoss: {=json { "retryLimit": 3 } json=}
+    }
+  },
+  entities: [Champion]
+}
+

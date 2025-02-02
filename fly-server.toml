@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for scout-ahead-staging-server on 2025-02-02T11:36:32-08:00
+# fly.toml app configuration file generated for scout-ahead-server on 2025-01-09T13:45:01-08:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'scout-ahead-staging-server'
+app = 'scout-ahead-server'
 primary_region = 'sea'
 
 [build]

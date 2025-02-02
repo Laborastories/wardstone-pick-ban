@@ -69,29 +69,28 @@ export function DraftPage() {
     return acc
   }, {})
 
-  // Set auth token when socket connects
+  // Set auth token and connect socket only once
   useEffect(() => {
-    if (socket && auth) {
+    if (socket && auth && !socket.connected) {
       socket.auth = { token: auth }
       socket.connect()
     }
   }, [socket, auth])
 
   const { data: series } = useQuery(getSeries, { seriesId })
-  const {
-    data: game,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery(getGame, { seriesId, gameNumber })
+  const { data: game, isLoading, error, refetch } = useQuery(getGame, { seriesId, gameNumber })
 
-  // Join game room when socket connects and game data is available
+  // Join game room only when necessary
   useEffect(() => {
-    if (!socket || !game || !isConnected) {
+    if (!socket || !game?.id || !isConnected) {
       return
     }
+
+    // Join the game room
     socket.emit('joinGame', game.id)
-  }, [socket, game, isConnected])
+
+    // No need for cleanup since socket will handle this automatically
+  }, [socket, game?.id, isConnected]) // Only depend on game.id, not the whole game object
 
   // Socket event listeners
   useSocketListener(
@@ -105,6 +104,8 @@ export function DraftPage() {
   useSocketListener('draftActionUpdate', () => {
     setLastTeam(null)
     setIsTimerReady(false)
+    
+    // Always refetch on draft actions to ensure turn order is correct
     refetch()
   })
 
@@ -130,20 +131,23 @@ export function DraftPage() {
   useEffect(() => {
     if (!socket) return
 
-    socket.on('gameUpdated', data => {
-      if (data.gameId === game?.id) {
+    socket.on('gameUpdated', ({ gameId }) => {
+      if (gameId === game?.id) {
+        // Always refetch on game updates to ensure state is in sync
         refetch()
       }
     })
 
-    socket.on('gameCreated', data => {
-      if (data.seriesId === game?.seriesId) {
+    socket.on('gameCreated', ({ seriesId }) => {
+      if (seriesId === game?.seriesId) {
+        // Always refetch when new games are created
         refetch()
       }
     })
 
-    socket.on('seriesUpdated', data => {
-      if (data.seriesId === game?.seriesId) {
+    socket.on('seriesUpdated', ({ seriesId }) => {
+      if (seriesId === game?.seriesId) {
+        // Always refetch when series updates
         refetch()
       }
     })
@@ -711,8 +715,8 @@ export function DraftPage() {
 
             {/* Center Actions */}
             <div className='flex h-[48px] w-[90px] flex-none items-center justify-center sm:w-[120px] lg:w-[160px]'>
-              {/* Confirmation Button */}
-              {pendingAction && isCurrentTeam && (
+              {/* Confirmation Button or Team Status */}
+              {pendingAction && isCurrentTeam ? (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -725,6 +729,18 @@ export function DraftPage() {
                   >
                     Lock In
                   </Button>
+                </motion.div>
+              ) : nextAction && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className='text-center text-sm font-medium text-muted-foreground'
+                >
+                  <span className='block truncate'>
+                    {team && isCurrentTeam 
+                      ? "It's your turn! 👋" 
+                      : `${nextAction.team === 'BLUE' ? gameWithRelations.blueSide : gameWithRelations.redSide} is thinking 🤔`}
+                  </span>
                 </motion.div>
               )}
             </div>

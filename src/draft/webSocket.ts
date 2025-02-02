@@ -25,6 +25,8 @@ export interface ServerToClientEvents {
     gameId: string
     status: string
     winner?: 'BLUE' | 'RED'
+    blueSide?: string
+    redSide?: string
   }) => void
   gameCreated: (data: {
     gameId: string
@@ -460,6 +462,8 @@ export const webSocketFn: WebSocketFn = (io, context) => {
           gameId,
           status: updatedGame.status,
           winner: updatedGame.winner as 'BLUE' | 'RED' | undefined,
+          blueSide: updatedGame.blueSide,
+          redSide: updatedGame.redSide
         })
 
         // If game is completed, check if we need to create next game
@@ -638,9 +642,12 @@ export const webSocketFn: WebSocketFn = (io, context) => {
           },
         })
 
+        // Emit a more complete game update
         io.emit('gameUpdated', {
           gameId: updatedGame.id,
           status: updatedGame.status,
+          blueSide: updatedGame.blueSide,
+          redSide: updatedGame.redSide
         })
       } catch (error) {
         console.error('Error selecting side:', error)

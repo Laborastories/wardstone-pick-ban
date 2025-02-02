@@ -33,7 +33,10 @@ app wardstonepickban {
   },
   client: {
     rootComponent: import Root from "@src/root/RootPage",
-    setupFn: import setupClient from "@src/lib/setup"
+    setupFn: import { setupClient } from "@src/lib/setup"
+  },
+  server: {
+    setupFn: import { setupServer } from "@src/lib/setupServer"
   },
   webSocket: {
     fn: import { webSocketFn } from "@src/draft/webSocket",
@@ -134,7 +137,7 @@ query getChampionsFromDb {
 job fetchChampionsJob {
   executor: PgBoss,
   schedule: {
-    cron: "* * * * *", // Every minute
+    cron: "0 * * * *",
     args: {=json {} json=}
   },
   perform: {

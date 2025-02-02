@@ -109,7 +109,7 @@ export function ChampionGrid({
             placeholder='Search champions...'
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className='h-8 pl-7 text-sm'
+            className='h-8 pl-7 text-sm font-sans'
           />
         </div>
 

@@ -14,4 +14,3 @@ export async function setupClient(): Promise<void> {
   })
 }
 
-export default setupClient

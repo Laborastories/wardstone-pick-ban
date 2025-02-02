@@ -1,4 +1,5 @@
 import { type Champion, type ChampionRole } from '../../draft/services/championService'
+import { type FetchChampionsJob } from 'wasp/server/jobs'
 
 const DDRAGON_LANG = 'en_US'
 const COMMUNITY_DRAGON_URL =
@@ -20,7 +21,7 @@ async function initDDragon() {
   } catch (error) {
     console.error('Failed to fetch DDragon version:', error)
     // Fallback to a known version if fetch fails
-    DDRAGON_VERSION = '15.1.1'
+    DDRAGON_VERSION = '15.1.2'
     DDRAGON_BASE_URL = `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/data/${DDRAGON_LANG}`
   }
 }
@@ -249,7 +250,7 @@ interface CommunityDragonChampion {
   }[]
 }
 
-export async function fetchChampions(args: void, context: any): Promise<void> {
+export const fetchChampions: FetchChampionsJob<{}, {}> = async (args, context) => {
   console.log('🎮 Fetching champions...')
   await initDDragon()
 
@@ -330,7 +331,9 @@ export async function fetchChampions(args: void, context: any): Promise<void> {
     }
 
     console.log('✅ Champions updated successfully')
+    return {}
   } catch (error) {
     console.error('❌ Failed to fetch champions:', error)
+    return {}
   }
 } 

@@ -1,19 +1,19 @@
-# fly.toml app configuration file generated for scout-ahead-staging-client on 2025-02-02T11:36:38-08:00
+# fly.toml app configuration file generated for scout-ahead-server on 2025-01-09T13:45:01-08:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'scout-ahead-staging-client'
+app = 'scout-ahead-server'
 primary_region = 'sea'
 
 [build]
 
 [http_service]
-  internal_port = 8043
+  internal_port = 3000
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ['app']
 
 [[vm]]

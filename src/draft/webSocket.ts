@@ -568,7 +568,8 @@ export const webSocketFn: WebSocketFn = (io, context) => {
             winner: updatedSeries.winner as 'team1' | 'team2' | undefined,
           })
         } else {
-          const maxGames = series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1
+          const maxGames =
+            series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1
           // Only create next game if we haven't reached the maximum number of games
           // (regardless of scrim block mode)
           if (series.games.length < maxGames) {

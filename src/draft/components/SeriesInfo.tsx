@@ -61,8 +61,12 @@ export function SeriesInfo({
 
   const gamesNeeded =
     series.format === 'BO5' ? 3 : series.format === 'BO3' ? 2 : 1
+  const maxGames = series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1
+  const completedGames = series.games.filter(g => g.status === 'COMPLETED').length
   const isSeriesOver =
-    !series.scrimBlock && (team1Wins >= gamesNeeded || team2Wins >= gamesNeeded)
+    series.scrimBlock
+      ? completedGames === maxGames
+      : team1Wins >= gamesNeeded || team2Wins >= gamesNeeded
 
   const handleCopyUrl = () => {
     const baseUrl = window.location.origin

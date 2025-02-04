@@ -567,45 +567,73 @@ export const webSocketFn: WebSocketFn = (io, context) => {
             status: updatedSeries.status,
             winner: updatedSeries.winner as 'team1' | 'team2' | undefined,
           })
-        } else if (
-          series.games.length <
-          (series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1)
-        ) {
+        } else {
+          const maxGames = series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1
           // Only create next game if we haven't reached the maximum number of games
-          const nextGameNumber = series.games.length + 1
-          const nextGame = await prisma.game.create({
-            data: {
+          // (regardless of scrim block mode)
+          if (series.games.length < maxGames) {
+            const nextGameNumber = series.games.length + 1
+            const nextGame = await prisma.game.create({
+              data: {
+                seriesId: series.id,
+                gameNumber: nextGameNumber,
+                blueSide: '',
+                redSide: '',
+                status: 'PENDING',
+              },
+            })
+
+            console.log('✓ Created next game:', {
+              id: nextGame.id,
+              gameNumber: nextGame.gameNumber,
+              maxGames,
+              currentGames: series.games.length + 1,
+            })
+
+            // Initialize ready states for the new game
+            await setGameReadyState(nextGame.id, {})
+
+            // Emit game created event
+            io.emit('gameCreated', {
+              gameId: nextGame.id,
               seriesId: series.id,
               gameNumber: nextGameNumber,
-              blueSide: '',
-              redSide: '',
-              status: 'PENDING',
-            },
-          })
+            })
 
-          console.log('✓ Created next game:', {
-            id: nextGame.id,
-            gameNumber: nextGame.gameNumber,
-            maxGames:
-              series.format === 'BO5' ? 5 : series.format === 'BO3' ? 3 : 1,
-            currentGames: series.games.length + 1,
-          })
+            // Emit ready state update for the new game
+            io.emit('readyStateUpdate', {
+              gameId: nextGame.id,
+              readyStates: {},
+            })
+          } else if (series.scrimBlock) {
+            // In scrim block mode, only mark as completed if all games are finished
+            const completedGames = await prisma.game.count({
+              where: {
+                seriesId: series.id,
+                status: 'COMPLETED',
+              },
+            })
 
-          // Initialize ready states for the new game
-          await setGameReadyState(nextGame.id, {})
+            if (completedGames === maxGames) {
+              // If this is the last game in a scrim block and all games are completed,
+              // mark the series as completed
+              const updatedSeries = await prisma.series.update({
+                where: { id: series.id },
+                data: {
+                  status: 'COMPLETED',
+                  // In scrim block mode, we don't declare a winner
+                  winner: null,
+                },
+              })
 
-          // Emit game created event
-          io.emit('gameCreated', {
-            gameId: nextGame.id,
-            seriesId: series.id,
-            gameNumber: nextGameNumber,
-          })
-
-          // Emit ready state update for the new game
-          io.emit('readyStateUpdate', {
-            gameId: nextGame.id,
-            readyStates: {},
-          })
+              // Emit series updated event
+              io.emit('seriesUpdated', {
+                seriesId: series.id,
+                status: updatedSeries.status,
+                winner: undefined,
+              })
+            }
+          }
         }
       } catch (error) {
         console.error('❌ Error setting winner:', error)

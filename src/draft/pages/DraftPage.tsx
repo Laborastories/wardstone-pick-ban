@@ -708,14 +708,13 @@ export function DraftPage() {
                             <Button
                               size='sm'
                               variant={
-                                readyStates[gameSide]
-                                  ? 'outline'
-                                  : 'default'
+                                readyStates[gameSide] ? 'outline' : 'default'
                               }
                               onClick={handleReadyClick}
                               className={cn(
                                 'min-w-[80px] transition-all duration-200',
-                                readyStates[gameSide] && 'hover:bg-destructive hover:text-destructive-foreground',
+                                readyStates[gameSide] &&
+                                  'hover:bg-destructive hover:text-destructive-foreground',
                               )}
                             >
                               {readyStates[gameSide] ? 'Unready' : 'Ready'}

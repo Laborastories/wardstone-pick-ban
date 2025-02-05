@@ -21,6 +21,7 @@ import { SeriesInfo } from '../components/SeriesInfo'
 import { useParams } from 'react-router-dom'
 import { SideSelection } from '../components/SideSelection'
 import { cn } from '../../lib/utils'
+import { CaretDown } from '@phosphor-icons/react'
 
 type GameWithRelations = Game & {
   series: Series & {
@@ -40,6 +41,55 @@ type GameWithRelations = Game & {
     position: number
   }[]
 }
+
+interface TimerState {
+  turnStartedAt: number
+  phaseTimeLimit: number
+}
+
+const ReadyStateIndicator = ({
+  blueReady,
+  redReady,
+}: {
+  blueReady?: boolean
+  redReady?: boolean
+}) => (
+  <div className='flex items-center gap-3'>
+    <div
+      className={cn(
+        'h-4 w-4 rounded-full transition-all duration-300',
+        blueReady
+          ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+          : 'bg-blue-500/20',
+      )}
+    />
+    <div
+      className={cn(
+        'h-4 w-4 rounded-full transition-all duration-300',
+        redReady
+          ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+          : 'bg-red-500/20',
+      )}
+    />
+  </div>
+)
+
+const ScrollIndicator = () => (
+  <motion.div
+    initial={{ opacity: 0, y: -5 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: 5 }}
+    className='mt-1 flex flex-col items-center text-xs text-muted-foreground/80'
+  >
+    <span>More info below</span>
+    <motion.div
+      animate={{ y: [0, 2, 0] }}
+      transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+    >
+      <CaretDown size={12} />
+    </motion.div>
+  </motion.div>
+)
 
 export function DraftPage() {
   const params = useParams()
@@ -71,6 +121,7 @@ export function DraftPage() {
     },
     {},
   )
+  const [timerState, setTimerState] = useState<TimerState | null>(null)
 
   // Set auth token and connect socket only once
   useEffect(() => {
@@ -117,6 +168,31 @@ export function DraftPage() {
     refetch()
   })
 
+  // Add useEffect for client-side timer calculation
+  useEffect(() => {
+    if (!timerState) return
+
+    const calculateTimeRemaining = () => {
+      const elapsed = Math.floor((Date.now() - timerState.turnStartedAt) / 1000)
+      const remaining = Math.max(0, timerState.phaseTimeLimit - elapsed)
+      setTimeRemaining(remaining)
+
+      // Clear interval if time is up
+      if (remaining <= 0) {
+        setTimerState(null)
+      }
+    }
+
+    // Calculate initial time
+    calculateTimeRemaining()
+
+    // Update every second
+    const interval = setInterval(calculateTimeRemaining, 1000)
+
+    return () => clearInterval(interval)
+  }, [timerState])
+
+  // Update socket listener for timer updates
   useSocketListener(
     'timerUpdate',
     (data: ServerToClientPayload<'timerUpdate'>) => {
@@ -125,13 +201,19 @@ export function DraftPage() {
       // If this is a new team's turn
       if (lastTeam !== nextAction.team) {
         setLastTeam(nextAction.team)
-        setTimeRemaining(data.timeRemaining)
+        setTimerState({
+          turnStartedAt: data.turnStartedAt,
+          phaseTimeLimit: data.phaseTimeLimit,
+        })
         setIsTimerReady(true)
         return
       }
 
-      // Just update the time without resetting the animation
-      setTimeRemaining(data.timeRemaining)
+      // Just update the timer state without resetting animation
+      setTimerState({
+        turnStartedAt: data.turnStartedAt,
+        phaseTimeLimit: data.phaseTimeLimit,
+      })
       setIsTimerReady(true)
     },
   )
@@ -528,7 +610,7 @@ export function DraftPage() {
 
   return (
     <div className='h-screen overflow-hidden bg-background'>
-      <div className='flex h-full flex-col rounded-lg p-2 shadow-lg backdrop-blur-sm sm:p-3'>
+      <div className='relative flex h-full flex-col rounded-lg p-2 shadow-lg backdrop-blur-sm sm:p-3'>
         {/* Main Draft UI */}
         <div className='flex h-full flex-col gap-2 sm:gap-4'>
           {/* Top Section: Picks and Series Info */}
@@ -609,26 +691,33 @@ export function DraftPage() {
                     {gameWithRelations.status === 'PENDING' &&
                     gameWithRelations.blueSide &&
                     gameWithRelations.redSide ? (
-                      <div className='flex h-[72px] items-center justify-center'>
-                        <div className='flex flex-col items-center gap-2'>
+                      <div className='flex h-[120px] items-center justify-center py-4'>
+                        <div className='flex flex-col items-center gap-4'>
+                          <ReadyStateIndicator
+                            blueReady={readyStates.blue}
+                            redReady={readyStates.red}
+                          />
                           <div className='text-sm font-medium text-muted-foreground'>
                             {gameSide
                               ? readyStates[gameSide]
                                 ? 'Waiting for other team...'
-                                : 'Click ready to start'
-                              : 'Waiting for teams to ready up...'}
+                                : 'Click ready when your team is set'
+                              : 'Waiting for teams...'}
                           </div>
                           {gameSide && (
                             <Button
                               size='sm'
                               variant={
-                                readyStates[gameSide]
-                                  ? 'destructive'
-                                  : 'default'
+                                readyStates[gameSide] ? 'outline' : 'default'
                               }
                               onClick={handleReadyClick}
+                              className={cn(
+                                'min-w-[80px] transition-all duration-200',
+                                readyStates[gameSide] &&
+                                  'hover:bg-destructive hover:text-destructive-foreground',
+                              )}
                             >
-                              {readyStates[gameSide] ? 'Cancel' : 'Ready'}
+                              {readyStates[gameSide] ? 'Unready' : 'Ready'}
                             </Button>
                           )}
                         </div>
@@ -637,7 +726,7 @@ export function DraftPage() {
 
                     {/* Champion Grid */}
                     <div className='flex min-h-0 flex-1 flex-col gap-2'>
-                      <div className='flex min-h-0 flex-1 justify-center'>
+                      <div className='relative flex min-h-0 flex-1 justify-center'>
                         <div className='w-full min-w-0'>
                           <ChampionGrid
                             onSelect={handleChampionSelect}
@@ -734,7 +823,7 @@ export function DraftPage() {
             </div>
 
             {/* Center Actions */}
-            <div className='flex h-[48px] w-[90px] flex-none items-center justify-center sm:w-[120px] lg:w-[160px]'>
+            <div className='flex h-[48px] w-[90px] flex-none flex-col items-center justify-center sm:w-[120px] lg:w-[160px]'>
               {/* Confirmation Button or Team Status */}
               {pendingAction && isCurrentTeam ? (
                 <motion.div
@@ -765,6 +854,13 @@ export function DraftPage() {
                   </motion.div>
                 )
               )}
+
+              {/* Scroll Indicator */}
+              <AnimatePresence>
+                {gameWithRelations.status === 'COMPLETED' && (
+                  <ScrollIndicator />
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Red Bans */}

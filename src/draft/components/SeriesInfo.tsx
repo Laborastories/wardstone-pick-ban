@@ -136,12 +136,14 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
               >
                 <div className='flex items-center gap-2'>
                   <div className='flex items-center gap-1.5'>
-                    <div className={cn(
-                      'rounded px-2 py-0.5 font-medium transition-colors',
-                      series.fearlessDraft 
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-muted/50 text-muted-foreground/50'
-                    )}>
+                    <div
+                      className={cn(
+                        'rounded px-2 py-0.5 font-medium transition-colors',
+                        series.fearlessDraft
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted/50 text-muted-foreground/50',
+                      )}
+                    >
                       Fearless
                     </div>
                     {!series.fearlessDraft && (
@@ -150,23 +152,27 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                       </div>
                     )}
                   </div>
-                  <span className={cn(
-                    'transition-colors',
-                    series.fearlessDraft 
-                      ? 'text-foreground'
-                      : 'text-muted-foreground/50'
-                  )}>
+                  <span
+                    className={cn(
+                      'transition-colors',
+                      series.fearlessDraft
+                        ? 'text-foreground'
+                        : 'text-muted-foreground/50',
+                    )}
+                  >
                     Champions can only be picked once
                   </span>
                 </div>
                 <div className='flex items-center gap-2'>
                   <div className='flex items-center gap-1.5'>
-                    <div className={cn(
-                      'rounded px-2 py-0.5 font-medium transition-colors',
-                      series.scrimBlock 
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-muted/50 text-muted-foreground/50'
-                    )}>
+                    <div
+                      className={cn(
+                        'rounded px-2 py-0.5 font-medium transition-colors',
+                        series.scrimBlock
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted/50 text-muted-foreground/50',
+                      )}
+                    >
                       Scrim
                     </div>
                     {!series.scrimBlock && (
@@ -175,12 +181,14 @@ ${baseUrl}/draft/${series.id}/${currentGameNumber}`
                       </div>
                     )}
                   </div>
-                  <span className={cn(
-                    'transition-colors',
-                    series.scrimBlock 
-                      ? 'text-foreground'
-                      : 'text-muted-foreground/50'
-                  )}>
+                  <span
+                    className={cn(
+                      'transition-colors',
+                      series.scrimBlock
+                        ? 'text-foreground'
+                        : 'text-muted-foreground/50',
+                    )}
+                  >
                     All games must be played
                   </span>
                 </div>

@@ -74,7 +74,10 @@ export function SideSelection({
   return (
     <div className='space-y-6'>
       <div className='space-y-2 text-center'>
-        <h3 className='text-lg font-medium'>Select Side for {side === 'team1' ? series.team1Name : series.team2Name}</h3>
+        <h3 className='text-lg font-medium'>
+          Select Side for{' '}
+          {side === 'team1' ? series.team1Name : series.team2Name}
+        </h3>
         <div className='text-sm text-muted-foreground'>
           You are using{' '}
           <span className='font-medium text-foreground'>
